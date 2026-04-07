@@ -2,23 +2,78 @@
 
 import { useCallback, useState, type FormEvent } from "react";
 
+export type ClassFormValues = {
+  className: string;
+  coachId: string;
+  classDate: string;
+  startTime: string;
+  endTime: string;
+  capacity: number;
+  branchName: string;
+  roomName: string;
+  description: string;
+  isActive: boolean;
+  bookedCount?: number;
+  remainingSlots?: number;
+};
+
 type Props = {
   open: boolean;
   onClose: () => void;
+  title?: string;
+  initialValues?: Partial<ClassFormValues>;
+  submitLabel?: string;
+  trainerOptions: Array<{ id: string; name: string }>;
+  onSubmit: (values: ClassFormValues) => Promise<void>;
 };
 
-export function CreateClassModal({ open, onClose }: Props) {
+function toIsoDate(value: string) {
+  if (!value) return "";
+  return new Date(`${value}T00:00:00`).toISOString();
+}
+
+export function CreateClassModal({
+  open,
+  onClose,
+  title = "Create New Class",
+  submitLabel = "Create Schedule",
+  initialValues,
+  trainerOptions,
+  onSubmit,
+}: Props) {
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = useCallback(
-    (e: FormEvent<HTMLFormElement>) => {
+    async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      setError("");
       setSubmitting(true);
-      window.alert("Class created successfully! (Simulation)");
-      setSubmitting(false);
-      onClose();
+      const fd = new FormData(e.currentTarget);
+      const payload: ClassFormValues = {
+        className: String(fd.get("className") ?? ""),
+        coachId: String(fd.get("coachId") ?? ""),
+        classDate: toIsoDate(String(fd.get("classDate") ?? "")),
+        startTime: String(fd.get("startTime") ?? ""),
+        endTime: String(fd.get("endTime") ?? ""),
+        capacity: Number(fd.get("capacity") ?? 0),
+        branchName: String(fd.get("branchName") ?? ""),
+        roomName: String(fd.get("roomName") ?? ""),
+        description: String(fd.get("description") ?? ""),
+        isActive: true,
+      };
+
+      try {
+        await onSubmit(payload);
+        onClose();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to submit";
+        setError(msg);
+      } finally {
+        setSubmitting(false);
+      }
     },
-    [onClose]
+    [onClose, onSubmit]
   );
 
   if (!open) return null;
@@ -43,7 +98,7 @@ export function CreateClassModal({ open, onClose }: Props) {
             className="text-xl font-bold font-display uppercase"
             id="modal-title"
           >
-            Create New Class
+            {title}
           </h3>
           <button
             type="button"
@@ -66,6 +121,8 @@ export function CreateClassModal({ open, onClose }: Props) {
                   className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                   placeholder="e.g. Boxing 101"
                   name="className"
+                  defaultValue={initialValues?.className ?? ""}
+                  required
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -75,11 +132,18 @@ export function CreateClassModal({ open, onClose }: Props) {
                   </label>
                   <select
                     className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
-                    name="trainer"
-                    defaultValue="Coach Raka"
+                    name="coachId"
+                    defaultValue={initialValues?.coachId ?? ""}
+                    required
                   >
-                    <option>Coach Raka</option>
-                    <option>Coach Sarah</option>
+                    <option value="" disabled>
+                      Select trainer
+                    </option>
+                    {trainerOptions.map((trainer) => (
+                      <option key={trainer.id} value={trainer.id}>
+                        {trainer.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -89,35 +153,100 @@ export function CreateClassModal({ open, onClose }: Props) {
                   <input
                     type="number"
                     className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
-                    defaultValue={20}
+                    defaultValue={initialValues?.capacity ?? 20}
                     name="capacity"
+                    min={1}
+                    required
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">Date</label>
+                  <label className="block text-gray-400 text-sm mb-1">
+                    Class Date
+                  </label>
                   <input
                     type="date"
                     className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
-                    name="date"
+                    name="classDate"
+                    defaultValue={
+                      initialValues?.classDate
+                        ? initialValues.classDate.slice(0, 10)
+                        : ""
+                    }
+                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">Time</label>
+                  <label className="block text-gray-400 text-sm mb-1">
+                    Start Time (HH:mm:ss)
+                  </label>
                   <input
-                    type="time"
+                    type="text"
                     className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
-                    name="time"
+                    name="startTime"
+                    defaultValue={initialValues?.startTime ?? "08:00:00"}
+                    required
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-400 text-sm mb-1">
+                    End Time (HH:mm:ss)
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                    name="endTime"
+                    defaultValue={initialValues?.endTime ?? "09:00:00"}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-1">
+                    Branch
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                    name="branchName"
+                    defaultValue={initialValues?.branchName ?? "Puri Indah"}
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-gray-400 text-sm mb-1">Room</label>
+                <input
+                  type="text"
+                  className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                  name="roomName"
+                  defaultValue={initialValues?.roomName ?? "Main Hall"}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-gray-400 text-sm mb-1">
+                  Description
+                </label>
+                <textarea
+                  className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                  name="description"
+                  defaultValue={initialValues?.description ?? ""}
+                />
+              </div>
+              {error ? (
+                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+                  {error}
+                </p>
+              ) : null}
               <button
                 type="submit"
                 disabled={submitting}
                 className="w-full bg-sweat text-black font-bold py-3 rounded-lg mt-4 hover:bg-yellow-400 transition disabled:opacity-70"
               >
-                Create Schedule
+                {submitting ? "Submitting..." : submitLabel}
               </button>
             </div>
           </form>
