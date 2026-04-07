@@ -32,6 +32,11 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const { displayName, displayRole } = useRole();
 
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+
   return (
     <aside className="w-64 bg-sidebar border-r border-border flex flex-col justify-between overflow-y-auto">
       <div>
@@ -95,6 +100,14 @@ export function AdminSidebar() {
             </p>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={logout}
+          className="mt-3 w-full bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg text-sm border border-border transition"
+        >
+          <i className="fas fa-sign-out-alt mr-2" aria-hidden />
+          Logout
+        </button>
       </div>
     </aside>
   );
