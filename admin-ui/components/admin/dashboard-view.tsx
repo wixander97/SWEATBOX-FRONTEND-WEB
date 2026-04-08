@@ -18,8 +18,8 @@ export function DashboardView() {
   return (
     <>
       {expiringMembersCount > 0 ? (
-        <div className="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-xl mb-6 flex justify-between items-center shadow-lg">
-          <div className="flex items-center gap-4 text-yellow-500">
+        <div className="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-xl mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-lg">
+          <div className="flex items-start sm:items-center gap-4 text-yellow-500">
             <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
               <i className="fas fa-exclamation-triangle text-xl" aria-hidden />
             </div>
@@ -43,7 +43,7 @@ export function DashboardView() {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-8">
         <div className="bg-card p-6 rounded-xl border border-border transition hover:border-sweat/50 cursor-default">
           <p className="text-gray-400 text-xs font-bold uppercase mb-2">
             Total Active Members
@@ -109,7 +109,8 @@ export function DashboardView() {
               View All
             </Link>
           </div>
-          <table className="w-full text-left text-sm text-gray-400">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[680px] text-left text-sm text-gray-400">
             <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
               <tr>
                 <th className="px-6 py-3">Member</th>
@@ -141,6 +142,7 @@ export function DashboardView() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="bg-card rounded-xl border border-border p-6">
@@ -154,7 +156,7 @@ export function DashboardView() {
             {classes.map((c) => (
               <div
                 key={c.id}
-                className="flex items-center gap-4 p-3 rounded-lg border border-border hover:bg-white/5 transition"
+                className="flex items-center gap-3 sm:gap-4 p-3 rounded-lg border border-border hover:bg-white/5 transition"
               >
                 <div className="w-16 h-16 bg-gray-800 rounded-lg flex flex-col items-center justify-center text-center">
                   <span className="text-xs text-gray-400">TIME</span>

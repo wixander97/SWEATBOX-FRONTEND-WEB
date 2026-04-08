@@ -140,8 +140,8 @@ export function ClassesView() {
   return (
     <>
       <div className="bg-card rounded-xl border border-border overflow-hidden">
-        <div className="p-6 border-b border-border flex justify-between items-center">
-          <div className="flex gap-4">
+        <div className="p-4 sm:p-6 border-b border-border flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <input
               type="date"
               className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
@@ -155,13 +155,14 @@ export function ClassesView() {
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center gap-2"
-           >
+            className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 w-full sm:w-auto"
+          >
             <i className="fas fa-plus" aria-hidden />
             Create New Class
           </button>
         </div>
-        <table className="w-full text-left text-sm text-gray-400">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-left text-sm text-gray-400">
           <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
             <tr>
               <th className="px-6 py-4">Time</th>
@@ -246,6 +247,7 @@ export function ClassesView() {
             }))}
           </tbody>
         </table>
+        </div>
       </div>
 
       <CreateClassModal

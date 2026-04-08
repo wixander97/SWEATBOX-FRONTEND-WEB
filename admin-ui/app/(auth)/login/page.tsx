@@ -39,10 +39,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-dark text-white flex items-center justify-center p-6">
-      <section className="w-full max-w-md bg-card border border-border rounded-xl p-8">
-        <h1 className="font-display text-2xl font-bold mb-2">Login Admin</h1>
-        <p className="text-sm text-gray-400 mb-6">
+    <main className="min-h-screen bg-dark text-white flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8">
+      <section className="w-full max-w-md bg-card border border-border rounded-xl p-5 sm:p-8">
+        <h1 className="font-display text-xl sm:text-2xl font-bold mb-2">Login Admin</h1>
+        <p className="text-sm text-gray-400 mb-5 sm:mb-6">
           Masuk untuk mengakses dashboard Sweatbox.
         </p>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -53,7 +53,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border text-white px-3 sm:px-4 py-3 rounded-lg focus:outline-none focus:border-sweat text-sm sm:text-base"
             />
           </div>
           <div>
@@ -63,7 +63,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border text-white px-3 sm:px-4 py-3 rounded-lg focus:outline-none focus:border-sweat text-sm sm:text-base"
             />
           </div>
 
@@ -76,7 +76,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-sweat text-black font-bold py-3 rounded-lg hover:bg-yellow-400 transition disabled:opacity-70"
+            className="w-full bg-sweat text-black font-bold py-3 rounded-lg hover:bg-yellow-400 transition disabled:opacity-70 text-sm sm:text-base"
           >
             {loading ? "Memproses..." : "Login"}
           </button>

@@ -28,7 +28,7 @@ export default function RootLayout({
       lang="id"
       className={`${inter.variable} ${oswald.variable} h-full antialiased`}
     >
-      <body className="min-h-full h-screen overflow-hidden flex flex-col">
+      <body className="min-h-screen overflow-x-hidden flex flex-col">
         <RoleProvider>{children}</RoleProvider>
       </body>
     </html>

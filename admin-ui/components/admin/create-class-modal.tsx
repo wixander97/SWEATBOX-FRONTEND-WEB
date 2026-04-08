@@ -88,7 +88,7 @@ export function CreateClassModal({
       }}
     >
       <div
-        className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl p-6"
+        className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
         id="modal-box"
         role="dialog"
         aria-labelledby="modal-title"
@@ -125,7 +125,7 @@ export function CreateClassModal({
                   required
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
                     Trainer
@@ -160,7 +160,7 @@ export function CreateClassModal({
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
                     Class Date
@@ -190,7 +190,7 @@ export function CreateClassModal({
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
                     End Time (HH:mm:ss)

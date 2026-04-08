@@ -120,8 +120,8 @@ export function MembersView() {
 
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
-      <div className="p-6 border-b border-border flex justify-between items-center">
-        <div className="flex gap-4">
+      <div className="p-4 sm:p-6 border-b border-border flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4">
+        <div className="flex gap-4 overflow-x-auto">
           <button
             type="button"
             onClick={() => setMemberFilterTab("all")}
@@ -146,13 +146,13 @@ export function MembersView() {
           </button>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <input
             type="text"
             placeholder="Search member name..."
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm w-64 focus:outline-none focus:border-sweat"
+            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:border-sweat"
           />
           <div className="flex gap-2">
             <button
@@ -174,7 +174,8 @@ export function MembersView() {
           </div>
         </div>
       </div>
-      <table className="w-full text-left text-sm text-gray-400">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[860px] text-left text-sm text-gray-400">
         <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
           <tr>
             <th className="px-6 py-4">ID</th>
@@ -255,6 +256,7 @@ export function MembersView() {
           )))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

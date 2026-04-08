@@ -7,7 +7,7 @@ export function PayrollView() {
 
   if (currentRole !== "owner") {
     return (
-      <div className="bg-card rounded-xl border border-dashed border-red-500 p-12 text-center">
+      <div className="bg-card rounded-xl border border-dashed border-red-500 p-6 sm:p-12 text-center">
         <i className="fas fa-lock text-red-500 text-5xl mb-4" aria-hidden />
         <h3 className="text-2xl font-bold text-white mb-2">Access Denied</h3>
         <p className="text-gray-400">
@@ -19,7 +19,7 @@ export function PayrollView() {
 
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
-      <div className="p-6 border-b border-border flex justify-between items-center">
+      <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <h4 className="font-bold text-lg">Payroll Periode: Februari 2024</h4>
         <button
           type="button"
@@ -29,7 +29,8 @@ export function PayrollView() {
           Export Report
         </button>
       </div>
-      <table className="w-full text-left text-sm text-gray-400">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[720px] text-left text-sm text-gray-400">
         <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
           <tr>
             <th className="px-6 py-4">Coach Name</th>
@@ -64,6 +65,7 @@ export function PayrollView() {
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

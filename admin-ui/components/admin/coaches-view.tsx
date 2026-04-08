@@ -82,7 +82,7 @@ export function CoachesView() {
       ) : coaches.length === 0 ? (
         <div className="text-gray-400">No coaches found.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {coaches.map((coach) => (
             <div
               key={coach.id}
@@ -148,7 +148,7 @@ export function CoachesView() {
             }
           }}
         >
-          <div className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl p-6">
+          <div className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold font-display uppercase">
                 Coach Detail

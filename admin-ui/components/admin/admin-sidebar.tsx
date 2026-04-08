@@ -28,7 +28,12 @@ function navButtonClasses(active: boolean) {
   return base + "hover:bg-white/10 text-gray-400 hover:text-white";
 }
 
-export function AdminSidebar() {
+type Props = {
+  open?: boolean;
+  onClose?: () => void;
+};
+
+export function AdminSidebar({ open = false, onClose }: Props) {
   const pathname = usePathname();
   const { displayName, displayRole } = useRole();
 
@@ -38,77 +43,103 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside className="w-64 bg-sidebar border-r border-border flex flex-col justify-between overflow-y-auto">
-      <div>
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8 bg-sweat rounded flex items-center justify-center font-bold text-black font-display text-lg">
-            S
-          </div>
-          <h1 className="font-display text-xl font-bold tracking-wider text-white">
-            SWEATBOX <span className="text-sweat text-xs align-top">ADMIN</span>
-          </h1>
-        </div>
-
-        <nav className="mt-2 px-4 space-y-1 pb-4">
-          {mainNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              id={`nav-${item.id}`}
-              className={navButtonClasses(pathname === item.href)}
+    <>
+      <button
+        type="button"
+        aria-label="Close sidebar overlay"
+        onClick={onClose}
+        className={`fixed inset-0 z-30 bg-black/50 transition-opacity lg:hidden ${
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+      />
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-sidebar border-r border-border flex flex-col justify-between overflow-y-auto transform transition-transform lg:static lg:z-auto lg:w-64 lg:max-w-none lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div>
+          <div className="p-6 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-sweat rounded flex items-center justify-center font-bold text-black font-display text-lg">
+                S
+              </div>
+              <h1 className="font-display text-xl font-bold tracking-wider text-white">
+                SWEATBOX <span className="text-sweat text-xs align-top">ADMIN</span>
+              </h1>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="lg:hidden text-gray-400 hover:text-white text-xl"
+              aria-label="Close menu"
             >
-              <i className={`fas ${item.icon} w-5`} aria-hidden />
-              {item.label}
-            </Link>
-          ))}
+              ×
+            </button>
+          </div>
 
-          <div className="pt-4 mt-2 border-t border-gray-800">
-            <p className="px-4 text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">
-              Data &amp; Finance
-            </p>
-            {dataNav.map((item) => (
+          <nav className="mt-2 px-4 space-y-1 pb-4">
+            {mainNav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 id={`nav-${item.id}`}
+                onClick={onClose}
                 className={navButtonClasses(pathname === item.href)}
               >
                 <i className={`fas ${item.icon} w-5`} aria-hidden />
                 {item.label}
               </Link>
             ))}
-          </div>
-        </nav>
-      </div>
 
-      <div className="p-4 border-t border-border mt-auto">
-        <div className="flex items-center gap-3 px-4 py-2">
-          <Image
-            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`}
-            alt=""
-            width={32}
-            height={32}
-            className="w-8 h-8 rounded-full"
-            unoptimized
-          />
-          <div>
-            <p className="text-sm font-bold text-white" id="logged-in-name">
-              {displayName}
-            </p>
-            <p className="text-xs text-gray-500" id="logged-in-role">
-              {displayRole}
-            </p>
-          </div>
+            <div className="pt-4 mt-2 border-t border-gray-800">
+              <p className="px-4 text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">
+                Data &amp; Finance
+              </p>
+              {dataNav.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  id={`nav-${item.id}`}
+                  onClick={onClose}
+                  className={navButtonClasses(pathname === item.href)}
+                >
+                  <i className={`fas ${item.icon} w-5`} aria-hidden />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </nav>
         </div>
-        <button
-          type="button"
-          onClick={logout}
-          className="mt-3 w-full bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg text-sm border border-border transition"
-        >
-          <i className="fas fa-sign-out-alt mr-2" aria-hidden />
-          Logout
-        </button>
-      </div>
-    </aside>
+
+        <div className="p-4 border-t border-border mt-auto">
+          <div className="flex items-center gap-3 px-4 py-2">
+            <Image
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`}
+              alt=""
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-full"
+              unoptimized
+            />
+            <div>
+              <p className="text-sm font-bold text-white" id="logged-in-name">
+                {displayName}
+              </p>
+              <p className="text-xs text-gray-500" id="logged-in-role">
+                {displayRole}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={logout}
+            className="mt-3 w-full bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg text-sm border border-border transition"
+          >
+            <i className="fas fa-sign-out-alt mr-2" aria-hidden />
+            Logout
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
