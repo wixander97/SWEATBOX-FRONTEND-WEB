@@ -1,19 +1,21 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
-import { members, type Member } from "@/lib/mock-data";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type FilterTab = "all" | "active";
 
-function filterMembers(list: Member[], tab: FilterTab): Member[] {
-  if (tab === "active") {
-    return list.filter(
-      (m) => m.status === "Active" || m.status === "Expiring Soon"
-    );
-  }
-  return list;
-}
+type ApiMember = {
+  id: string;
+  memberCode?: string | null;
+  fullName?: string | null;
+  email?: string | null;
+  membershipType?: string | null;
+  membershipStatus?: string | null;
+  paymentStatus?: string | null;
+  remainingCredits?: number;
+  homeClub?: string | null;
+};
 
 function statusStyle(status: string) {
   let s = "bg-gray-500/10 text-gray-500";
@@ -32,7 +34,89 @@ function statusStyle(status: string) {
 
 export function MembersView() {
   const [memberFilterTab, setMemberFilterTab] = useState<FilterTab>("all");
-  const displayMembers = filterMembers(members, memberFilterTab);
+  const [keyword, setKeyword] = useState("");
+  const [members, setMembers] = useState<ApiMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const loadMembers = useCallback(
+    async (q: string, tab: FilterTab) => {
+      setLoading(true);
+      setError("");
+      const params = new URLSearchParams({
+        keyword: q,
+        pageNumber: "1",
+        pageSize: "100",
+      });
+      if (tab === "active") {
+        params.set("membershipStatus", "Active");
+      }
+
+      const res = await fetch(`/api/members?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const payload = (await res.json().catch(() => [])) as
+        | ApiMember[]
+        | { items?: ApiMember[]; data?: ApiMember[]; message?: string };
+
+      if (!res.ok) {
+        const msg =
+          typeof payload === "object" && !Array.isArray(payload)
+            ? payload.message
+            : "Gagal mengambil data member";
+        setError(msg || "Gagal mengambil data member");
+        setMembers([]);
+        setLoading(false);
+        return;
+      }
+
+      if (Array.isArray(payload)) {
+        setMembers(payload);
+      } else {
+        setMembers(payload.items || payload.data || []);
+      }
+      setLoading(false);
+    },
+    []
+  );
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadMembers(keyword, memberFilterTab);
+  }, [loadMembers, keyword, memberFilterTab]);
+
+  const displayMembers = useMemo(() => members, [members]);
+
+  function exportCsv() {
+    const header = [
+      "ID",
+      "Member Name",
+      "Current Plan",
+      "Home Club",
+      "Credits",
+      "Status",
+      "Payment",
+    ];
+    const rows = displayMembers.map((m) => [
+      m.memberCode || m.id,
+      m.fullName || "-",
+      m.membershipType || "-",
+      m.homeClub || "-",
+      String(m.remainingCredits ?? 0),
+      m.membershipStatus || "-",
+      m.paymentStatus || "-",
+    ]);
+    const csv = [header, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "members.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -66,11 +150,14 @@ export function MembersView() {
           <input
             type="text"
             placeholder="Search member name..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
             className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm w-64 focus:outline-none focus:border-sweat"
           />
           <div className="flex gap-2">
             <button
               type="button"
+              onClick={() => void loadMembers(keyword, memberFilterTab)}
               className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
             >
               <i className="fas fa-filter mr-2" aria-hidden />
@@ -78,6 +165,7 @@ export function MembersView() {
             </button>
             <button
               type="button"
+              onClick={exportCsv}
               className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
             >
               <i className="fas fa-file-export mr-2" aria-hidden />
@@ -99,14 +187,35 @@ export function MembersView() {
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {displayMembers.map((m) => (
+          {loading ? (
+            <tr>
+              <td className="px-6 py-6 text-gray-400" colSpan={7}>
+                Loading...
+              </td>
+            </tr>
+          ) : error ? (
+            <tr>
+              <td className="px-6 py-6 text-red-400" colSpan={7}>
+                {error}
+              </td>
+            </tr>
+          ) : displayMembers.length === 0 ? (
+            <tr>
+              <td className="px-6 py-6 text-gray-400" colSpan={7}>
+                Tidak ada data member.
+              </td>
+            </tr>
+          ) : (
+            displayMembers.map((m) => (
             <tr key={m.id} className="table-row transition">
-              <td className="px-6 py-4 font-mono text-xs">{m.id}</td>
+              <td className="px-6 py-4 font-mono text-xs">
+                {m.memberCode || m.id}
+              </td>
               <td className="px-6 py-4 font-bold text-white">
                 <span className="flex items-center gap-3">
                   <span className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden inline-block shrink-0">
                     <Image
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=random`}
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(m.fullName || "Member")}&background=random`}
                       alt=""
                       width={32}
                       height={32}
@@ -114,32 +223,36 @@ export function MembersView() {
                       unoptimized
                     />
                   </span>
-                  {m.name}
+                  {m.fullName || "-"}
                 </span>
               </td>
-              <td className="px-6 py-4">{m.plan}</td>
-              <td className="px-6 py-4">{m.club}</td>
-              <td className="px-6 py-4 font-bold text-sweat">{m.credits}</td>
+              <td className="px-6 py-4">{m.membershipType || "-"}</td>
+              <td className="px-6 py-4">{m.homeClub || "-"}</td>
+              <td className="px-6 py-4 font-bold text-sweat">
+                {m.remainingCredits ?? 0}
+              </td>
               <td className="px-6 py-4">
                 <span
-                  className={`px-3 py-1 rounded text-xs font-bold ${statusStyle(m.status)}`}
+                  className={`px-3 py-1 rounded text-xs font-bold ${statusStyle(
+                    m.membershipStatus || ""
+                  )}`}
                 >
-                  {m.status}
+                  {m.membershipStatus || "-"}
                 </span>
               </td>
               <td className="px-6 py-4">
                 <span
                   className={`px-2 py-1 rounded text-xs font-bold ${
-                    m.payment === "Paid"
+                    (m.paymentStatus || "").toLowerCase() === "paid"
                       ? "bg-green-500/10 text-green-500"
                       : "bg-yellow-500/10 text-yellow-500"
                   }`}
                 >
-                  {m.payment}
+                  {m.paymentStatus || "-"}
                 </span>
               </td>
             </tr>
-          ))}
+          )))}
         </tbody>
       </table>
     </div>
