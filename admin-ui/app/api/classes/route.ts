@@ -6,11 +6,23 @@ function unauthorized() {
   return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const token = await getAuthTokenFromCookie();
   if (!token) return unauthorized();
 
-  const res = await fetch(`${API_BASE_URL}/api/v1/class-schedules`, {
+  const url = new URL(req.url);
+  const page = url.searchParams.get("page") ?? "1";
+  const pageSize = url.searchParams.get("pageSize") ?? "10";
+  const search = url.searchParams.get("search") ?? "";
+  const isActive = url.searchParams.get("isActive") ?? "";
+
+  const backendUrl = new URL(`${API_BASE_URL}/api/v1/class-schedules/paged`);
+  backendUrl.searchParams.set("page", page);
+  backendUrl.searchParams.set("pageSize", pageSize);
+  if (search) backendUrl.searchParams.set("search", search);
+  if (isActive) backendUrl.searchParams.set("isActive", isActive);
+
+  const res = await fetch(backendUrl.toString(), {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });

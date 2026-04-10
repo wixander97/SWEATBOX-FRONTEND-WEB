@@ -1,10 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+
+type SortDir = "asc" | "desc";
 import {
   CreateClassModal,
   type ClassFormValues,
 } from "@/components/admin/create-class-modal";
+import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 
 type ApiClass = {
   id: string;
@@ -29,6 +32,18 @@ type ApiCoach = {
   name?: string | null;
 };
 
+type PagedResponse<T> = {
+  items?: T[];
+  data?: T[];
+  totalCount?: number;
+  totalItems?: number;
+  total?: number;
+  totalPages?: number;
+  pageCount?: number;
+  pageSize?: number;
+  message?: string;
+};
+
 export function ClassesView() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -37,36 +52,82 @@ export function ClassesView() {
   const [trainers, setTrainers] = useState<Array<{ id: string; name: string }>>(
     []
   );
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  const loadClasses = useCallback(async () => {
+  function toggleSort(key: string) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
+
+  const loadClasses = useCallback(async (targetPage: number) => {
     setLoading(true);
     setError("");
-    const res = await fetch("/api/classes", { cache: "no-store" });
-    const payload = (await res.json().catch(() => [])) as ApiClass[] | { message?: string };
+    const params = new URLSearchParams({
+      page: String(targetPage),
+      pageSize: String(pageSize),
+    });
+    const res = await fetch(`/api/classes?${params.toString()}`, { cache: "no-store" });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
+    const payload = (await res.json().catch(() => [])) as
+      | ApiClass[]
+      | PagedResponse<ApiClass>;
     if (!res.ok) {
       const msg =
         typeof payload === "object" && !Array.isArray(payload)
           ? payload.message
           : "Gagal mengambil class schedule";
       setError(msg || "Gagal mengambil class schedule");
+      setClasses([]);
+      setTotalItems(0);
+      setTotalPages(1);
       setLoading(false);
       return;
     }
-    setClasses(Array.isArray(payload) ? payload : []);
+    if (Array.isArray(payload)) {
+      setClasses(payload);
+      setTotalItems(payload.length);
+      setTotalPages(1);
+    } else {
+      const list = payload.items || payload.data || [];
+      const computedTotalItems =
+        payload.totalCount ?? payload.totalItems ?? payload.total ?? list.length;
+      const computedTotalPages =
+        payload.totalPages ??
+        payload.pageCount ??
+        Math.max(1, Math.ceil(computedTotalItems / (payload.pageSize ?? pageSize)));
+      setClasses(list);
+      setTotalItems(computedTotalItems);
+      setTotalPages(computedTotalPages);
+    }
     setLoading(false);
-  }, []);
+  }, [pageSize]);
 
   const loadCoaches = useCallback(async () => {
-    const res = await fetch("/api/coaches", { cache: "no-store" });
-    const payload = (await res.json().catch(() => [])) as ApiCoach[];
-    if (!res.ok || !Array.isArray(payload)) {
+    const res = await fetch("/api/coaches?page=1&pageSize=100", { cache: "no-store" });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
+    const payload = (await res.json().catch(() => [])) as
+      | ApiCoach[]
+      | { data?: ApiCoach[]; items?: ApiCoach[] };
+    const list = Array.isArray(payload)
+      ? payload
+      : payload.data || payload.items || [];
+    if (!res.ok || !Array.isArray(list)) {
       setTrainers([]);
       return;
     }
     setTrainers(
-      payload.map((c) => ({
+      list.map((c) => ({
         id: c.id,
         name: c.fullName || c.name || c.id,
       }))
@@ -74,13 +135,12 @@ export function ClassesView() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadClasses();
+    void loadClasses(page);
     void loadCoaches();
-  }, [loadClasses, loadCoaches]);
+  }, [loadClasses, loadCoaches, page]);
 
   const mappedRows = useMemo(() => {
-    return classes.map((c) => {
+    const rows = classes.map((c) => {
       const enrolled =
         c.bookedCount ?? Math.max(0, c.capacity - (c.remainingSlots ?? c.capacity));
       const time = c.startTime?.slice(0, 5) || "-";
@@ -88,7 +148,17 @@ export function ClassesView() {
       const location = c.branchName || "-";
       return { ...c, enrolled, time, trainer, location };
     });
-  }, [classes]);
+    if (!sortKey) return rows;
+    return [...rows].sort((a, b) => {
+      const av = (a as Record<string, unknown>)[sortKey] ?? "";
+      const bv = (b as Record<string, unknown>)[sortKey] ?? "";
+      const cmp =
+        typeof av === "number" && typeof bv === "number"
+          ? av - bv
+          : String(av).localeCompare(String(bv));
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [classes, sortKey, sortDir]);
 
   async function createClass(values: ClassFormValues) {
     const res = await fetch("/api/classes", {
@@ -96,11 +166,12 @@ export function ClassesView() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
     });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => ({}))) as { message?: string };
     if (!res.ok) {
       throw new Error(payload.message || "Create class gagal");
     }
-    await loadClasses();
+    await loadClasses(page);
   }
 
   async function updateClass(values: ClassFormValues) {
@@ -118,23 +189,25 @@ export function ClassesView() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => ({}))) as { message?: string };
     if (!res.ok) {
       throw new Error(payload.message || "Update class gagal");
     }
-    await loadClasses();
+    await loadClasses(page);
   }
 
   async function deleteClass(id: string) {
     const yes = window.confirm("Delete this class schedule?");
     if (!yes) return;
     const res = await fetch(`/api/classes/${id}`, { method: "DELETE" });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => ({}))) as { message?: string };
     if (!res.ok) {
       window.alert(payload.message || "Delete class gagal");
       return;
     }
-    await loadClasses();
+    await loadClasses(page);
   }
 
   return (
@@ -165,11 +238,35 @@ export function ClassesView() {
         <table className="w-full min-w-[760px] text-left text-sm text-gray-400">
           <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
             <tr>
-              <th className="px-6 py-4">Time</th>
-              <th className="px-6 py-4">Class Name</th>
-              <th className="px-6 py-4">Trainer</th>
-              <th className="px-6 py-4">Location</th>
-              <th className="px-6 py-4">Capacity</th>
+              {(
+                [
+                  { label: "Time", key: "time" },
+                  { label: "Class Name", key: "className" },
+                  { label: "Trainer", key: "trainer" },
+                  { label: "Location", key: "location" },
+                  { label: "Capacity", key: "enrolled" },
+                ] as { label: string; key: string }[]
+              ).map(({ label, key }) => (
+                <th key={key} className="px-6 py-4">
+                  <button
+                    type="button"
+                    onClick={() => toggleSort(key)}
+                    className="flex items-center gap-1.5 hover:text-white transition group"
+                  >
+                    {label}
+                    <span className="flex flex-col leading-none text-[10px]">
+                      <i
+                        className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`}
+                        aria-hidden
+                      />
+                      <i
+                        className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`}
+                        aria-hidden
+                      />
+                    </span>
+                  </button>
+                </th>
+              ))}
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -247,6 +344,29 @@ export function ClassesView() {
             }))}
           </tbody>
         </table>
+        </div>
+      </div>
+      <div className="px-4 sm:px-6 py-4 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <p className="text-xs text-gray-400">
+          Page {page} of {Math.max(1, totalPages)} • {totalItems} data
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={page <= 1 || loading}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <button
+            type="button"
+            disabled={page >= totalPages || loading}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       </div>
 

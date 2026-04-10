@@ -9,28 +9,23 @@ export async function GET(req: Request) {
   }
 
   const url = new URL(req.url);
-  const page = url.searchParams.get("page") ?? "1";
-  const pageSize = url.searchParams.get("pageSize") ?? "10";
-  const search = url.searchParams.get("search") ?? "";
-  const isActive = url.searchParams.get("isActive") ?? "";
+  const keyword = url.searchParams.get("keyword") ?? "";
 
-  const backendUrl = new URL(`${API_BASE_URL}/api/v1/coaches/paged`);
-  backendUrl.searchParams.set("page", page);
-  backendUrl.searchParams.set("pageSize", pageSize);
-  if (search) backendUrl.searchParams.set("search", search);
-  if (isActive) backendUrl.searchParams.set("isActive", isActive);
+  const backendUrl = new URL(`${API_BASE_URL}/api/v1/members/search`);
+  if (keyword) backendUrl.searchParams.set("keyword", keyword);
 
   const res = await fetch(backendUrl.toString(), {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
-
   const data = await res.json().catch(() => []);
+
   if (!res.ok) {
     return NextResponse.json(
-      { message: "Failed to fetch coaches" },
+      { message: "Failed to search members" },
       { status: res.status }
     );
   }
+
   return NextResponse.json(data);
 }

@@ -11,24 +11,24 @@ export async function GET(req: Request) {
   if (!token) return unauthorized();
 
   const url = new URL(req.url);
-  const keyword = url.searchParams.get("keyword") ?? "";
+  const page = url.searchParams.get("page") ?? url.searchParams.get("pageNumber") ?? "1";
+  const pageSize = url.searchParams.get("pageSize") ?? "10";
+  const search = url.searchParams.get("search") ?? url.searchParams.get("keyword") ?? "";
+  const isActiveQuery = url.searchParams.get("isActive");
   const membershipStatus = url.searchParams.get("membershipStatus") ?? "";
-  const paymentStatus = url.searchParams.get("paymentStatus") ?? "";
-  const membershipType = url.searchParams.get("membershipType") ?? "";
-  const homeClub = url.searchParams.get("homeClub") ?? "";
-  const pageNumber = url.searchParams.get("pageNumber") ?? "1";
-  const pageSize = url.searchParams.get("pageSize") ?? "50";
+  const isActive =
+    isActiveQuery ??
+    (membershipStatus.toLowerCase() === "active"
+      ? "true"
+      : membershipStatus
+        ? "false"
+        : "");
 
-  const backendUrl = new URL(`${API_BASE_URL}/api/v1/members/filter`);
-  if (keyword) backendUrl.searchParams.set("Keyword", keyword);
-  if (membershipStatus) {
-    backendUrl.searchParams.set("MembershipStatus", membershipStatus);
-  }
-  if (paymentStatus) backendUrl.searchParams.set("PaymentStatus", paymentStatus);
-  if (membershipType) backendUrl.searchParams.set("MembershipType", membershipType);
-  if (homeClub) backendUrl.searchParams.set("HomeClub", homeClub);
-  backendUrl.searchParams.set("PageNumber", pageNumber);
-  backendUrl.searchParams.set("PageSize", pageSize);
+  const backendUrl = new URL(`${API_BASE_URL}/api/v1/members/paged`);
+  backendUrl.searchParams.set("page", page);
+  backendUrl.searchParams.set("pageSize", pageSize);
+  if (search) backendUrl.searchParams.set("search", search);
+  if (isActive) backendUrl.searchParams.set("isActive", isActive);
 
   const res = await fetch(backendUrl.toString(), {
     headers: { Authorization: `Bearer ${token}` },
