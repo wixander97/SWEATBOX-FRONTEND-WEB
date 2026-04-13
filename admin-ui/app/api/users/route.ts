@@ -15,23 +15,22 @@ export async function GET(req: Request) {
   const pageSize = url.searchParams.get("pageSize") ?? "10";
   const search = url.searchParams.get("search") ?? "";
   const isActive = url.searchParams.get("isActive") ?? "";
-  const branchName = url.searchParams.get("branchName") ?? "";
+  const roleId = url.searchParams.get("roleId") ?? "";
 
-  const backendUrl = new URL(`${API_BASE_URL}/api/v1/coaches/paged`);
+  const backendUrl = new URL(`${API_BASE_URL}/api/v1/users/paged`);
   backendUrl.searchParams.set("page", page);
   backendUrl.searchParams.set("pageSize", pageSize);
   if (search) backendUrl.searchParams.set("search", search);
   if (isActive) backendUrl.searchParams.set("isActive", isActive);
-  if (branchName) backendUrl.searchParams.set("branchName", branchName);
+  if (roleId) backendUrl.searchParams.set("roleId", roleId);
 
   const res = await fetch(backendUrl.toString(), {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
-
   const data = await res.json().catch(() => []);
   if (!res.ok) {
-    return NextResponse.json({ message: "Failed to fetch coaches" }, { status: res.status });
+    return NextResponse.json({ message: "Failed to fetch users" }, { status: res.status });
   }
   return NextResponse.json(data);
 }
@@ -41,14 +40,14 @@ export async function POST(req: Request) {
   if (!token) return unauthorized();
 
   const body = await req.json();
-  const res = await fetch(`${API_BASE_URL}/api/v1/coaches`, {
+  const res = await fetch(`${API_BASE_URL}/api/v1/users`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    return NextResponse.json({ message: data?.message ?? "Failed to create coach" }, { status: res.status });
+    return NextResponse.json({ message: data?.message ?? "Failed to create user" }, { status: res.status });
   }
   return NextResponse.json(data);
 }

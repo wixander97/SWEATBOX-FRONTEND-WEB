@@ -3,8 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { adminPaths } from "@/lib/admin-routes";
 import { useRole } from "@/contexts/role-context";
+
+type ProfileData = {
+  fullName?: string | null;
+  email?: string | null;
+  roleName?: string | null;
+  role?: string | null;
+  profileImageUrl?: string | null;
+};
 
 const mainNav: { href: string; label: string; icon: string; id: string }[] = [
   { href: adminPaths.dashboard, label: "Dashboard", icon: "fa-chart-pie", id: "dashboard" },
@@ -15,8 +24,10 @@ const mainNav: { href: string; label: string; icon: string; id: string }[] = [
 ];
 
 const dataNav: { href: string; label: string; icon: string; id: string }[] = [
+  { href: adminPaths.payments, label: "Payments", icon: "fa-credit-card", id: "payments" },
   { href: adminPaths.workout, label: "Workout Master", icon: "fa-running", id: "workout" },
   { href: adminPaths.payroll, label: "Coaches Payroll", icon: "fa-file-invoice-dollar", id: "payroll" },
+  { href: adminPaths.users, label: "User Management", icon: "fa-user-shield", id: "users" },
 ];
 
 function navButtonClasses(active: boolean) {
@@ -36,6 +47,19 @@ type Props = {
 export function AdminSidebar({ open = false, onClose }: Props) {
   const pathname = usePathname();
   const { displayName, displayRole } = useRole();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/profile", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: ProfileData | null) => { if (data) setProfile(data); })
+      .catch(() => null);
+  }, []);
+
+  const name = profile?.fullName ?? displayName;
+  const role = profile?.roleName ?? profile?.role ?? displayRole;
+  const avatarUrl = profile?.profileImageUrl
+    || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -114,7 +138,7 @@ export function AdminSidebar({ open = false, onClose }: Props) {
         <div className="p-4 border-t border-border mt-auto">
           <div className="flex items-center gap-3 px-4 py-2">
             <Image
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`}
+              src={avatarUrl}
               alt=""
               width={32}
               height={32}
@@ -123,10 +147,10 @@ export function AdminSidebar({ open = false, onClose }: Props) {
             />
             <div>
               <p className="text-sm font-bold text-white" id="logged-in-name">
-                {displayName}
+                {name}
               </p>
               <p className="text-xs text-gray-500" id="logged-in-role">
-                {displayRole}
+                {role}
               </p>
             </div>
           </div>

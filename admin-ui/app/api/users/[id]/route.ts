@@ -14,13 +14,13 @@ export async function GET(
   if (!token) return unauthorized();
   const { id } = await ctx.params;
 
-  const res = await fetch(`${API_BASE_URL}/api/v1/members/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/api/v1/users/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    return NextResponse.json({ message: data?.message ?? "Failed to fetch member" }, { status: res.status });
+    return NextResponse.json({ message: data?.message ?? "Failed to fetch user" }, { status: res.status });
   }
   return NextResponse.json(data);
 }
@@ -34,20 +34,14 @@ export async function PUT(
   const { id } = await ctx.params;
   const body = await req.json();
 
-  const res = await fetch(`${API_BASE_URL}/api/v1/members/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/api/v1/users/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    return NextResponse.json(
-      { message: data?.message ?? "Failed to update member" },
-      { status: res.status }
-    );
+    return NextResponse.json({ message: data?.message ?? "Failed to update user" }, { status: res.status });
   }
   return NextResponse.json(data);
 }
@@ -60,15 +54,12 @@ export async function DELETE(
   if (!token) return unauthorized();
   const { id } = await ctx.params;
 
-  const res = await fetch(`${API_BASE_URL}/api/v1/members/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/api/v1/users/${id}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
-    return NextResponse.json(
-      { message: "Failed to delete member" },
-      { status: res.status }
-    );
+    return NextResponse.json({ message: "Failed to delete user" }, { status: res.status });
   }
   return NextResponse.json({ ok: true });
 }
