@@ -124,6 +124,70 @@ export default function ReportsPage() {
 
   const presentCount = attendances.filter((a) => a.clockIn).length;
 
+  function exportAttendanceCsv(rows: StaffAttendance[], filename: string) {
+    const header = [
+      "Date",
+      "Staff Name",
+      "Role",
+      "Location",
+      "Clock In",
+      "Clock Out",
+      "Status",
+      "Notes",
+      "Latitude",
+      "Longitude",
+    ];
+    const dataRows = rows.map((s) => [
+      formatDate(s.date ?? s.clockIn),
+      s.staffName || "",
+      s.role || "",
+      s.branchName || "",
+      formatTime(s.clockIn),
+      formatTime(s.clockOut),
+      s.status || "",
+      s.notes || "",
+      s.latitude != null ? String(s.latitude) : "",
+      s.longitude != null ? String(s.longitude) : "",
+    ]);
+    const csv = [header, ...dataRows]
+      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function exportAllReport() {
+    const res = await fetch("/api/staff-attendances", { cache: "no-store" });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
+    const data = await res.json().catch(() => []);
+    if (!res.ok) return;
+    const list: StaffAttendance[] = Array.isArray(data)
+      ? data
+      : (data.items ?? data.data ?? []);
+    exportAttendanceCsv(list, "staff-attendance-all.csv");
+  }
+
+  async function exportCurrentStaffReport() {
+    if (!selectedStaffId) return;
+    const res = await fetch(`/api/staff-attendances/${selectedStaffId}`, { cache: "no-store" });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
+    const data = await res.json().catch(() => []);
+    if (!res.ok) return;
+    const list: StaffAttendance[] = Array.isArray(data)
+      ? data
+      : (data.items ?? data.data ?? []);
+    const staff = staffList.find((s) => s.id === selectedStaffId);
+    const namePart = (staff?.fullName ?? staff?.name ?? selectedStaffId)
+      .replace(/\s+/g, "-")
+      .replace(/[^a-zA-Z0-9-_]/g, "");
+    exportAttendanceCsv(list, `staff-attendance-${namePart || "staff"}.csv`);
+  }
+
   return (
     <>
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -143,7 +207,7 @@ export default function ReportsPage() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
             <select
               value={selectedStaffId}
               onChange={(e) => setSelectedStaffId(e.target.value)}
@@ -156,6 +220,7 @@ export default function ReportsPage() {
                 </option>
               ))}
             </select>
+            <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => void loadAttendances(selectedStaffId)}
@@ -164,6 +229,25 @@ export default function ReportsPage() {
               <i className="fas fa-sync-alt mr-2" aria-hidden />
               Refresh
             </button>
+            <button
+              type="button"
+              onClick={() => void exportAllReport()}
+              disabled={loading}
+              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 disabled:opacity-50"
+            >
+              <i className="fas fa-file-export mr-2" aria-hidden />
+              Export report (all)
+            </button>
+            <button
+              type="button"
+              onClick={() => void exportCurrentStaffReport()}
+              disabled={loading || !selectedStaffId}
+              className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
+            >
+              <i className="fas fa-user-clock mr-2" aria-hidden />
+              Export per staff
+            </button>
+            </div>
           </div>
         </div>
 

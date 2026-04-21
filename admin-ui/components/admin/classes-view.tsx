@@ -44,6 +44,18 @@ type PagedResponse<T> = {
   message?: string;
 };
 
+/** PIK vs Puri (and other branches) — quick visual scan in the schedule table. */
+function branchBadgeClass(branchName: string | null | undefined) {
+  const n = (branchName ?? "").toLowerCase();
+  if (n.includes("pik")) {
+    return "bg-sky-500/15 text-sky-200 border border-sky-500/35";
+  }
+  if (n.includes("puri")) {
+    return "bg-amber-500/15 text-amber-100 border border-amber-500/35";
+  }
+  return "bg-gray-800 text-gray-300 border border-border";
+}
+
 export function ClassesView() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -214,7 +226,8 @@ export function ClassesView() {
     <>
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         <div className="p-4 sm:p-6 border-b border-border flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <input
               type="date"
               className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
@@ -224,6 +237,22 @@ export function ClassesView() {
               <option>Puri Indah</option>
               <option>PIK Avenue</option>
             </select>
+            </div>
+            <p className="text-[11px] text-gray-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="font-bold uppercase tracking-wide text-gray-400">Lokasi</span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-sky-400" aria-hidden />
+                PIK
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-400" aria-hidden />
+                Puri
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-gray-500" aria-hidden />
+                Lainnya
+              </span>
+            </p>
           </div>
           <button
             type="button"
@@ -303,7 +332,9 @@ export function ClassesView() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="bg-gray-800 px-2 py-1 rounded text-xs text-gray-300">
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${branchBadgeClass(c.branchName)}`}
+                    >
                       {c.location}
                     </span>
                   </td>
