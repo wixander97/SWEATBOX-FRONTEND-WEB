@@ -54,6 +54,30 @@ type EditForm = {
   isActive: boolean;
 };
 
+type AddForm = {
+  userId: string;
+  specialization: string;
+  bio: string;
+  profileImageUrl: string;
+  branchName: string;
+  rating: string;
+  attendanceRate: string;
+  totalClasses: string;
+  totalMembers: string;
+  totalPtSessions: string;
+  payrollType: string;
+  payrollRate: string;
+  certification: string;
+  emergencyContact: string;
+  isActive: boolean;
+};
+
+type UserOption = {
+  id: string;
+  fullName?: string | null;
+  email?: string | null;
+};
+
 export function CoachesView() {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [page, setPage] = useState(1);
@@ -74,10 +98,95 @@ export function CoachesView() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState("");
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const defaultAddForm: AddForm = {
+    userId: "",
+    specialization: "",
+    bio: "",
+    profileImageUrl: "",
+    branchName: "",
+    rating: "0",
+    attendanceRate: "0",
+    totalClasses: "0",
+    totalMembers: "0",
+    totalPtSessions: "0",
+    payrollType: "",
+    payrollRate: "0",
+    certification: "",
+    emergencyContact: "",
+    isActive: true,
+  };
+  const [addForm, setAddForm] = useState<AddForm>(defaultAddForm);
 
   function toggleSort(key: CoachSortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
+  }
+
+  async function loadUsers() {
+    setUsersLoading(true);
+    const params = new URLSearchParams({ page: "1", pageSize: "100" });
+    const res = await fetch(`/api/users?${params.toString()}`, { cache: "no-store" });
+    if (redirectToLoginIfUnauthorized(res.status)) { setUsersLoading(false); return; }
+    const payload = (await res.json().catch(() => ({}))) as { data?: UserOption[]; items?: UserOption[]; message?: string };
+    const list = payload.data ?? payload.items ?? [];
+    setUsers(list);
+    setUsersLoading(false);
+  }
+
+  function openAddModal() {
+    setAddForm(defaultAddForm);
+    setAddError("");
+    setAddModalOpen(true);
+    void loadUsers();
+  }
+
+  async function handleAddCoach() {
+    if (!addForm.userId) {
+      setAddError("Please select a user.");
+      return;
+    }
+    if (!addForm.specialization.trim()) {
+      setAddError("Specialization is required.");
+      return;
+    }
+    setAddLoading(true);
+    setAddError("");
+    const body = {
+      userId: addForm.userId,
+      specialization: addForm.specialization,
+      bio: addForm.bio || undefined,
+      profileImageUrl: addForm.profileImageUrl || undefined,
+      branchName: addForm.branchName || undefined,
+      rating: Number(addForm.rating) || 0,
+      attendanceRate: Number(addForm.attendanceRate) || 0,
+      totalClasses: Number(addForm.totalClasses) || 0,
+      totalMembers: Number(addForm.totalMembers) || 0,
+      totalPtSessions: Number(addForm.totalPtSessions) || 0,
+      payrollType: addForm.payrollType || undefined,
+      payrollRate: Number(addForm.payrollRate) || 0,
+      certification: addForm.certification || undefined,
+      emergencyContact: addForm.emergencyContact || undefined,
+      isActive: addForm.isActive,
+    };
+    const res = await fetch("/api/coaches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({})) as { message?: string };
+    setAddLoading(false);
+    if (!res.ok) {
+      setAddError(data.message ?? "Failed to create coach");
+      return;
+    }
+    setAddModalOpen(false);
+    setAddForm(defaultAddForm);
+    void loadCoaches(page);
   }
 
   const loadCoaches = useCallback(async (targetPage: number) => {
@@ -217,7 +326,14 @@ export function CoachesView() {
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-xs text-gray-500 uppercase font-bold mr-1">Sort by:</span>
+            <button
+              type="button"
+              onClick={() => openAddModal()}
+              className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-sweat/80 transition"
+            >
+              <i className="fas fa-plus mr-2" aria-hidden /> Add New Coach
+            </button>
+            <span className="text-xs text-gray-500 uppercase font-bold mr-1 ml-2">Sort by:</span>
             {(
               [
                 { label: "Name", key: "fullName" },
@@ -340,6 +456,115 @@ export function CoachesView() {
             </div>
           </div>
         </>
+      )}
+
+      {addModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.currentTarget === e.target) { setAddModalOpen(false); setAddError(""); }
+          }}
+        >
+          <div className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold font-display uppercase">Add New Coach</h3>
+              <button
+                type="button"
+                onClick={() => { setAddModalOpen(false); setAddError(""); }}
+                className="text-gray-400 hover:text-white text-xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">User <span className="text-red-400">*</span></label>
+                <select
+                  value={addForm.userId}
+                  onChange={(e) => setAddForm((f) => ({ ...f, userId: e.target.value }))}
+                  disabled={usersLoading}
+                  className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat disabled:opacity-50"
+                >
+                  <option value="">{usersLoading ? "Loading users..." : "Select a user"}</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.fullName ?? "—"}{u.email ? ` (${u.email})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {([
+                ["Specialization", "specialization", true],
+                ["Bio", "bio", false],
+                ["Profile Image URL", "profileImageUrl", false],
+                ["Branch Name", "branchName", false],
+                ["Payroll Type", "payrollType", false],
+                ["Payroll Rate", "payrollRate", false],
+                ["Certification", "certification", false],
+                ["Emergency Contact", "emergencyContact", false],
+              ] as [string, keyof AddForm, boolean][]).map(([label, field]) => (
+                <div key={field}>
+                  <label className="block text-xs text-gray-400 mb-1">
+                    {label}{field !== "profileImageUrl" && field !== "branchName" && field !== "payrollType" && field !== "payrollRate" && field !== "certification" && field !== "emergencyContact" && field !== "bio" ? <span className="text-red-400">*</span> : null}
+                  </label>
+                  <input
+                    type={field === "payrollRate" ? "number" : "text"}
+                    value={String(addForm[field])}
+                    onChange={(e) => setAddForm((f) => ({ ...f, [field]: e.target.value }))}
+                    className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
+                  />
+                </div>
+              ))}
+              <div className="grid grid-cols-2 gap-3">
+                {([
+                  ["Rating", "rating"],
+                  ["Attendance Rate", "attendanceRate"],
+                  ["Total Classes", "totalClasses"],
+                  ["Total Members", "totalMembers"],
+                  ["Total PT Sessions", "totalPtSessions"],
+                ] as [string, keyof AddForm][]).map(([label, field]) => (
+                  <div key={field}>
+                    <label className="block text-xs text-gray-400 mb-1">{label}</label>
+                    <input
+                      type="number"
+                      value={String(addForm[field])}
+                      onChange={(e) => setAddForm((f) => ({ ...f, [field]: e.target.value }))}
+                      className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="addIsActive"
+                  checked={addForm.isActive}
+                  onChange={(e) => setAddForm((f) => ({ ...f, isActive: e.target.checked }))}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="addIsActive" className="text-sm text-gray-300">Active</label>
+              </div>
+              {addError && <p className="text-red-400 text-xs">{addError}</p>}
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => void handleAddCoach()}
+                  disabled={addLoading}
+                  className="flex-1 bg-sweat text-black py-2 rounded-lg text-sm font-bold disabled:opacity-50"
+                >
+                  {addLoading ? "Creating..." : "Create Coach"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAddModalOpen(false); setAddError(""); }}
+                  className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {(detailLoading || detailError || selected) && (
