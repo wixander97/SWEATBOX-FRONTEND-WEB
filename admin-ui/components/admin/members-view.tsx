@@ -18,7 +18,8 @@ type ApiMember = {
   dateOfBirth?: string | null;
   emergencyContactName?: string | null;
   emergencyContactPhone?: string | null;
-  membershipType?: string | null;
+  membershipPlanId?: string | null;
+  membershipPlanName?: string | null;
   membershipStatus?: string | null;
   paymentStatus?: string | null;
   remainingCredits?: number;
@@ -27,7 +28,8 @@ type ApiMember = {
   expiryDate?: string | null;
   freezeStartDate?: string | null;
   freezeEndDate?: string | null;
-  homeClub?: string | null;
+  homeClubBranchId?: string | null;
+  homeClubBranchName?: string | null;
   membershipSource?: string | null;
   address?: string | null;
   city?: string | null;
@@ -37,16 +39,29 @@ type ApiMember = {
   notes?: string | null;
   isWaiverSigned?: boolean;
   isPtMember?: boolean;
+  isExpired?: boolean;
   isActive?: boolean;
 };
 
+type Branch = {
+  id: string;
+  branchName: string;
+  isActive: boolean;
+};
+
+type MembershipPlan = {
+  id: string;
+  planName: string;
+  description?: string | null;
+  price?: number;
+  credits: number;
+  validityDays: number;
+  isActive: boolean;
+};
+
 type MemberFormState = {
-  // Account
-  memberCode: string;
-  password: string;
   // Basic Info
   fullName: string;
-  email: string;
   phoneNumber: string;
   // Personal
   gender: string;
@@ -59,33 +74,23 @@ type MemberFormState = {
   emergencyContactName: string;
   emergencyContactPhone: string;
   // Membership
-  membershipType: string;
-  membershipStatus: string;
-  paymentStatus: string;
   membershipSource: string;
   remainingCredits: string;
   remainingPtSessions: string;
-  joinDate: string;
   expiryDate: string;
-  freezeStartDate: string;
-  freezeEndDate: string;
   homeClub: string;
+  membershipPlanId: string;
+  membershipStatus: string;
   // Account Status
   profileImageUrl: string;
   notes: string;
   isWaiverSigned: boolean;
   isPtMember: boolean;
-  isActive: boolean;
 };
 
 function emptyMemberForm(): MemberFormState {
   return {
-    // Account
-    memberCode: "",
-    password: "",
-    // Basic Info
     fullName: "",
-    email: "",
     phoneNumber: "",
     // Personal
     gender: "",
@@ -98,23 +103,18 @@ function emptyMemberForm(): MemberFormState {
     emergencyContactName: "",
     emergencyContactPhone: "",
     // Membership
-    membershipType: "",
-    membershipStatus: "Active",
-    paymentStatus: "",
     membershipSource: "",
     remainingCredits: "0",
     remainingPtSessions: "0",
-    joinDate: "",
     expiryDate: "",
-    freezeStartDate: "",
-    freezeEndDate: "",
     homeClub: "",
+    membershipPlanId: "",
+    membershipStatus: "",
     // Account Status
     profileImageUrl: "",
     notes: "",
     isWaiverSigned: false,
     isPtMember: false,
-    isActive: true,
   };
 }
 
@@ -127,12 +127,7 @@ function parseDate(isoString: string | null | undefined): string {
 
 function memberToForm(m: ApiMember): MemberFormState {
   return {
-    // Account
-    memberCode: m.memberCode ?? "",
-    password: "",
-    // Basic Info
     fullName: m.fullName ?? "",
-    email: m.email ?? "",
     phoneNumber: m.phoneNumber ?? "",
     // Personal
     gender: m.gender ?? "",
@@ -145,23 +140,18 @@ function memberToForm(m: ApiMember): MemberFormState {
     emergencyContactName: m.emergencyContactName ?? "",
     emergencyContactPhone: m.emergencyContactPhone ?? "",
     // Membership
-    membershipType: m.membershipType ?? "",
-    membershipStatus: m.membershipStatus ?? "",
-    paymentStatus: m.paymentStatus ?? "",
     membershipSource: m.membershipSource ?? "",
     remainingCredits: String(m.remainingCredits ?? 0),
     remainingPtSessions: String(m.remainingPtSessions ?? 0),
-    joinDate: parseDate(m.joinDate),
     expiryDate: parseDate(m.expiryDate),
-    freezeStartDate: parseDate(m.freezeStartDate),
-    freezeEndDate: parseDate(m.freezeEndDate),
-    homeClub: m.homeClub ?? "",
+    homeClub: m.homeClubBranchName ?? "",
+    membershipPlanId: m.membershipPlanId ?? "",
+    membershipStatus: m.membershipStatus ?? "",
     // Account Status
     profileImageUrl: m.profileImageUrl ?? "",
     notes: m.notes ?? "",
     isWaiverSigned: m.isWaiverSigned ?? false,
     isPtMember: m.isPtMember ?? false,
-    isActive: m.isActive ?? true,
   };
 }
 
@@ -233,8 +223,45 @@ export function MembersView() {
   const [memberForm, setMemberForm] = useState<MemberFormState>(emptyMemberForm);
   const [memberSaving, setMemberSaving] = useState(false);
   const [memberModalError, setMemberModalError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [branchesLoading, setBranchesLoading] = useState(true);
+  const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([]);
+  const [membershipPlansLoading, setMembershipPlansLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadBranches() {
+      try {
+        const res = await fetch("/api/v1/branches");
+        if (res.ok) {
+          const data = (await res.json()) as Branch[];
+          setBranches(data.filter((b) => b.isActive));
+        }
+      } catch {
+        // silently fail, branches will be empty
+      } finally {
+        setBranchesLoading(false);
+      }
+    }
+    void loadBranches();
+  }, []);
+
+  useEffect(() => {
+    async function loadMembershipPlans() {
+      try {
+        const res = await fetch("/api/v1/membership-plans");
+        if (res.ok) {
+          const data = (await res.json()) as MembershipPlan[];
+          setMembershipPlans(data.filter((p) => p.isActive));
+        }
+      } catch {
+        // silently fail, plans will be empty
+      } finally {
+        setMembershipPlansLoading(false);
+      }
+    }
+    void loadMembershipPlans();
+  }, []);
 
   const loadMembers = useCallback(
     async (q: string, tab: FilterTab, targetPage: number) => {
@@ -295,7 +322,7 @@ export function MembersView() {
     void loadMembers(keyword, memberFilterTab, page);
   }, [loadMembers, keyword, memberFilterTab, page]);
 
-  // Magic search – debounced fetch from /api/v1/members/search
+  // Magic search - debounced fetch from /api/v1/members/search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
@@ -393,6 +420,22 @@ export function MembersView() {
     return Number.isNaN(n) ? 0 : n;
   }
 
+  function calculateExpiryDate(validityDays: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() + validityDays);
+    return date.toISOString().slice(0, 10);
+  }
+
+  function handleMembershipPlanChange(planId: string) {
+    const plan = membershipPlans.find((p) => p.id === planId);
+    setMemberForm((f) => ({
+      ...f,
+      membershipPlanId: planId,
+      remainingCredits: plan ? String(plan.credits) : f.remainingCredits,
+      expiryDate: plan ? calculateExpiryDate(plan.validityDays) : f.expiryDate,
+    }));
+  }
+
   function generateMemberCode(): string {
     const timestamp = Date.now().toString(36).toUpperCase();
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -412,28 +455,21 @@ export function MembersView() {
 
       if (memberModal.mode === "create") {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { memberCode: _, password, ...formData } = memberForm;
+        const { ...formData } = memberForm;
         const body: Record<string, unknown> = {
           // memberCode: generateMemberCode(), // TEMP: commented out, not required
-          password: password || null,
           fullName: formData.fullName || null,
-          email: formData.email || null,
           phoneNumber: formData.phoneNumber || null,
           gender: formData.gender || null,
           dateOfBirth: dateToIso(formData.dateOfBirth),
           emergencyContactName: formData.emergencyContactName || null,
           emergencyContactPhone: formData.emergencyContactPhone || null,
-          membershipType: formData.membershipType || null,
-          membershipStatus: formData.membershipStatus || null,
-          paymentStatus: formData.paymentStatus || null,
           membershipSource: formData.membershipSource || null,
           remainingCredits: parseIntSafe(formData.remainingCredits),
           remainingPtSessions: parseIntSafe(formData.remainingPtSessions),
-          joinDate: dateToIso(formData.joinDate) || new Date().toISOString(),
           expiryDate: dateToIso(formData.expiryDate),
-          freezeStartDate: dateToIso(formData.freezeStartDate),
-          freezeEndDate: dateToIso(formData.freezeEndDate),
-          homeClub: formData.homeClub || null,
+          homeClubBranchId: formData.homeClub || null,
+          membershipPlanId: formData.membershipPlanId || null,
           address: formData.address || null,
           city: formData.city || null,
           heightCm: parseIntSafe(formData.heightCm),
@@ -442,7 +478,6 @@ export function MembersView() {
           notes: formData.notes || null,
           isWaiverSigned: formData.isWaiverSigned,
           isPtMember: formData.isPtMember,
-          isActive: formData.isActive,
         };
         console.log("[DEBUG] POST body:", JSON.stringify(body, null, 2));
         const res = await fetch("/api/members", {
@@ -473,22 +508,15 @@ export function MembersView() {
       // Edit mode
       const body: Record<string, unknown> = {
         fullName: memberForm.fullName || null,
-        email: memberForm.email || null,
         phoneNumber: memberForm.phoneNumber || null,
         gender: memberForm.gender || null,
         dateOfBirth: dateToIso(memberForm.dateOfBirth),
         emergencyContactName: memberForm.emergencyContactName || null,
         emergencyContactPhone: memberForm.emergencyContactPhone || null,
-        membershipType: memberForm.membershipType || null,
-        membershipStatus: memberForm.membershipStatus || null,
-        paymentStatus: memberForm.paymentStatus || null,
         membershipSource: memberForm.membershipSource || null,
         remainingCredits: credits,
         remainingPtSessions: ptSessions,
-        joinDate: dateToIso(memberForm.joinDate),
         expiryDate: dateToIso(memberForm.expiryDate),
-        freezeStartDate: dateToIso(memberForm.freezeStartDate),
-        freezeEndDate: dateToIso(memberForm.freezeEndDate),
         homeClub: memberForm.homeClub || null,
         address: memberForm.address || null,
         city: memberForm.city || null,
@@ -498,7 +526,6 @@ export function MembersView() {
         notes: memberForm.notes || null,
         isWaiverSigned: memberForm.isWaiverSigned,
         isPtMember: memberForm.isPtMember,
-        isActive: memberForm.isActive,
       };
       const res = await fetch(`/api/members/${memberModal.id}`, {
         method: "PUT",
@@ -531,8 +558,8 @@ export function MembersView() {
     const rows = displayMembers.map((m) => [
       m.memberCode || m.id,
       m.fullName || "-",
-      m.membershipType || "-",
-      m.homeClub || "-",
+      m.membershipPlanName || "-",
+      m.homeClubBranchName || "-",
       String(m.remainingCredits ?? 0),
       m.membershipStatus || "-",
       m.paymentStatus || "-",
@@ -586,7 +613,6 @@ export function MembersView() {
             type="button"
             onClick={() => {
               setMemberModalError("");
-              setShowPassword(false);
               setImagePreview(null);
               setMemberForm(emptyMemberForm());
               setMemberModal({ mode: "create" });
@@ -657,15 +683,11 @@ export function MembersView() {
                         <span className="block text-white text-sm font-medium truncate">
                           {m.fullName || "-"}
                         </span>
-                        <span className="block text-gray-500 text-xs truncate">
+                        {/* <span className="block text-gray-500 text-xs truncate">
                           {m.memberCode || m.id} · {m.membershipType || "-"}
-                        </span>
+                        </span> */}
                       </span>
-                      {m.membershipStatus && (
-                        <span className={`ml-auto shrink-0 px-2 py-0.5 rounded text-xs font-bold ${statusStyle(m.membershipStatus)}`}>
-                          {m.membershipStatus}
-                        </span>
-                      )}
+
                     </button>
                   </li>
                 ))}
@@ -691,8 +713,7 @@ export function MembersView() {
                 [
                   { label: "ID", key: "memberCode" },
                   { label: "Member Name", key: "fullName" },
-                  { label: "Current Plan", key: "membershipType" },
-                  { label: "Home Club", key: "homeClub" },
+                  { label: "Home Club", key: "homeClubBranchName" },
                   { label: "Credits", key: "remainingCredits" },
                   { label: "Status", key: "membershipStatus" },
                   { label: "Payment", key: "paymentStatus" },
@@ -767,30 +788,16 @@ export function MembersView() {
                       {m.fullName || "-"}
                     </span>
                   </td>
-                  <td className="px-6 py-4">{m.membershipType || "-"}</td>
-                  <td className="px-6 py-4">{m.homeClub || "-"}</td>
+                  <td className="px-6 py-4">{m.homeClubBranchName || "—"}</td>
+                  <td className="px-6 py-4">{String(m.remainingCredits) || "-"}</td>
                   <td className="px-6 py-4 font-bold text-sweat">
-                    {m.remainingCredits ?? 0}
+                    {m.membershipStatus ?? 0}
                   </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 rounded text-xs font-bold ${statusStyle(
-                        m.membershipStatus || ""
-                      )}`}
-                    >
-                      {m.membershipStatus || "-"}
-                    </span>
+                  <td className="px-6 py-4 font-bold text-sweat">
+                    {m.paymentStatus ?? 0}
                   </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-bold ${(m.paymentStatus || "").toLowerCase() === "paid"
-                        ? "bg-green-500/10 text-green-500"
-                        : "bg-yellow-500/10 text-yellow-500"
-                        }`}
-                    >
-                      {m.paymentStatus || "-"}
-                    </span>
-                  </td>
+
+
                   <td className="px-6 py-4 text-right">
                     <button
                       type="button"
@@ -853,48 +860,7 @@ export function MembersView() {
             </div>
             <div className="space-y-4 text-sm">
               {/* Section 1: Account Information */}
-              {memberModal.mode === "create" && (
-                <div className="border-b border-border pb-4">
-                  <h4 className="text-xs uppercase font-bold text-sweat mb-3">Account Information</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label className="block">
-                      <span className="text-gray-500 text-xs uppercase font-bold">Password</span>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={memberForm.password}
-                          onChange={(e) => setMemberForm((f) => ({ ...f, password: e.target.value }))}
-                          className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 pr-10 text-white focus:outline-none focus:border-sweat"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
-                          aria-label={showPassword ? "Hide password" : "Show password"}
-                        >
-                          <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} aria-hidden />
-                        </button>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-              )}
-              {memberModal.mode === "edit" && (
-                <div className="border-b border-border pb-4">
-                  <h4 className="text-xs uppercase font-bold text-sweat mb-3">Member Code</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label className="block">
-                      <span className="text-gray-500 text-xs uppercase font-bold">Member Code</span>
-                      <input
-                        type="text"
-                        value={memberForm.memberCode}
-                        readOnly
-                        className="mt-1 w-full bg-gray-800 border border-border rounded-lg px-3 py-2 text-gray-400 cursor-not-allowed"
-                      />
-                    </label>
-                  </div>
-                </div>
-              )}
+
 
               {/* Section 2: Basic Information */}
               <div className="border-b border-border pb-4">
@@ -912,15 +878,7 @@ export function MembersView() {
                       className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                     />
                   </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Email</span>
-                    <input
-                      type="email"
-                      value={memberForm.email}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, email: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
+
                   <label className="block">
                     <span className="text-gray-500 text-xs uppercase font-bold">Phone Number</span>
                     <input
@@ -1034,30 +992,6 @@ export function MembersView() {
                 <h4 className="text-xs uppercase font-bold text-sweat mb-3">Membership Details</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Membership Type</span>
-                    <input
-                      value={memberForm.membershipType}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, membershipType: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Membership Status</span>
-                    <input
-                      value={memberForm.membershipStatus}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, membershipStatus: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Payment Status</span>
-                    <input
-                      value={memberForm.paymentStatus}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, paymentStatus: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
-                  <label className="block">
                     <span className="text-gray-500 text-xs uppercase font-bold">Membership Source</span>
                     <input
                       value={memberForm.membershipSource}
@@ -1067,12 +1001,41 @@ export function MembersView() {
                   </label>
                   <label className="block">
                     <span className="text-gray-500 text-xs uppercase font-bold">Home Club</span>
-                    <input
+                    <select
                       value={memberForm.homeClub}
                       onChange={(e) => setMemberForm((f) => ({ ...f, homeClub: e.target.value }))}
-                      placeholder="PIK / Puri…"
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
+                      disabled={branchesLoading}
+                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat disabled:opacity-50"
+                    >
+                      <option value="">{branchesLoading ? "Memuat branch..." : "Pilih Home Club..."}</option>
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.branchName}
+                        </option>
+                      ))}
+                      {!branchesLoading && branches.length === 0 && (
+                        <option value="" disabled>Tidak ada branch aktif</option>
+                      )}
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="text-gray-500 text-xs uppercase font-bold">Membership Plan</span>
+                    <select
+                      value={memberForm.membershipPlanId}
+                      onChange={(e) => handleMembershipPlanChange(e.target.value)}
+                      disabled={membershipPlansLoading}
+                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat disabled:opacity-50"
+                    >
+                      <option value="">{membershipPlansLoading ? "Memuat plan..." : "Pilih Membership Plan..."}</option>
+                      {membershipPlans.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.planName} ({p.credits} credits)
+                        </option>
+                      ))}
+                      {!membershipPlansLoading && membershipPlans.length === 0 && (
+                        <option value="" disabled>Tidak ada plan aktif</option>
+                      )}
+                    </select>
                   </label>
                   <label className="block">
                     <span className="text-gray-500 text-xs uppercase font-bold">Remaining Credits</span>
@@ -1080,103 +1043,37 @@ export function MembersView() {
                       type="number"
                       min={0}
                       value={memberForm.remainingCredits}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, remainingCredits: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Remaining PT Sessions</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={memberForm.remainingPtSessions}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, remainingPtSessions: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                      readOnly
+                      className="mt-1 w-full bg-gray-800 border border-border rounded-lg px-3 py-2 text-gray-400 cursor-not-allowed"
                     />
                   </label>
                 </div>
               </div>
 
-              {/* Section 7: Membership Period */}
-              <div className="border-b border-border pb-4">
-                <h4 className="text-xs uppercase font-bold text-sweat mb-3">Membership Period</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Join Date</span>
-                    <input
-                      type="date"
-                      value={memberForm.joinDate}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, joinDate: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                      style={{ colorScheme: 'dark' }}
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Expiry Date</span>
-                    <input
-                      type="date"
-                      value={memberForm.expiryDate}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, expiryDate: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                      style={{ colorScheme: 'dark' }}
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Freeze Start Date</span>
-                    <input
-                      type="date"
-                      value={memberForm.freezeStartDate}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, freezeStartDate: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                      style={{ colorScheme: 'dark' }}
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Freeze End Date</span>
-                    <input
-                      type="date"
-                      value={memberForm.freezeEndDate}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, freezeEndDate: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                      style={{ colorScheme: 'dark' }}
-                    />
-                  </label>
-                </div>
-              </div>
+
 
               {/* Section 8: Account Status */}
               <div>
                 <h4 className="text-xs uppercase font-bold text-sweat mb-3">Account Status</h4>
                 <div className="space-y-3">
-                  <div className="flex flex-wrap gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={memberForm.isActive}
-                        onChange={(e) => setMemberForm((f) => ({ ...f, isActive: e.target.checked }))}
-                        className="rounded border-border"
-                      />
-                      <span className="text-gray-300">Active</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={memberForm.isWaiverSigned}
-                        onChange={(e) => setMemberForm((f) => ({ ...f, isWaiverSigned: e.target.checked }))}
-                        className="rounded border-border"
-                      />
-                      <span className="text-gray-300">Waiver Signed</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={memberForm.isPtMember}
-                        onChange={(e) => setMemberForm((f) => ({ ...f, isPtMember: e.target.checked }))}
-                        className="rounded border-border"
-                      />
-                      <span className="text-gray-300">PT Member</span>
-                    </label>
-                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={memberForm.isWaiverSigned}
+                      onChange={(e) => setMemberForm((f) => ({ ...f, isWaiverSigned: e.target.checked }))}
+                      className="rounded border-border"
+                    />
+                    <span className="text-gray-300">Waiver Signed</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={memberForm.isPtMember}
+                      onChange={(e) => setMemberForm((f) => ({ ...f, isPtMember: e.target.checked }))}
+                      className="rounded border-border"
+                    />
+                    <span className="text-gray-300">PT Member</span>
+                  </label>
                   <label className="block">
                     <span className="text-gray-500 text-xs uppercase font-bold">Notes</span>
                     <textarea
@@ -1197,7 +1094,7 @@ export function MembersView() {
                 onClick={() => void saveMemberModal()}
                 className="flex-1 bg-sweat text-black py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
               >
-                {memberSaving ? "Menyimpan…" : memberModal.mode === "create" ? "Create member" : "Save changes"}
+                {memberSaving ? "Menyimpan..." : memberModal.mode === "create" ? "Create member" : "Save changes"}
               </button>
               <button
                 type="button"
