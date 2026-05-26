@@ -9,19 +9,29 @@ type User = {
   fullName?: string | null;
   email?: string | null;
   phoneNumber?: string | null;
+  password?: string | null;
   roleId?: string | null;
   roleName?: string | null;
   role?: string | null;
+  specialization?: string | null;
+  department?: string | null;
+  hireDate?: number | null;
+  salary?: number | null;
   branchName?: string | null;
   profileImageUrl?: string | null;
   isActive?: boolean;
-  specialization?: string | null;
   position?: string | null;
 };
 
 type Role = {
   id: string;
   name?: string | null;
+};
+
+type Branch = {
+  id: string;
+  branchName: string;
+  isActive: boolean;
 };
 
 type PagedResponse<T> = {
@@ -43,26 +53,30 @@ type ResetPasswordForm = { newPassword: string };
 
 type UserCrudForm = {
   fullName: string;
-  email: string;
-  phoneNumber: string;
   password: string;
-  roleId: string;
-  branchName: string;
+  email: string;
+  role: string;
+  phoneNumber: string;
   position: string;
-  specialization: string;
+  department: string;
+  branchName: string;
+  hireDate: string;
+  salary: string;
   isActive: boolean;
 };
 
 function emptyUserCrudForm(): UserCrudForm {
   return {
     fullName: "",
-    email: "",
-    phoneNumber: "",
     password: "",
-    roleId: "",
-    branchName: "",
+    email: "",
+    role: "",
+    phoneNumber: "",
     position: "",
-    specialization: "",
+    department: "",
+    branchName: "",
+    hireDate: new Date().toISOString().split("T")[0],
+    salary: "",
     isActive: true,
   };
 }
@@ -70,6 +84,8 @@ function emptyUserCrudForm(): UserCrudForm {
 export function UsersView() {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -137,6 +153,23 @@ export function UsersView() {
     }
   }, []);
 
+  const loadBranches = useCallback(async () => {
+    const res = await fetch("/api/v1/branches", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json().catch(() => []);
+      const list: Branch[] = Array.isArray(data) ? data : (data.items ?? data.data ?? []);
+      setBranches(list);
+    }
+  }, []);
+
+  const loadCurrentUser = useCallback(async () => {
+    const res = await fetch("/api/auth/profile", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json().catch(() => ({})) as { userId?: string };
+      if (data.userId) setCurrentUserId(data.userId);
+    }
+  }, []);
+
   useEffect(() => {
     void loadUsers(page, search);
   }, [loadUsers, page, search]);
@@ -144,6 +177,14 @@ export function UsersView() {
   useEffect(() => {
     void loadRoles();
   }, [loadRoles]);
+
+  useEffect(() => {
+    void loadBranches();
+  }, [loadBranches]);
+
+  useEffect(() => {
+    void loadCurrentUser();
+  }, [loadCurrentUser]);
 
   const sorted = useMemo(() => {
     return [...users].sort((a, b) => {
@@ -202,16 +243,20 @@ export function UsersView() {
   function formFromUserRow(u: User): UserCrudForm {
     return {
       fullName: u.fullName ?? "",
-      email: u.email ?? "",
-      phoneNumber: u.phoneNumber ?? "",
       password: "",
-      roleId:
-        u.roleId ??
-        roles.find((r) => (r.name ?? "").toLowerCase() === (u.roleName ?? u.role ?? "").toLowerCase())?.id ??
-        "",
-      branchName: u.branchName ?? "",
+      email: u.email ?? "",
+      role: u.role ?? "",
+      phoneNumber: u.phoneNumber ?? "",
       position: u.position ?? "",
-      specialization: u.specialization ?? "",
+      department: u.department ?? "",
+      branchName: u.branchName ?? "",
+      hireDate: (() => {
+        const hd = u.hireDate as string | number | null | undefined;
+        if (!hd) return new Date().toISOString().split("T")[0];
+        if (typeof hd === "string") return hd.split("T")[0];
+        return new Date(hd).toISOString().split("T")[0];
+      })(),
+      salary: u.salary != null ? String(u.salary) : "",
       isActive: u.isActive !== false,
     };
   }
@@ -235,20 +280,23 @@ export function UsersView() {
     setCrudMsg("");
     try {
       if (userCrud.mode === "create") {
-        if (!crudForm.password.trim()) {
+        if (!(crudForm.password ?? "").trim()) {
           setCrudMsg("Password wajib diisi untuk user baru.");
           setCrudLoading(false);
           return;
         }
         const body: Record<string, unknown> = {
-          fullName: crudForm.fullName || null,
-          email: crudForm.email || null,
-          phoneNumber: crudForm.phoneNumber || null,
+          userId: currentUserId,
+          fullname: crudForm.fullName,
           password: crudForm.password,
-          roleId: crudForm.roleId || null,
-          branchName: crudForm.branchName || null,
+          email: crudForm.email,
+          role: crudForm.role || null,
+          phoneNumber: crudForm.phoneNumber || null,
           position: crudForm.position || null,
-          specialization: crudForm.specialization || null,
+          department: crudForm.department || null,
+          branchName: crudForm.branchName || null,
+          hireDate: crudForm.hireDate || null,
+          salary: crudForm.salary === "" ? null : Number(crudForm.salary),
           isActive: crudForm.isActive,
         };
         const res = await fetch("/api/users", {
@@ -266,18 +314,19 @@ export function UsersView() {
         return;
       }
       const body: Record<string, unknown> = {
-        fullName: crudForm.fullName || null,
-        email: crudForm.email || null,
+        id: userCrud.id,
+        userId: currentUserId,
+        fullname: crudForm.fullName,
+        email: crudForm.email,
+        role: crudForm.role || null,
         phoneNumber: crudForm.phoneNumber || null,
-        roleId: crudForm.roleId || null,
-        branchName: crudForm.branchName || null,
         position: crudForm.position || null,
-        specialization: crudForm.specialization || null,
+        department: crudForm.department || null,
+        branchName: crudForm.branchName || null,
+        hireDate: crudForm.hireDate || null,
+        salary: crudForm.salary === "" ? null : Number(crudForm.salary),
         isActive: crudForm.isActive,
       };
-      if (crudForm.password.trim()) {
-        body.password = crudForm.password;
-      }
       const res = await fetch(`/api/users/${userCrud.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -319,7 +368,7 @@ export function UsersView() {
           type="button"
           onClick={() => {
             setCrudMsg("");
-            setCrudForm({ ...emptyUserCrudForm(), roleId: roles[0]?.id ?? "" });
+            setCrudForm(emptyUserCrudForm());
             setUserCrud({ mode: "create" });
           }}
           className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 shrink-0"
@@ -485,6 +534,8 @@ export function UsersView() {
             </div>
             <div className="space-y-2 text-sm text-gray-300 mb-4">
               {[
+                ["Full Name", selected.fullName],
+                ["Email", selected.email],
                 ["Phone", selected.phoneNumber],
                 ["Role", roleLabel(selected)],
                 ["Branch", selected.branchName],
@@ -554,10 +605,19 @@ export function UsersView() {
             </div>
             <div className="space-y-3 text-sm">
               <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Full name</span>
+                <span className="text-gray-500 text-xs uppercase font-bold">Full Name</span>
                 <input
                   value={crudForm.fullName}
                   onChange={(e) => setCrudForm((f) => ({ ...f, fullName: e.target.value }))}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                />
+              </label>
+              <label className="block">
+                <span className="text-gray-500 text-xs uppercase font-bold">Password</span>
+                <input
+                  type="password"
+                  value={crudForm.password}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, password: e.target.value }))}
                   className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                 />
               </label>
@@ -571,45 +631,25 @@ export function UsersView() {
                 />
               </label>
               <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Phone</span>
-                <input
-                  value={crudForm.phoneNumber}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, phoneNumber: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">
-                  {userCrud.mode === "create" ? "Password" : "Password (opsional)"}
-                </span>
-                <input
-                  type="password"
-                  value={crudForm.password}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, password: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                  placeholder={userCrud.mode === "edit" ? "Kosongkan jika tidak diubah" : ""}
-                />
-              </label>
-              <label className="block">
                 <span className="text-gray-500 text-xs uppercase font-bold">Role</span>
                 <select
-                  value={crudForm.roleId}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, roleId: e.target.value }))}
+                  value={crudForm.role}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, role: e.target.value }))}
                   className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                 >
                   <option value="">— Pilih role —</option>
                   {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
+                    <option key={r.id} value={r.name ?? r.id}>
                       {r.name ?? r.id}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Branch</span>
+                <span className="text-gray-500 text-xs uppercase font-bold">Phone</span>
                 <input
-                  value={crudForm.branchName}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, branchName: e.target.value }))}
+                  value={crudForm.phoneNumber}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, phoneNumber: e.target.value }))}
                   className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                 />
               </label>
@@ -622,10 +662,48 @@ export function UsersView() {
                 />
               </label>
               <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Specialization</span>
+                <span className="text-gray-500 text-xs uppercase font-bold">Department</span>
                 <input
-                  value={crudForm.specialization}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, specialization: e.target.value }))}
+                  value={crudForm.department}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, department: e.target.value }))}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                />
+              </label>
+              <label className="block">
+                <span className="text-gray-500 text-xs uppercase font-bold">Branch</span>
+                <select
+                  value={crudForm.branchName}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, branchName: e.target.value }))}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                >
+                  <option value="">— Pilih branch —</option>
+                  {branches.map((b) => (
+                    <option key={b.branchName ?? b.id} value={b.branchName ?? b.id}>
+                      {b.branchName ?? b.id}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-gray-500 text-xs uppercase font-bold">Hire Date</span>
+                <input
+                  type="date"
+                  value={crudForm.hireDate}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, hireDate: e.target.value }))}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                />
+              </label>
+              <label className="block">
+                <span className="text-gray-500 text-xs uppercase font-bold">Salary (Rp)</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={crudForm.salary}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9]/g, "");
+                    setCrudForm((f) => ({ ...f, salary: raw }));
+                  }}
+                  placeholder="0"
                   className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                 />
               </label>

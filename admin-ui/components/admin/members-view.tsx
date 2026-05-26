@@ -78,7 +78,7 @@ type MemberFormState = {
   remainingCredits: string;
   remainingPtSessions: string;
   expiryDate: string;
-  homeClub: string;
+  homeClubBranchId: string;
   membershipPlanId: string;
   membershipStatus: string;
   // Account Status
@@ -107,7 +107,7 @@ function emptyMemberForm(): MemberFormState {
     remainingCredits: "0",
     remainingPtSessions: "0",
     expiryDate: "",
-    homeClub: "",
+    homeClubBranchId: "",
     membershipPlanId: "",
     membershipStatus: "",
     // Account Status
@@ -144,7 +144,7 @@ function memberToForm(m: ApiMember): MemberFormState {
     remainingCredits: String(m.remainingCredits ?? 0),
     remainingPtSessions: String(m.remainingPtSessions ?? 0),
     expiryDate: parseDate(m.expiryDate),
-    homeClub: m.homeClubBranchName ?? "",
+    homeClubBranchId: m.homeClubBranchId ?? "",
     membershipPlanId: m.membershipPlanId ?? "",
     membershipStatus: m.membershipStatus ?? "",
     // Account Status
@@ -468,7 +468,7 @@ export function MembersView() {
           remainingCredits: parseIntSafe(formData.remainingCredits),
           remainingPtSessions: parseIntSafe(formData.remainingPtSessions),
           expiryDate: dateToIso(formData.expiryDate),
-          homeClubBranchId: formData.homeClub || null,
+          homeClubBranchId: formData.homeClubBranchId || null,
           membershipPlanId: formData.membershipPlanId || null,
           address: formData.address || null,
           city: formData.city || null,
@@ -517,7 +517,7 @@ export function MembersView() {
         remainingCredits: credits,
         remainingPtSessions: ptSessions,
         expiryDate: dateToIso(memberForm.expiryDate),
-        homeClub: memberForm.homeClub || null,
+        homeClubBranchId: memberForm.homeClubBranchId || null,
         address: memberForm.address || null,
         city: memberForm.city || null,
         heightCm,
@@ -714,6 +714,7 @@ export function MembersView() {
                   { label: "ID", key: "memberCode" },
                   { label: "Member Name", key: "fullName" },
                   { label: "Home Club", key: "homeClubBranchName" },
+                  { label: "Membership Plan", key: "membershipPlanName" },
                   { label: "Credits", key: "remainingCredits" },
                   { label: "Status", key: "membershipStatus" },
                   { label: "Payment", key: "paymentStatus" },
@@ -789,6 +790,7 @@ export function MembersView() {
                     </span>
                   </td>
                   <td className="px-6 py-4">{m.homeClubBranchName || "—"}</td>
+                  <td className="px-6 py-4">{m.membershipPlanName || "—"}</td>
                   <td className="px-6 py-4">{String(m.remainingCredits) || "-"}</td>
                   <td className="px-6 py-4 font-bold text-sweat">
                     {m.membershipStatus ?? 0}
@@ -1002,8 +1004,8 @@ export function MembersView() {
                   <label className="block">
                     <span className="text-gray-500 text-xs uppercase font-bold">Home Club</span>
                     <select
-                      value={memberForm.homeClub}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, homeClub: e.target.value }))}
+                      value={memberForm.homeClubBranchId}
+                      onChange={(e) => setMemberForm((f) => ({ ...f, homeClubBranchId: e.target.value }))}
                       disabled={branchesLoading}
                       className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat disabled:opacity-50"
                     >
@@ -1015,6 +1017,11 @@ export function MembersView() {
                       ))}
                       {!branchesLoading && branches.length === 0 && (
                         <option value="" disabled>Tidak ada branch aktif</option>
+                      )}
+                      {!branchesLoading && memberForm.homeClubBranchId && !branches.find((b) => b.id === memberForm.homeClubBranchId) && (
+                        <option value={memberForm.homeClubBranchId} disabled>
+                          ⚠️ Branch tidak ditemukan (ID: {memberForm.homeClubBranchId})
+                        </option>
                       )}
                     </select>
                   </label>
@@ -1034,6 +1041,11 @@ export function MembersView() {
                       ))}
                       {!membershipPlansLoading && membershipPlans.length === 0 && (
                         <option value="" disabled>Tidak ada plan aktif</option>
+                      )}
+                      {!membershipPlansLoading && memberForm.membershipPlanId && !membershipPlans.find((p) => p.id === memberForm.membershipPlanId) && (
+                        <option value={memberForm.membershipPlanId} disabled>
+                          ⚠️ Plan tidak ditemukan (ID: {memberForm.membershipPlanId})
+                        </option>
                       )}
                     </select>
                   </label>
