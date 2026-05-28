@@ -2,12 +2,26 @@
 
 import { useCallback, useState, type FormEvent } from "react";
 
+type Branch = {
+    id: string;
+    branchName: string;
+    isActive: boolean;
+};
+
 export type MembershipPlanFormValues = {
+    branchId: string;
     planName: string;
     description: string;
     price: number;
     credits: number;
     validityDays: number;
+    isUnlimitedClasses: boolean;
+    isPtIncluded: boolean;
+    ptSessions: number;
+    isPopular: boolean;
+    planCategory: string;
+    registrationFee: number;
+    allowMultiBranchAccess: boolean;
     isActive: boolean;
 };
 
@@ -17,6 +31,7 @@ type Props = {
     onSubmit: (values: MembershipPlanFormValues) => Promise<void>;
     initialValues?: Partial<MembershipPlanFormValues>;
     isEdit?: boolean;
+    branches: Branch[];
 };
 
 export function CreateMembershipPlanModal({
@@ -25,6 +40,7 @@ export function CreateMembershipPlanModal({
     onSubmit,
     initialValues,
     isEdit = false,
+    branches,
 }: Props) {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
@@ -36,13 +52,27 @@ export function CreateMembershipPlanModal({
             setSubmitting(true);
             const fd = new FormData(e.currentTarget);
             const payload: MembershipPlanFormValues = {
+                branchId: String(fd.get("branchId") ?? ""),
                 planName: String(fd.get("planName") ?? ""),
                 description: String(fd.get("description") ?? ""),
                 price: Number(fd.get("price") ?? 0),
                 credits: Number(fd.get("credits") ?? 0),
                 validityDays: Number(fd.get("validityDays") ?? 30),
+                isUnlimitedClasses: fd.get("isUnlimitedClasses") === "on",
+                isPtIncluded: fd.get("isPtIncluded") === "on",
+                ptSessions: Number(fd.get("ptSessions") ?? 0),
+                isPopular: fd.get("isPopular") === "on",
+                planCategory: String(fd.get("planCategory") ?? ""),
+                registrationFee: Number(fd.get("registrationFee") ?? 0),
+                allowMultiBranchAccess: fd.get("allowMultiBranchAccess") === "on",
                 isActive: fd.get("isActive") === "on",
             };
+
+            if (!payload.branchId.trim()) {
+                setError("Branch is required");
+                setSubmitting(false);
+                return;
+            }
 
             if (!payload.planName.trim()) {
                 setError("Plan name is required");
@@ -119,6 +149,25 @@ export function CreateMembershipPlanModal({
 
                             <div>
                                 <label className="block text-gray-400 text-sm mb-1">
+                                    Branch <span className="text-red-400">*</span>
+                                </label>
+                                <select
+                                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                    name="branchId"
+                                    defaultValue={initialValues?.branchId ?? ""}
+                                    required
+                                >
+                                    <option value="">Select branch</option>
+                                    {branches.map((branch) => (
+                                        <option key={branch.id} value={branch.id}>
+                                            {branch.branchName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-gray-400 text-sm mb-1">
                                     Plan Name <span className="text-red-400">*</span>
                                 </label>
                                 <input
@@ -147,6 +196,36 @@ export function CreateMembershipPlanModal({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-gray-400 text-sm mb-1">
+                                        Plan Category
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        placeholder="e.g. Monthly, Annual"
+                                        name="planCategory"
+                                        defaultValue={initialValues?.planCategory ?? ""}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-400 text-sm mb-1">
+                                        Validity (Days) <span className="text-red-400">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        placeholder="30"
+                                        name="validityDays"
+                                        defaultValue={initialValues?.validityDays ?? 30}
+                                        min={1}
+                                        step={1}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-gray-400 text-sm mb-1">
                                         Price (Rp) <span className="text-red-400">*</span>
                                     </label>
                                     <input
@@ -156,13 +235,28 @@ export function CreateMembershipPlanModal({
                                         name="price"
                                         defaultValue={initialValues?.price ?? 0}
                                         min={0}
-                                        step={10000}
                                         required
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-gray-400 text-sm mb-1">
-                                        Credits <span className="text-red-400">*</span>
+                                        Registration Fee (Rp)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        placeholder="0"
+                                        name="registrationFee"
+                                        defaultValue={initialValues?.registrationFee ?? 0}
+                                        min={0}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-gray-400 text-sm mb-1">
+                                        Credits
                                     </label>
                                     <input
                                         type="number"
@@ -172,38 +266,89 @@ export function CreateMembershipPlanModal({
                                         defaultValue={initialValues?.credits ?? 10}
                                         min={0}
                                         step={1}
-                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-400 text-sm mb-1">
+                                        PT Sessions
+                                    </label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        placeholder="0"
+                                        name="ptSessions"
+                                        defaultValue={initialValues?.ptSessions ?? 0}
+                                        min={0}
+                                        step={1}
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-gray-400 text-sm mb-1">
-                                    Validity (Days) <span className="text-red-400">*</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
-                                    placeholder="30"
-                                    name="validityDays"
-                                    defaultValue={initialValues?.validityDays ?? 30}
-                                    min={1}
-                                    step={1}
-                                    required
-                                />
-                            </div>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        id="isUnlimitedClasses"
+                                        name="isUnlimitedClasses"
+                                        defaultChecked={initialValues?.isUnlimitedClasses ?? false}
+                                        className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
+                                    />
+                                    <label htmlFor="isUnlimitedClasses" className="text-gray-300 text-sm cursor-pointer">
+                                        Unlimited Classes
+                                    </label>
+                                </div>
 
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    id="isActive"
-                                    name="isActive"
-                                    defaultChecked={initialValues?.isActive ?? true}
-                                    className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
-                                />
-                                <label htmlFor="isActive" className="text-gray-300 text-sm cursor-pointer">
-                                    Active (visible to users)
-                                </label>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        id="isPtIncluded"
+                                        name="isPtIncluded"
+                                        defaultChecked={initialValues?.isPtIncluded ?? false}
+                                        className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
+                                    />
+                                    <label htmlFor="isPtIncluded" className="text-gray-300 text-sm cursor-pointer">
+                                        PT Sessions Included
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        id="isPopular"
+                                        name="isPopular"
+                                        defaultChecked={initialValues?.isPopular ?? false}
+                                        className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
+                                    />
+                                    <label htmlFor="isPopular" className="text-gray-300 text-sm cursor-pointer">
+                                        Mark as Popular Plan
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        id="allowMultiBranchAccess"
+                                        name="allowMultiBranchAccess"
+                                        defaultChecked={initialValues?.allowMultiBranchAccess ?? false}
+                                        className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
+                                    />
+                                    <label htmlFor="allowMultiBranchAccess" className="text-gray-300 text-sm cursor-pointer">
+                                        Allow Multi-Branch Access
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        id="isActive"
+                                        name="isActive"
+                                        defaultChecked={initialValues?.isActive ?? true}
+                                        className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
+                                    />
+                                    <label htmlFor="isActive" className="text-gray-300 text-sm cursor-pointer">
+                                        Active (visible to users)
+                                    </label>
+                                </div>
                             </div>
                         </div>
 

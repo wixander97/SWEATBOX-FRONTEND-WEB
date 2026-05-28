@@ -17,6 +17,21 @@ type ApiMembershipPlan = {
     credits: number;
     validityDays: number;
     isActive: boolean;
+    branchId?: string;
+    branchName?: string;
+    isUnlimitedClasses?: boolean;
+    isPtIncluded?: boolean;
+    ptSessions?: number;
+    isPopular?: boolean;
+    planCategory?: string | null;
+    registrationFee?: number;
+    allowMultiBranchAccess?: boolean;
+};
+
+type Branch = {
+    id: string;
+    branchName: string;
+    isActive: boolean;
 };
 
 type PagedResponse<T> = {
@@ -35,6 +50,7 @@ export function MembershipPlansView() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [plans, setPlans] = useState<ApiMembershipPlan[]>([]);
+    const [branches, setBranches] = useState<Branch[]>([]);
     const [selected, setSelected] = useState<ApiMembershipPlan | null>(null);
     const [page, setPage] = useState(1);
     const [pageSize] = useState(10);
@@ -100,9 +116,28 @@ export function MembershipPlansView() {
         setLoading(false);
     }, [pageSize]);
 
+    const loadBranches = useCallback(async () => {
+        const res = await fetch("/api/v1/branches?page=1&pageSize=100", {
+            cache: "no-store",
+        });
+        if (redirectToLoginIfUnauthorized(res.status)) return;
+        const payload = (await res.json().catch(() => [])) as
+            | Branch[]
+            | { data?: Branch[]; items?: Branch[] };
+        const list = Array.isArray(payload)
+            ? payload
+            : payload.data || payload.items || [];
+        if (!res.ok || !Array.isArray(list)) {
+            setBranches([]);
+            return;
+        }
+        setBranches(list);
+    }, []);
+
     useEffect(() => {
         void loadPlans(page);
-    }, [loadPlans, page]);
+        void loadBranches();
+    }, [loadPlans, loadBranches, page]);
 
     const filteredPlans = useMemo(() => {
         if (filterActive === "all") return plans;
@@ -297,25 +332,25 @@ export function MembershipPlansView() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setSelected(plan);
-                                                        setEditOpen(true);
-                                                    }}
-                                                    className="text-blue-400 hover:text-blue-300 transition text-xs font-semibold"
-                                                >
-                                                    <i className="fas fa-edit" aria-hidden /> Edit
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void deletePlan(plan.id)}
-                                                    className="text-red-400 hover:text-red-300 transition text-xs font-semibold"
-                                                >
-                                                    <i className="fas fa-trash" aria-hidden /> Delete
-                                                </button>
-                                            </div>
+                                            <button
+                                                type="button"
+                                                className="text-gray-400 hover:text-white mx-1"
+                                                aria-label="Edit"
+                                                onClick={() => {
+                                                    setSelected(plan);
+                                                    setEditOpen(true);
+                                                }}
+                                            >
+                                                <i className="fas fa-edit" aria-hidden />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="text-red-500 hover:text-red-400 mx-1"
+                                                aria-label="Delete"
+                                                onClick={() => void deletePlan(plan.id)}
+                                            >
+                                                <i className="fas fa-trash" aria-hidden />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -367,17 +402,26 @@ export function MembershipPlansView() {
                         );
                     }
                 }}
+                branches={branches}
             />
 
             {selected && (
                 <CreateMembershipPlanModal
                     isOpen={editOpen}
                     initialValues={{
+                        branchId: selected.branchId ?? "",
                         planName: selected.planName,
                         description: selected.description ?? "",
                         price: selected.price ?? 0,
                         credits: selected.credits,
                         validityDays: selected.validityDays,
+                        isUnlimitedClasses: selected.isUnlimitedClasses ?? false,
+                        isPtIncluded: selected.isPtIncluded ?? false,
+                        ptSessions: selected.ptSessions ?? 0,
+                        isPopular: selected.isPopular ?? false,
+                        planCategory: selected.planCategory ?? "",
+                        registrationFee: selected.registrationFee ?? 0,
+                        allowMultiBranchAccess: selected.allowMultiBranchAccess ?? false,
                         isActive: selected.isActive,
                     }}
                     onClose={() => {
@@ -396,6 +440,7 @@ export function MembershipPlansView() {
                         }
                     }}
                     isEdit
+                    branches={branches}
                 />
             )}
         </>
