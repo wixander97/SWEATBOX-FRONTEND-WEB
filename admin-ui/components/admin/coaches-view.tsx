@@ -130,7 +130,7 @@ export function CoachesView() {
   async function loadUsers() {
     setUsersLoading(true);
     const params = new URLSearchParams({ page: "1", pageSize: "100" });
-    const res = await fetch(`/api/users?${params.toString()}`, { cache: "no-store" });
+    const res = await fetch(`/api/v1/users?${params.toString()}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) { setUsersLoading(false); return; }
     const payload = (await res.json().catch(() => ({}))) as { data?: UserOption[]; items?: UserOption[]; message?: string };
     const list = payload.data ?? payload.items ?? [];
@@ -173,7 +173,7 @@ export function CoachesView() {
       emergencyContact: addForm.emergencyContact || undefined,
       isActive: addForm.isActive,
     };
-    const res = await fetch("/api/coaches", {
+    const res = await fetch("/api/v1/coaches", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -193,7 +193,7 @@ export function CoachesView() {
     setLoading(true);
     setError("");
     const params = new URLSearchParams({ page: String(targetPage), pageSize: String(pageSize) });
-    const res = await fetch(`/api/coaches?${params.toString()}`, { cache: "no-store" });
+    const res = await fetch(`/api/v1/coaches?${params.toString()}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => [])) as Coach[] | PagedResponse<Coach>;
     if (!res.ok) {
@@ -239,7 +239,7 @@ export function CoachesView() {
     setSelected(null);
     setEditMode(false);
     setEditError("");
-    const res = await fetch(`/api/coaches/${id}`, { cache: "no-store" });
+    const res = await fetch(`/api/v1/coaches/${id}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => ({}))) as CoachDetail & { data?: CoachDetail; message?: string };
     if (!res.ok) {
@@ -281,7 +281,7 @@ export function CoachesView() {
       certification: editForm.certification || undefined,
       isActive: editForm.isActive,
     };
-    const res = await fetch(`/api/coaches/${coachId}`, {
+    const res = await fetch(`/api/v1/coaches/${coachId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -299,7 +299,7 @@ export function CoachesView() {
 
   async function handleDelete(id: string) {
     setDeleteLoading(true);
-    const res = await fetch(`/api/coaches/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/v1/coaches/${id}`, { method: "DELETE" });
     setDeleteLoading(false);
     setDeleteId(null);
     if (res.ok) {
@@ -310,7 +310,7 @@ export function CoachesView() {
 
   async function handleToggleStatus(coach: Coach) {
     setStatusLoading(coach.id);
-    await fetch(`/api/coaches/${coach.id}/status?isActive=${!coach.isActive}`, { method: "PATCH" });
+    await fetch(`/api/v1/coaches/${coach.id}/status?isActive=${!coach.isActive}`, { method: "PATCH" });
     setStatusLoading(null);
     void loadCoaches(page);
   }

@@ -276,7 +276,7 @@ export function MembersView() {
         params.set("isActive", "true");
       }
 
-      const res = await fetch(`/api/members?${params.toString()}`, {
+      const res = await fetch(`/api/v1/members?${params.toString()}`, {
         cache: "no-store",
       });
       if (redirectToLoginIfUnauthorized(res.status)) return;
@@ -336,7 +336,7 @@ export function MembersView() {
       setMagicLoading(true);
       try {
         const res = await fetch(
-          `/api/members/search?keyword=${encodeURIComponent(magicQuery)}`,
+          `/api/v1/members/search?keyword=${encodeURIComponent(magicQuery)}`,
           { cache: "no-store" }
         );
         if (res.ok) {
@@ -391,7 +391,7 @@ export function MembersView() {
     setImagePreview(m.profileImageUrl || null);
     setMemberForm(memberToForm(m));
     setMemberModal({ mode: "edit", id: m.id });
-    const res = await fetch(`/api/members/${m.id}`, { cache: "no-store" });
+    const res = await fetch(`/api/v1/members/${m.id}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     if (res.ok) {
       const data = (await res.json().catch(() => null)) as ApiMember | null;
@@ -480,7 +480,7 @@ export function MembersView() {
           isPtMember: formData.isPtMember,
         };
         console.log("[DEBUG] POST body:", JSON.stringify(body, null, 2));
-        const res = await fetch("/api/members", {
+        const res = await fetch("/api/v1/members", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
@@ -527,7 +527,7 @@ export function MembersView() {
         isWaiverSigned: memberForm.isWaiverSigned,
         isPtMember: memberForm.isPtMember,
       };
-      const res = await fetch(`/api/members/${memberModal.id}`, {
+      const res = await fetch(`/api/v1/members/${memberModal.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

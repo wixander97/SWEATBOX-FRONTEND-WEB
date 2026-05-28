@@ -171,9 +171,9 @@ export function DashboardView() {
     async function load() {
       setLoading(true);
       const [statsRes, paymentsRes, classesRes] = await Promise.allSettled([
-        fetch("/api/stats", { cache: "no-store" }),
-        fetch("/api/payments", { cache: "no-store" }),
-        fetch("/api/classes?page=1&pageSize=6", { cache: "no-store" }),
+        fetch("/api/v1/stats", { cache: "no-store" }),
+        fetch("/api/v1/payments", { cache: "no-store" }),
+        fetch("/api/v1/classes?page=1&pageSize=6", { cache: "no-store" }),
       ]);
 
       if (statsRes.status === "fulfilled") {
@@ -496,7 +496,7 @@ export function DashboardView() {
                 ) : (
                   recentPayments.map((p) => {
                     const status = p.paymentStatus ?? p.status ?? "—";
-                    const statusLower = status.toLowerCase();
+                    const statusLower = status;
                     const badgeCls =
                       statusLower === "paid"
                         ? "bg-green-500/10 text-green-500"

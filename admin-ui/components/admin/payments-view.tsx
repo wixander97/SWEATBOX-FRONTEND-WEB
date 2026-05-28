@@ -38,7 +38,7 @@ function formatRupiah(amount: number): string {
 }
 
 function statusBadge(status: string) {
-  const s = status.toLowerCase();
+  const s = status;
   if (s === "paid") return "bg-green-500/10 text-green-500 border-green-500/20";
   if (s === "pending") return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
   return "bg-red-500/10 text-red-500 border-red-500/20";
@@ -166,11 +166,10 @@ export function PaymentsView() {
                 key={t.key}
                 type="button"
                 onClick={() => setActiveTab(t.key)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${
-                  activeTab === t.key
-                    ? "bg-sweat text-black border-sweat"
-                    : "bg-sidebar border-border text-gray-400 hover:text-white"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${activeTab === t.key
+                  ? "bg-sweat text-black border-sweat"
+                  : "bg-sidebar border-border text-gray-400 hover:text-white"
+                  }`}
               >
                 {t.label}
               </button>

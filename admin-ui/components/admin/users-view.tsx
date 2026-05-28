@@ -17,10 +17,15 @@ type User = {
   department?: string | null;
   hireDate?: number | null;
   salary?: number | null;
+  branchId?: string | null;
   branchName?: string | null;
   profileImageUrl?: string | null;
   isActive?: boolean;
   position?: string | null;
+  notes?: string | null;
+  bio?: string | null;
+  payrollType?: string | null;
+  payrollRate?: number | null;
 };
 
 type Role = {
@@ -55,12 +60,16 @@ type UserCrudForm = {
   fullName: string;
   password: string;
   email: string;
-  role: string;
+  roleId: string;
+  branchId: string;
   phoneNumber: string;
   position: string;
   department: string;
-  branchName: string;
-  hireDate: string;
+  specialization: string;
+  notes: string;
+  bio: string;
+  payrollType: string;
+  payrollRate: string;
   salary: string;
   isActive: boolean;
 };
@@ -70,12 +79,16 @@ function emptyUserCrudForm(): UserCrudForm {
     fullName: "",
     password: "",
     email: "",
-    role: "",
+    roleId: "",
+    branchId: "",
     phoneNumber: "",
     position: "",
     department: "",
-    branchName: "",
-    hireDate: new Date().toISOString().split("T")[0],
+    specialization: "",
+    notes: "",
+    bio: "",
+    payrollType: "",
+    payrollRate: "",
     salary: "",
     isActive: true,
   };
@@ -120,7 +133,7 @@ export function UsersView() {
     setError("");
     const params = new URLSearchParams({ page: String(targetPage), pageSize: String(pageSize) });
     if (keyword) params.set("search", keyword);
-    const res = await fetch(`/api/users?${params.toString()}`, { cache: "no-store" });
+    const res = await fetch(`/api/v1/users?${params.toString()}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => [])) as User[] | PagedResponse<User>;
     if (!res.ok) {
@@ -145,7 +158,7 @@ export function UsersView() {
   }, [pageSize]);
 
   const loadRoles = useCallback(async () => {
-    const res = await fetch("/api/users/roles", { cache: "no-store" });
+    const res = await fetch("/api/v1/users/roles", { cache: "no-store" });
     if (res.ok) {
       const data = await res.json().catch(() => []);
       const list: Role[] = Array.isArray(data) ? data : (data.items ?? data.data ?? []);
@@ -163,7 +176,7 @@ export function UsersView() {
   }, []);
 
   const loadCurrentUser = useCallback(async () => {
-    const res = await fetch("/api/auth/profile", { cache: "no-store" });
+    const res = await fetch("/api/v1/auth/profile", { cache: "no-store" });
     if (res.ok) {
       const data = await res.json().catch(() => ({})) as { userId?: string };
       if (data.userId) setCurrentUserId(data.userId);
@@ -205,7 +218,7 @@ export function UsersView() {
     if (!resetForm) return;
     setResetLoading(true);
     setResetMsg("");
-    const res = await fetch(`/api/users/${userId}/reset-password`, {
+    const res = await fetch(`/api/v1/users/${userId}/reset-password`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ newPassword: resetForm.newPassword }),
@@ -222,7 +235,7 @@ export function UsersView() {
 
   async function handleToggleStatus(user: User) {
     setStatusLoading(user.id);
-    await fetch(`/api/users/${user.id}/status`, {
+    await fetch(`/api/v1/users/${user.id}/status`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isActive: !user.isActive }),
@@ -233,7 +246,7 @@ export function UsersView() {
 
   async function handleDelete(id: string) {
     setDeleteLoading(true);
-    await fetch(`/api/users/${id}`, { method: "DELETE" });
+    await fetch(`/api/v1/users/${id}`, { method: "DELETE" });
     setDeleteLoading(false);
     setDeleteId(null);
     setSelected(null);
@@ -245,17 +258,16 @@ export function UsersView() {
       fullName: u.fullName ?? "",
       password: "",
       email: u.email ?? "",
-      role: u.role ?? "",
+      roleId: u.roleId ?? "",
+      branchId: u.branchId ?? "",
       phoneNumber: u.phoneNumber ?? "",
       position: u.position ?? "",
       department: u.department ?? "",
-      branchName: u.branchName ?? "",
-      hireDate: (() => {
-        const hd = u.hireDate as string | number | null | undefined;
-        if (!hd) return new Date().toISOString().split("T")[0];
-        if (typeof hd === "string") return hd.split("T")[0];
-        return new Date(hd).toISOString().split("T")[0];
-      })(),
+      specialization: u.specialization ?? "",
+      notes: u.notes ?? "",
+      bio: u.bio ?? "",
+      payrollType: u.payrollType ?? "",
+      payrollRate: u.payrollRate != null ? String(u.payrollRate) : "",
       salary: u.salary != null ? String(u.salary) : "",
       isActive: u.isActive !== false,
     };
@@ -265,7 +277,7 @@ export function UsersView() {
     setCrudMsg("");
     setCrudForm(formFromUserRow(u));
     setUserCrud({ mode: "edit", id: u.id });
-    const res = await fetch(`/api/users/${u.id}`, { cache: "no-store" });
+    const res = await fetch(`/api/v1/users/${u.id}`, { cache: "no-store" });
     if (res.ok) {
       const data = (await res.json().catch(() => null)) as User | null;
       if (data) {
@@ -287,19 +299,23 @@ export function UsersView() {
         }
         const body: Record<string, unknown> = {
           userId: currentUserId,
-          fullname: crudForm.fullName,
+          fullName: crudForm.fullName,
           password: crudForm.password,
           email: crudForm.email,
-          role: crudForm.role || null,
+          roleId: crudForm.roleId || null,
+          branchId: crudForm.branchId || null,
           phoneNumber: crudForm.phoneNumber || null,
           position: crudForm.position || null,
           department: crudForm.department || null,
-          branchName: crudForm.branchName || null,
-          hireDate: crudForm.hireDate || null,
+          specialization: crudForm.specialization || null,
+          notes: crudForm.notes || null,
+          bio: crudForm.bio || null,
+          payrollType: crudForm.payrollType || null,
+          payrollRate: crudForm.payrollRate === "" ? null : Number(crudForm.payrollRate),
           salary: crudForm.salary === "" ? null : Number(crudForm.salary),
           isActive: crudForm.isActive,
         };
-        const res = await fetch("/api/users", {
+        const res = await fetch("/api/v1/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
@@ -316,18 +332,22 @@ export function UsersView() {
       const body: Record<string, unknown> = {
         id: userCrud.id,
         userId: currentUserId,
-        fullname: crudForm.fullName,
+        fullName: crudForm.fullName,
         email: crudForm.email,
-        role: crudForm.role || null,
+        roleId: crudForm.roleId || null,
+        branchId: crudForm.branchId || null,
         phoneNumber: crudForm.phoneNumber || null,
         position: crudForm.position || null,
         department: crudForm.department || null,
-        branchName: crudForm.branchName || null,
-        hireDate: crudForm.hireDate || null,
+        specialization: crudForm.specialization || null,
+        notes: crudForm.notes || null,
+        bio: crudForm.bio || null,
+        payrollType: crudForm.payrollType || null,
+        payrollRate: crudForm.payrollRate === "" ? null : Number(crudForm.payrollRate),
         salary: crudForm.salary === "" ? null : Number(crudForm.salary),
         isActive: crudForm.isActive,
       };
-      const res = await fetch(`/api/users/${userCrud.id}`, {
+      const res = await fetch(`/api/v1/users/${userCrud.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -394,7 +414,6 @@ export function UsersView() {
                     [
                       { label: "User", key: "fullName" },
                       { label: "Role", key: "roleName" },
-                      { label: "Branch", key: null },
                       { label: "Status", key: "isActive" },
                     ] as { label: string; key: SortKey | null }[]
                   ).map(({ label, key }) => (
@@ -437,7 +456,6 @@ export function UsersView() {
                       </div>
                     </td>
                     <td className="px-6 py-4">{roleLabel(u)}</td>
-                    <td className="px-6 py-4">{u.branchName ?? "—"}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded text-xs font-bold border ${u.isActive ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-gray-500/10 text-gray-400 border-gray-600/20"}`}>
                         {u.isActive ? "Active" : "Inactive"}
@@ -520,7 +538,7 @@ export function UsersView() {
             </div>
             <div className="flex items-center gap-4 mb-4">
               <Image
-                src={selected.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(selected.fullName || "User")}&background=random`}
+                src={selected.fullName ? `https://ui-avatars.com/api/?name=${encodeURIComponent(selected.fullName)}&background=random&color=fff&size=128` : `https://ui-avatars.com/api/?name=?&background=random&color=fff&size=128`}
                 alt=""
                 width={56}
                 height={56}
@@ -540,10 +558,16 @@ export function UsersView() {
                 ["Role", roleLabel(selected)],
                 ["Branch", selected.branchName],
                 ["Position", selected.position],
+                ["Department", selected.department],
                 ["Specialization", selected.specialization],
+                ["Payroll Type", selected.payrollType],
+                ["Payroll Rate", selected.payrollRate != null ? `Rp ${Number(selected.payrollRate).toLocaleString("id-ID")}` : null],
+                ["Salary", selected.salary != null ? `Rp ${Number(selected.salary).toLocaleString("id-ID")}` : null],
+                ["Bio", selected.bio],
+                ["Notes", selected.notes],
                 ["Status", selected.isActive ? "Active" : "Inactive"],
               ].map(([label, val]) =>
-                val != null ? (
+                val != null && val !== "" ? (
                   <p key={String(label)}><span className="text-gray-500">{label}:</span> {String(val)}</p>
                 ) : null
               )}
@@ -633,13 +657,13 @@ export function UsersView() {
               <label className="block">
                 <span className="text-gray-500 text-xs uppercase font-bold">Role</span>
                 <select
-                  value={crudForm.role}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, role: e.target.value }))}
+                  value={crudForm.roleId}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, roleId: e.target.value }))}
                   className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                 >
                   <option value="">— Pilih role —</option>
                   {roles.map((r) => (
-                    <option key={r.id} value={r.name ?? r.id}>
+                    <option key={r.id} value={r.id}>
                       {r.name ?? r.id}
                     </option>
                   ))}
@@ -672,24 +696,69 @@ export function UsersView() {
               <label className="block">
                 <span className="text-gray-500 text-xs uppercase font-bold">Branch</span>
                 <select
-                  value={crudForm.branchName}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, branchName: e.target.value }))}
+                  value={crudForm.branchId}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, branchId: e.target.value }))}
                   className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                 >
                   <option value="">— Pilih branch —</option>
                   {branches.map((b) => (
-                    <option key={b.branchName ?? b.id} value={b.branchName ?? b.id}>
-                      {b.branchName ?? b.id}
+                    <option key={b.id} value={b.id}>
+                      {b.branchName}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Hire Date</span>
+                <span className="text-gray-500 text-xs uppercase font-bold">Specialization</span>
                 <input
-                  type="date"
-                  value={crudForm.hireDate}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, hireDate: e.target.value }))}
+                  value={crudForm.specialization}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, specialization: e.target.value }))}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                />
+              </label>
+              <label className="block">
+                <span className="text-gray-500 text-xs uppercase font-bold">Notes</span>
+                <textarea
+                  value={crudForm.notes}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, notes: e.target.value }))}
+                  rows={2}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-none"
+                />
+              </label>
+              <label className="block">
+                <span className="text-gray-500 text-xs uppercase font-bold">Bio</span>
+                <textarea
+                  value={crudForm.bio}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, bio: e.target.value }))}
+                  rows={2}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-none"
+                />
+              </label>
+              <label className="block">
+                <span className="text-gray-500 text-xs uppercase font-bold">Payroll Type</span>
+                <select
+                  value={crudForm.payrollType}
+                  onChange={(e) => setCrudForm((f) => ({ ...f, payrollType: e.target.value }))}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                >
+                  <option value="">— Select type —</option>
+                  <option value="Hourly">Hourly</option>
+                  <option value="Daily">Daily</option>
+                  <option value="Monthly">Monthly</option>
+                  <option value="Fixed">Fixed</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={crudForm.payrollRate}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9]/g, "");
+                    setCrudForm((f) => ({ ...f, payrollRate: raw }));
+                  }}
+                  placeholder="0"
                   className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                 />
               </label>

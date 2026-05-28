@@ -41,7 +41,7 @@ export function PayrollView() {
   const loadPayroll = useCallback(async () => {
     setLoading(true);
     setError("");
-    const res = await fetch("/api/coaches?page=1&pageSize=100", { cache: "no-store" });
+    const res = await fetch("/api/v1/coaches?page=1&pageSize=100", { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = await res.json().catch(() => ({})) as {
       items?: PayrollRow[];

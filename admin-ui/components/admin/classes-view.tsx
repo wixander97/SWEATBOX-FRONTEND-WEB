@@ -89,7 +89,7 @@ export function ClassesView() {
       page: String(targetPage),
       pageSize: String(pageSize),
     });
-    const res = await fetch(`/api/classes?${params.toString()}`, { cache: "no-store" });
+    const res = await fetch(`/api/v1/classes?${params.toString()}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => [])) as
       | ApiClass[]
@@ -126,7 +126,7 @@ export function ClassesView() {
   }, [pageSize]);
 
   const loadCoaches = useCallback(async () => {
-    const res = await fetch("/api/coaches?page=1&pageSize=100", { cache: "no-store" });
+    const res = await fetch("/api/v1/coaches?page=1&pageSize=100", { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => [])) as
       | ApiCoach[]
@@ -173,7 +173,7 @@ export function ClassesView() {
   }, [classes, sortKey, sortDir]);
 
   async function createClass(values: ClassFormValues) {
-    const res = await fetch("/api/classes", {
+    const res = await fetch("/api/v1/classes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
@@ -196,7 +196,7 @@ export function ClassesView() {
       bookedCount: enrolled,
       remainingSlots: Math.max(0, values.capacity - enrolled),
     };
-    const res = await fetch(`/api/classes/${selected.id}`, {
+    const res = await fetch(`/api/v1/classes/${selected.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -212,7 +212,7 @@ export function ClassesView() {
   async function deleteClass(id: string) {
     const yes = window.confirm("Delete this class schedule?");
     if (!yes) return;
-    const res = await fetch(`/api/classes/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/v1/classes/${id}`, { method: "DELETE" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => ({}))) as { message?: string };
     if (!res.ok) {
