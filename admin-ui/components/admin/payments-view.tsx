@@ -1,24 +1,33 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { API_BASE_URL } from "@/lib/auth/constants";
+import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { useRole } from "@/contexts/role-context";
 
 type Payment = {
   id: string;
-  memberName?: string | null;
-  fullName?: string | null;
-  memberCode?: string | null;
-  membershipType?: string | null;
-  amount?: number;
-  discount?: number;
-  tax?: number;
-  paymentMethod?: string | null;
-  paymentStatus?: string | null;
-  status?: string | null;
-  paymentProvider?: string | null;
-  notes?: string | null;
-  createdAt?: string | null;
+  userId: string;
+  membershipPlanId: string;
+  membershipPlanName: string | null;
+  invoiceNo: string;
+  amount: number;
+  discount: number;
+  tax: number;
+  finalAmount: number;
+  paymentMethod: number;
+  paymentStatus: number;
+  paymentProvider: number;
+  providerTransactionId: string | null;
+  providerOrderId: string | null;
+  snapToken: string | null;
+  redirectUrl: string | null;
+  expiryAt: string;
+  paidAt: string | null;
+  notes: string | null;
+  created: string;
+  lastModified: string | null;
 };
 
 type PaymentSummary = {
@@ -30,18 +39,17 @@ type PaymentSummary = {
 };
 
 type StatusTab = "all" | "paid" | "pending" | "failed";
-type SortKey = "memberName" | "amount" | "paymentStatus" | "createdAt";
+type SortKey = "invoiceNo" | "finalAmount" | "paymentStatus" | "created";
 type SortDir = "asc" | "desc";
 
 function formatRupiah(amount: number): string {
   return `Rp ${amount.toLocaleString("id-ID")}`;
 }
 
-function statusBadge(status: string) {
-  const s = status;
-  if (s === "paid") return "bg-green-500/10 text-green-500 border-green-500/20";
-  if (s === "pending") return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
-  return "bg-red-500/10 text-red-500 border-red-500/20";
+function statusBadge(status: number) {
+  if (status === 1) return { label: "Paid", class: "bg-green-500/10 text-green-500 border-green-500/20" };
+  if (status === 0) return { label: "Pending", class: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" };
+  return { label: "Failed", class: "bg-red-500/10 text-red-500 border-red-500/20" };
 }
 
 export function PaymentsView() {
@@ -51,7 +59,7 @@ export function PaymentsView() {
   const [activeTab, setActiveTab] = useState<StatusTab>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
+  const [sortKey, setSortKey] = useState<SortKey>("created");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selected, setSelected] = useState<Payment | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -60,8 +68,14 @@ export function PaymentsView() {
   const loadPayments = useCallback(async (tab: StatusTab) => {
     setLoading(true);
     setError("");
-    const params = tab !== "all" ? `?status=${tab}` : "";
-    const res = await fetch(`/api/payments${params}`, { cache: "no-store" });
+    const statusMap: Record<StatusTab, string> = {
+      all: "",
+      paid: "?status=1",
+      pending: "?status=0",
+      failed: "?status=2",
+    };
+    const params = statusMap[tab];
+    const res = await authFetch(`${API_BASE_URL}/api/v1/payments${params}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const data = (await res.json().catch(() => [])) as Payment[] | { items?: Payment[]; data?: Payment[] };
     if (!res.ok) {
@@ -76,7 +90,7 @@ export function PaymentsView() {
   }, []);
 
   const loadSummary = useCallback(async () => {
-    const res = await fetch("/api/payments/summary", { cache: "no-store" });
+    const res = await authFetch(`${API_BASE_URL}/api/v1/payments/summary`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json().catch(() => null);
       if (data) setSummary(data as PaymentSummary);
@@ -190,11 +204,12 @@ export function PaymentsView() {
                 <tr>
                   {(
                     [
-                      { label: "Member", key: "memberName" },
-                      { label: "Amount", key: "amount" },
-                      { label: "Method", key: null },
+                      { label: "Invoice", key: "invoiceNo" },
+                      { label: "Plan", key: null },
+                      { label: "Amount", key: null },
+                      { label: "Final", key: "finalAmount" },
                       { label: "Status", key: "paymentStatus" },
-                      { label: "Date", key: "createdAt" },
+                      { label: "Created", key: "created" },
                     ] as { label: string; key: SortKey | null }[]
                   ).map(({ label, key }) => (
                     <th key={label} className="px-6 py-4">
@@ -218,28 +233,28 @@ export function PaymentsView() {
               </thead>
               <tbody className="divide-y divide-border">
                 {sorted.map((p) => {
-                  const status = p.paymentStatus ?? p.status ?? "—";
+                  const badge = statusBadge(p.paymentStatus);
                   return (
                     <tr key={p.id} className="table-row transition">
+                      <td className="px-6 py-4 font-mono text-xs text-sweat">
+                        {p.invoiceNo}
+                      </td>
                       <td className="px-6 py-4 font-medium text-white">
-                        {p.memberName ?? p.fullName ?? "—"}
-                        {p.memberCode && (
-                          <span className="block text-xs text-gray-500">{p.memberCode}</span>
-                        )}
+                        {p.membershipPlanName ?? "—"}
                       </td>
                       <td className="px-6 py-4 font-mono text-white">
-                        {p.amount != null ? formatRupiah(p.amount) : "—"}
+                        {formatRupiah(p.amount)}
                       </td>
-                      <td className="px-6 py-4">{p.paymentMethod ?? "—"}</td>
+                      <td className="px-6 py-4 font-mono text-green-400">
+                        {formatRupiah(p.finalAmount)}
+                      </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-xs font-bold border ${statusBadge(status)}`}>
-                          {status}
+                        <span className={`px-2 py-1 rounded text-xs font-bold border ${badge.class}`}>
+                          {badge.label}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        {p.createdAt
-                          ? new Date(p.createdAt).toLocaleDateString("id-ID")
-                          : "—"}
+                        {new Date(p.created).toLocaleDateString("id-ID")}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex gap-2 justify-end">
@@ -282,17 +297,20 @@ export function PaymentsView() {
             </div>
             <div className="space-y-2 text-sm text-gray-300">
               {[
-                ["Member", selected.memberName ?? selected.fullName],
-                ["Member Code", selected.memberCode],
-                ["Membership Type", selected.membershipType],
-                ["Amount", selected.amount != null ? formatRupiah(selected.amount) : null],
-                ["Discount", selected.discount != null ? formatRupiah(selected.discount) : null],
-                ["Tax", selected.tax != null ? formatRupiah(selected.tax) : null],
-                ["Method", selected.paymentMethod],
-                ["Provider", selected.paymentProvider],
-                ["Status", selected.paymentStatus ?? selected.status],
+                ["Invoice No", selected.invoiceNo],
+                ["Plan Name", selected.membershipPlanName],
+                ["Amount", formatRupiah(selected.amount)],
+                ["Discount", formatRupiah(selected.discount)],
+                ["Tax", formatRupiah(selected.tax)],
+                ["Final Amount", formatRupiah(selected.finalAmount)],
+                ["Payment Method", selected.paymentMethod],
+                ["Payment Provider", selected.paymentProvider],
+                ["Status", statusBadge(selected.paymentStatus).label],
+                ["Provider Order ID", selected.providerOrderId],
+                ["Expiry At", new Date(selected.expiryAt).toLocaleString("id-ID")],
+                ["Paid At", selected.paidAt ? new Date(selected.paidAt).toLocaleString("id-ID") : null],
                 ["Notes", selected.notes],
-                ["Date", selected.createdAt ? new Date(selected.createdAt).toLocaleString("id-ID") : null],
+                ["Created", new Date(selected.created).toLocaleString("id-ID")],
               ].map(([label, val]) =>
                 val != null ? (
                   <p key={String(label)}>

@@ -3,10 +3,55 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adminPaths } from "@/lib/admin-routes";
+import { API_BASE_URL } from "@/lib/auth/constants";
+import { authFetch } from "@/lib/auth/client-fetch";
 import { useRole } from "@/contexts/role-context";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 
 type StatsPayload = Record<string, unknown>;
+
+type MembersStatsPayload = {
+  totalMembers: number;
+  activeMembers: number;
+  expiredMembers: number;
+  frozenMembers: number;
+  pendingPayments: number;
+  ptMembers: number;
+};
+
+type PaymentSummaryPayload = {
+  totalPayments: number;
+  totalPendingPayments: number;
+  totalPaidPayments: number;
+  totalFailedPayments: number;
+  totalRevenue: number;
+  totalPendingRevenue: number;
+  mostCommonStatus: number;
+};
+
+type ClassSchedulesStatsPayload = {
+  totalClasses: number;
+  activeClasses: number;
+  cancelledClasses: number;
+  completedClasses: number;
+};
+
+type StaffAttendanceStatsPayload = {
+  totalAttendances: number;
+  totalPresent: number;
+  totalAbsent: number;
+  totalLate: number;
+};
+
+type CoachesStatsPayload = {
+  totalCoaches: number;
+  activeCoaches: number;
+  inactiveCoaches: number;
+  averageRating: number;
+  averageAttendanceRate: number;
+  totalPtSessions: number;
+  totalClasses: number;
+};
 
 type DashboardStats = {
   members: StatsPayload | null;
@@ -19,12 +64,14 @@ type DashboardStats = {
 
 type RecentPayment = {
   id: string;
-  memberName?: string;
-  fullName?: string;
-  membershipType?: string;
-  amount?: number;
-  paymentStatus?: string;
-  status?: string;
+  membershipPlanName: string | null;
+  invoiceNo: string;
+  amount: number;
+  finalAmount: number;
+  paymentStatus: number;
+  paymentProvider: number;
+  notes: string | null;
+  created: string;
 };
 
 type TodayClass = {
@@ -162,6 +209,11 @@ function CompactStatCard({
 export function DashboardView() {
   const { currentRole } = useRole();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [memberStats, setMemberStats] = useState<MembersStatsPayload | null>(null);
+  const [paymentSummary, setPaymentSummary] = useState<PaymentSummaryPayload | null>(null);
+  const [classStats, setClassStats] = useState<ClassSchedulesStatsPayload | null>(null);
+  const [staffAttendanceStats, setStaffAttendanceStats] = useState<StaffAttendanceStatsPayload | null>(null);
+  const [coachesStats, setCoachesStats] = useState<CoachesStatsPayload | null>(null);
   const [recentPayments, setRecentPayments] = useState<RecentPayment[]>([]);
   const [todayClasses, setTodayClasses] = useState<TodayClass[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,10 +222,15 @@ export function DashboardView() {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const [statsRes, paymentsRes, classesRes] = await Promise.allSettled([
-        fetch("/api/v1/stats", { cache: "no-store" }),
-        fetch("/api/v1/payments", { cache: "no-store" }),
-        fetch("/api/v1/classes?page=1&pageSize=6", { cache: "no-store" }),
+      const [statsRes, memberStatsRes, paymentSummaryRes, classStatsRes, staffAttendanceRes, coachesStatsRes, paymentsRes, classesRes] = await Promise.allSettled([
+        authFetch(`${API_BASE_URL}/api/v1/stats`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/members/stats`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/payments/summary`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/class-schedules/stats`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/staff-attendances/stats`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/coaches/stats`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/payments`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/class-schedules?page=1&pageSize=6`, { cache: "no-store" }),
       ]);
 
       if (statsRes.status === "fulfilled") {
@@ -182,11 +239,36 @@ export function DashboardView() {
         if (data) setStats(data as DashboardStats);
       }
 
+      if (memberStatsRes.status === "fulfilled" && memberStatsRes.value.ok) {
+        const data = await memberStatsRes.value.json().catch(() => null);
+        if (data) setMemberStats(data as MembersStatsPayload);
+      }
+
+      if (paymentSummaryRes.status === "fulfilled" && paymentSummaryRes.value.ok) {
+        const data = await paymentSummaryRes.value.json().catch(() => null);
+        if (data) setPaymentSummary(data as PaymentSummaryPayload);
+      }
+
+      if (classStatsRes.status === "fulfilled" && classStatsRes.value.ok) {
+        const data = await classStatsRes.value.json().catch(() => null);
+        if (data) setClassStats(data as ClassSchedulesStatsPayload);
+      }
+
+      if (staffAttendanceRes.status === "fulfilled" && staffAttendanceRes.value.ok) {
+        const data = await staffAttendanceRes.value.json().catch(() => null);
+        if (data) setStaffAttendanceStats(data as StaffAttendanceStatsPayload);
+      }
+
+      if (coachesStatsRes.status === "fulfilled" && coachesStatsRes.value.ok) {
+        const data = await coachesStatsRes.value.json().catch(() => null);
+        if (data) setCoachesStats(data as CoachesStatsPayload);
+      }
+
       if (paymentsRes.status === "fulfilled" && paymentsRes.value.ok) {
         const data = await paymentsRes.value.json().catch(() => []);
         const list: RecentPayment[] = Array.isArray(data)
-          ? data.slice(0, 5)
-          : ((data?.items ?? data?.data ?? []) as RecentPayment[]).slice(0, 5);
+          ? data.slice(0, 10)
+          : ((data?.items ?? data?.data ?? []) as RecentPayment[]).slice(0, 10);
         setRecentPayments(list);
       }
 
@@ -204,36 +286,49 @@ export function DashboardView() {
   }, []);
 
   // ── Member stats ─────────────────────────────────────────────────────────
-  const m = stats?.members ?? null;
-  const totalMembers = getNum(m, "totalMembers", "total", "count");
-  const activeMembers = getNum(m, "totalActive", "activeCount", "active");
-  const expiredMembers = getNum(m, "totalExpired", "expiredCount", "expired");
-  const expiringCount = getNum(m, "expiringSoonCount", "expiringCount", "expiringSoon", "expiringSoonCount");
-  const frozenCount = getNum(m, "frozenCount", "frozen", "totalFrozen");
-  const pendingPaymentCount = getNum(m, "pendingPaymentCount", "pendingPayment", "unpaidCount");
+  const totalMembers = memberStats?.totalMembers ?? null;
+  const activeMembers = memberStats?.activeMembers ?? null;
+  const expiredMembers = memberStats?.expiredMembers ?? null;
+  const frozenCount = memberStats?.frozenMembers ?? null;
+  const pendingPaymentCount = memberStats?.pendingPayments ?? null;
+  const ptMembers = memberStats?.ptMembers ?? null;
+  const expiringCount = null; // Not available in new endpoint
 
   // ── Coach stats ───────────────────────────────────────────────────────────
   const c = stats?.coaches ?? null;
-  const totalCoaches = getNum(c, "totalCoaches", "total", "count");
-  const activeCoaches = getNum(c, "totalActive", "activeCount", "active");
-  const avgRating = getNum(c, "averageRating", "avgRating", "rating");
+  const totalCoachesFallback = getNum(c, "totalCoaches", "total", "count");
+  const activeCoachesFallback = getNum(c, "totalActive", "activeCount", "active");
+  const avgRatingFallback = getNum(c, "averageRating", "avgRating", "rating");
+
+  // Use coachesStats from dedicated endpoint, fallback to stats?.coaches
+  const totalCoaches = coachesStats?.totalCoaches ?? totalCoachesFallback;
+  const activeCoaches = coachesStats?.activeCoaches ?? activeCoachesFallback;
+  const avgRating = coachesStats?.averageRating ?? avgRatingFallback;
 
   // ── Class stats ───────────────────────────────────────────────────────────
   const cl = stats?.classes ?? null;
-  const totalClasses = getNum(cl, "totalClasses", "total", "count");
-  const activeClasses = getNum(cl, "activeCount", "totalActive", "active");
-  const upcomingClasses = getNum(cl, "upcomingCount", "upcoming", "totalUpcoming");
-  const completedClasses = getNum(cl, "completedCount", "completed", "totalCompleted");
-  const cancelledClasses = getNum(cl, "cancelledCount", "cancelled", "totalCancelled");
   const classOccupancy = getNum(cl, "averageOccupancy", "occupancyRate", "avgOccupancy", "averageOccupancyRate");
+  const upcomingClasses = null; // Not in new endpoint, display replaced
+
+  // Use classStats from dedicated endpoint, fallback to stats?.classes for classOccupancy
+  const totalClasses = classStats?.totalClasses ?? getNum(cl, "totalClasses", "total", "count");
+  const activeClasses = classStats?.activeClasses ?? getNum(cl, "activeCount", "totalActive", "active");
+  const completedClasses = classStats?.completedClasses ?? getNum(cl, "completedCount", "completed", "totalCompleted");
+  const cancelledClasses = classStats?.cancelledClasses ?? getNum(cl, "cancelledCount", "cancelled", "totalCancelled");
 
   // ── Payment stats ─────────────────────────────────────────────────────────
   const p = stats?.payments ?? null;
-  const totalRevenue = getNum(p, "totalRevenue", "totalAmount", "revenue", "total", "totalPaid");
-  const paidCount = getNum(p, "paidCount", "totalPaid", "paid");
-  const pendingCount = getNum(p, "pendingCount", "totalPending", "pending");
-  const failedCount = getNum(p, "failedCount", "totalFailed", "failed");
+  const totalRevenueFallback = getNum(p, "totalRevenue", "totalAmount", "revenue", "total", "totalPaid");
+  const paidCountFallback = getNum(p, "paidCount", "totalPaid", "paid");
+  const pendingCountFallback = getNum(p, "pendingCount", "totalPending", "pending");
+  const failedCountFallback = getNum(p, "failedCount", "totalFailed", "failed");
   const totalTx = getNum(p, "totalTransactions", "totalCount", "count");
+
+  // Use paymentSummary from dedicated endpoint, fallback to stats?.payments
+  const totalRevenue = paymentSummary?.totalRevenue ?? totalRevenueFallback;
+  const paidCount = paymentSummary?.totalPaidPayments ?? paidCountFallback;
+  const pendingCount = paymentSummary?.totalPendingPayments ?? pendingCountFallback;
+  const failedCount = paymentSummary?.totalFailedPayments ?? failedCountFallback;
 
   // ── Staff stats ───────────────────────────────────────────────────────────
   const s = stats?.staffs ?? null;
@@ -242,10 +337,18 @@ export function DashboardView() {
 
   // ── Attendance stats ──────────────────────────────────────────────────────
   const a = stats?.attendance ?? null;
-  const checkedIn = getNum(a, "checkedIn", "presentCount", "totalPresent", "present");
-  const lateCount = getNum(a, "lateCount", "late", "totalLate");
-  const absentCount = getNum(a, "absentCount", "absent", "totalAbsent");
-  const onTimeCount = getNum(a, "onTimeCount", "onTime", "totalOnTime");
+  const checkedInFallback = getNum(a, "checkedIn", "presentCount", "totalPresent", "present");
+  const lateCountFallback = getNum(a, "lateCount", "late", "totalLate");
+  const absentCountFallback = getNum(a, "absentCount", "absent", "totalAbsent");
+  const onTimeCountFallback = getNum(a, "onTimeCount", "onTime", "totalOnTime");
+
+  // Use staffAttendanceStats from dedicated endpoint, fallback to stats?.attendance
+  const checkedIn = staffAttendanceStats?.totalPresent ?? checkedInFallback;
+  const lateCount = staffAttendanceStats?.totalLate ?? lateCountFallback;
+  const absentCount = staffAttendanceStats?.totalAbsent ?? absentCountFallback;
+  const onTimeCount = (staffAttendanceStats?.totalPresent != null && staffAttendanceStats?.totalLate != null)
+    ? Math.max(0, staffAttendanceStats.totalPresent - staffAttendanceStats.totalLate)
+    : onTimeCountFallback;
 
   const staffDisplay = activeStaff ?? totalStaff;
 
@@ -291,7 +394,7 @@ export function DashboardView() {
         />
         {currentRole === "owner" ? (
           <StatCard
-            label="Revenue Monthly" // FR-003: Changed from "Revenue Total" to "Revenue Monthly"
+            label="Total Revenue" // FR-003: Changed from "Revenue Total" to "Revenue Monthly"
             value={totalRevenue != null ? formatRupiah(totalRevenue) : "—"}
             accent="text-sweat"
             icon="fa-wallet"
@@ -358,8 +461,8 @@ export function DashboardView() {
           </div>
         )}
         <CompactStatCard
-          label="Upcoming Classes"
-          value={upcomingClasses ?? activeClasses ?? "—"}
+          label="Cancelled Classes"
+          value={cancelledClasses ?? "—"}
           icon="fa-play-circle"
           loading={loading}
           href={adminPaths.classes}
@@ -452,7 +555,7 @@ export function DashboardView() {
                 ) : (
                   <>
                     <QuickStatRow label="Total Kelas" value={totalClasses} />
-                    <QuickStatRow label="Upcoming" value={upcomingClasses} accent="text-green-400" />
+                    <QuickStatRow label="Cancelled" value={cancelledClasses} accent="text-red-400" />
                     <QuickStatRow label="Completed" value={completedClasses} accent="text-gray-400" />
                     {avgRating != null && (
                       <QuickStatRow label="Avg Rating" value={`${avgRating.toFixed(1)} ★`} accent="text-sweat" />
@@ -495,26 +598,25 @@ export function DashboardView() {
                   </tr>
                 ) : (
                   recentPayments.map((p) => {
-                    const status = p.paymentStatus ?? p.status ?? "—";
-                    const statusLower = status;
+                    const statusLabel = p.paymentStatus === 1 ? "Paid" : p.paymentStatus === 0 ? "Pending" : "Failed";
                     const badgeCls =
-                      statusLower === "paid"
+                      p.paymentStatus === 1
                         ? "bg-green-500/10 text-green-500"
-                        : statusLower === "pending"
+                        : p.paymentStatus === 0
                           ? "bg-yellow-500/10 text-yellow-400"
                           : "bg-red-500/10 text-red-400";
                     return (
                       <tr key={p.id} className="table-row transition">
                         <td className="px-5 py-3 font-medium text-white">
-                          {p.memberName ?? p.fullName ?? "—"}
+                          {p.invoiceNo}
                         </td>
-                        <td className="px-5 py-3">{p.membershipType ?? "—"}</td>
-                        <td className="px-5 py-3 text-white font-mono text-xs">
-                          {p.amount != null ? formatRupiah(p.amount) : "—"}
+                        <td className="px-5 py-3">{p.membershipPlanName ?? "—"}</td>
+                        <td className="px-5 py-3 text-green-400 font-mono text-xs">
+                          {formatRupiah(p.finalAmount)}
                         </td>
                         <td className="px-5 py-3">
                           <span className={`px-2 py-1 rounded text-xs font-bold ${badgeCls}`}>
-                            {status}
+                            {statusLabel}
                           </span>
                         </td>
                       </tr>

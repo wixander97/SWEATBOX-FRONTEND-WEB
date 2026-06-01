@@ -22,5 +22,5 @@ export async function POST(req: Request) {
   }
 
   await setAuthTokenCookie(result.token);
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, token: result.token });
 }

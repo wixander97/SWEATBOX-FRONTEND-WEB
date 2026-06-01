@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
+import { API_BASE_URL } from "@/lib/auth/constants";
+import { authFetch } from "@/lib/auth/client-fetch";
 
 type User = {
   id: string;
@@ -109,6 +111,7 @@ export function UsersView() {
   const [error, setError] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("fullName");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [selected, setSelected] = useState<User | null>(null);
   const [resetForm, setResetForm] = useState<ResetPasswordForm | null>(null);
@@ -133,7 +136,7 @@ export function UsersView() {
     setError("");
     const params = new URLSearchParams({ page: String(targetPage), pageSize: String(pageSize) });
     if (keyword) params.set("search", keyword);
-    const res = await fetch(`/api/v1/users?${params.toString()}`, { cache: "no-store" });
+    const res = await authFetch(`${API_BASE_URL}/api/v1/users/paged?${params.toString()}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => [])) as User[] | PagedResponse<User>;
     if (!res.ok) {
@@ -158,7 +161,7 @@ export function UsersView() {
   }, [pageSize]);
 
   const loadRoles = useCallback(async () => {
-    const res = await fetch("/api/v1/users/roles", { cache: "no-store" });
+    const res = await authFetch(`${API_BASE_URL}/api/v1/users/roles`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json().catch(() => []);
       const list: Role[] = Array.isArray(data) ? data : (data.items ?? data.data ?? []);
@@ -167,7 +170,7 @@ export function UsersView() {
   }, []);
 
   const loadBranches = useCallback(async () => {
-    const res = await fetch("/api/v1/branches", { cache: "no-store" });
+    const res = await authFetch(`${API_BASE_URL}/api/v1/branches`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json().catch(() => []);
       const list: Branch[] = Array.isArray(data) ? data : (data.items ?? data.data ?? []);
@@ -176,7 +179,7 @@ export function UsersView() {
   }, []);
 
   const loadCurrentUser = useCallback(async () => {
-    const res = await fetch("/api/v1/auth/profile", { cache: "no-store" });
+    const res = await authFetch(`${API_BASE_URL}/api/v1/auth/profile`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json().catch(() => ({})) as { userId?: string };
       if (data.userId) setCurrentUserId(data.userId);
@@ -218,7 +221,7 @@ export function UsersView() {
     if (!resetForm) return;
     setResetLoading(true);
     setResetMsg("");
-    const res = await fetch(`/api/v1/users/${userId}/reset-password`, {
+    const res = await authFetch(`${API_BASE_URL}/api/v1/users/${userId}/reset-password`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ newPassword: resetForm.newPassword }),
@@ -235,7 +238,7 @@ export function UsersView() {
 
   async function handleToggleStatus(user: User) {
     setStatusLoading(user.id);
-    await fetch(`/api/v1/users/${user.id}/status`, {
+    await authFetch(`${API_BASE_URL}/api/v1/users/${user.id}/status`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isActive: !user.isActive }),
@@ -246,7 +249,7 @@ export function UsersView() {
 
   async function handleDelete(id: string) {
     setDeleteLoading(true);
-    await fetch(`/api/v1/users/${id}`, { method: "DELETE" });
+    await authFetch(`${API_BASE_URL}/api/v1/users/${id}`, { method: "DELETE" });
     setDeleteLoading(false);
     setDeleteId(null);
     setSelected(null);
@@ -277,7 +280,7 @@ export function UsersView() {
     setCrudMsg("");
     setCrudForm(formFromUserRow(u));
     setUserCrud({ mode: "edit", id: u.id });
-    const res = await fetch(`/api/v1/users/${u.id}`, { cache: "no-store" });
+    const res = await authFetch(`${API_BASE_URL}/api/v1/users/${u.id}`, { cache: "no-store" });
     if (res.ok) {
       const data = (await res.json().catch(() => null)) as User | null;
       if (data) {
@@ -315,7 +318,7 @@ export function UsersView() {
           salary: crudForm.salary === "" ? null : Number(crudForm.salary),
           isActive: crudForm.isActive,
         };
-        const res = await fetch("/api/v1/users", {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/users`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
@@ -347,7 +350,7 @@ export function UsersView() {
         salary: crudForm.salary === "" ? null : Number(crudForm.salary),
         isActive: crudForm.isActive,
       };
-      const res = await fetch(`/api/v1/users/${userCrud.id}`, {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/users/${userCrud.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -581,15 +584,31 @@ export function UsersView() {
               >
                 <i className="fas fa-key" aria-hidden /> Reset Password
               </button>
+
               {resetForm && (
                 <div className="mt-3 flex gap-2">
-                  <input
-                    type="password"
-                    placeholder="New password"
-                    value={resetForm.newPassword}
-                    onChange={(e) => setResetForm({ newPassword: e.target.value })}
-                    className="flex-1 bg-sidebar border border-border rounded px-3 py-1.5 text-sm text-white focus:outline-none focus:border-sweat"
-                  />
+                  {/* Wrapper relative untuk memposisikan icon mata */}
+                  <div className="relative flex-1">
+                    <input
+                      // Tipe input berubah secara dinamis berdasarkan state
+                      type={showPassword ? "text" : "password"}
+                      placeholder="New password"
+                      value={resetForm.newPassword}
+                      onChange={(e) => setResetForm({ newPassword: e.target.value })}
+                      // Ditambahkan w-full dan pr-10 agar teks tidak tertutup icon
+                      className="w-full bg-sidebar border border-border rounded px-3 py-1.5 pr-10 text-sm text-white focus:outline-none focus:border-sweat"
+                    />
+
+                    {/* Tombol Toggle Visible Password */}
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 focus:outline-none"
+                    >
+                      <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} aria-hidden />
+                    </button>
+                  </div>
+
                   <button
                     type="button"
                     disabled={resetLoading || !resetForm.newPassword}
@@ -600,7 +619,12 @@ export function UsersView() {
                   </button>
                 </div>
               )}
-              {resetMsg && <p className={`mt-2 text-xs ${resetMsg.includes("success") ? "text-green-400" : "text-red-400"}`}>{resetMsg}</p>}
+
+              {resetMsg && (
+                <p className={`mt-2 text-xs ${resetMsg.includes("success") ? "text-green-400" : "text-red-400"}`}>
+                  {resetMsg}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -638,12 +662,22 @@ export function UsersView() {
               </label>
               <label className="block">
                 <span className="text-gray-500 text-xs uppercase font-bold">Password</span>
-                <input
-                  type="password"
-                  value={crudForm.password}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, password: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={crudForm.password}
+                    onChange={(e) => setCrudForm((f) => ({ ...f, password: e.target.value }))}
+                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 pr-10 text-white focus:outline-none focus:border-sweat"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} aria-hidden />
+                  </button>
+                </div>
               </label>
               <label className="block">
                 <span className="text-gray-500 text-xs uppercase font-bold">Email</span>

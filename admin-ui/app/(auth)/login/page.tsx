@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { setAuthTokenLocal } from "@/lib/auth/client-fetch";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function LoginPage() {
       body: JSON.stringify({ email, password }),
     });
 
-    const payload = (await res.json().catch(() => ({}))) as { message?: string };
+    const payload = (await res.json().catch(() => ({}))) as { ok?: boolean; token?: string; message?: string };
     setLoading(false);
 
     if (!res.ok) {
@@ -34,6 +35,7 @@ export default function LoginPage() {
     const nextPath =
       new URLSearchParams(window.location.search).get("next") ||
       "/admin/dashboard";
+    setAuthTokenLocal(payload.token ?? "");
     router.push(nextPath);
     router.refresh();
   }

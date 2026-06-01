@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { API_BASE_URL } from "@/lib/auth/constants";
+import { authFetch } from "@/lib/auth/client-fetch";
+
 type SortDir = "asc" | "desc";
 import {
   CreateClassModal,
@@ -14,16 +17,25 @@ type ApiClass = {
   className: string;
   coachId: string;
   coachName?: string | null;
+  branchId: string;
+  branchName?: string | null;
   classDate: string;
   startTime: string;
   endTime: string;
   capacity: number;
   bookedCount?: number;
   remainingSlots?: number;
-  branchName?: string | null;
   roomName?: string | null;
   description?: string | null;
+  classType?: string | null;
+  difficultyLevel?: string | null;
   isActive: boolean;
+  isCancelled?: boolean;
+  cancelReason?: string | null;
+  isCompleted?: boolean;
+  isSessionActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string | null;
 };
 
 type ApiCoach = {
@@ -31,6 +43,7 @@ type ApiCoach = {
   fullName?: string | null;
   name?: string | null;
 };
+
 
 type PagedResponse<T> = {
   items?: T[];
@@ -89,7 +102,7 @@ export function ClassesView() {
       page: String(targetPage),
       pageSize: String(pageSize),
     });
-    const res = await fetch(`/api/v1/classes?${params.toString()}`, { cache: "no-store" });
+    const res = await authFetch(`${API_BASE_URL}/api/v1/class-schedules?${params.toString()}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => [])) as
       | ApiClass[]
@@ -126,7 +139,7 @@ export function ClassesView() {
   }, [pageSize]);
 
   const loadCoaches = useCallback(async () => {
-    const res = await fetch("/api/v1/coaches?page=1&pageSize=100", { cache: "no-store" });
+    const res = await authFetch(`${API_BASE_URL}/api/v1/coaches?page=1&pageSize=100`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => [])) as
       | ApiCoach[]
@@ -173,7 +186,7 @@ export function ClassesView() {
   }, [classes, sortKey, sortDir]);
 
   async function createClass(values: ClassFormValues) {
-    const res = await fetch("/api/v1/classes", {
+    const res = await authFetch(`${API_BASE_URL}/api/v1/class-schedules`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
@@ -188,18 +201,10 @@ export function ClassesView() {
 
   async function updateClass(values: ClassFormValues) {
     if (!selected) return;
-    const enrolled =
-      selected.bookedCount ??
-      Math.max(0, selected.capacity - (selected.remainingSlots ?? selected.capacity));
-    const body = {
-      ...values,
-      bookedCount: enrolled,
-      remainingSlots: Math.max(0, values.capacity - enrolled),
-    };
-    const res = await fetch(`/api/v1/classes/${selected.id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/v1/class-schedules/${selected.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(values),
     });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => ({}))) as { message?: string };
@@ -212,7 +217,7 @@ export function ClassesView() {
   async function deleteClass(id: string) {
     const yes = window.confirm("Delete this class schedule?");
     if (!yes) return;
-    const res = await fetch(`/api/v1/classes/${id}`, { method: "DELETE" });
+    const res = await authFetch(`${API_BASE_URL}/api/v1/class-schedules/${id}`, { method: "DELETE" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => ({}))) as { message?: string };
     if (!res.ok) {
@@ -228,15 +233,15 @@ export function ClassesView() {
         <div className="p-4 sm:p-6 border-b border-border flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div className="flex flex-col gap-3">
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <input
-              type="date"
-              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
-            />
-            <select className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat">
-              <option>All Locations</option>
-              <option>Puri Indah</option>
-              <option>PIK Avenue</option>
-            </select>
+              <input
+                type="date"
+                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+              />
+              <select className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat">
+                <option>All Locations</option>
+                <option>Puri Indah</option>
+                <option>PIK Avenue</option>
+              </select>
             </div>
             <p className="text-[11px] text-gray-500 flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="font-bold uppercase tracking-wide text-gray-400">Lokasi</span>
@@ -264,117 +269,117 @@ export function ClassesView() {
           </button>
         </div>
         <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-sm text-gray-400">
-          <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
-            <tr>
-              {(
-                [
-                  { label: "Time", key: "time" },
-                  { label: "Class Name", key: "className" },
-                  { label: "Trainer", key: "trainer" },
-                  { label: "Location", key: "location" },
-                  { label: "Capacity", key: "enrolled" },
-                ] as { label: string; key: string }[]
-              ).map(({ label, key }) => (
-                <th key={key} className="px-6 py-4">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort(key)}
-                    className="flex items-center gap-1.5 hover:text-white transition group"
-                  >
-                    {label}
-                    <span className="flex flex-col leading-none text-[10px]">
-                      <i
-                        className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`}
-                        aria-hidden
-                      />
-                      <i
-                        className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`}
-                        aria-hidden
-                      />
-                    </span>
-                  </button>
-                </th>
-              ))}
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {loading ? (
+          <table className="w-full min-w-[760px] text-left text-sm text-gray-400">
+            <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={6}>
-                  Loading...
-                </td>
-              </tr>
-            ) : error ? (
-              <tr>
-                <td className="px-6 py-6 text-red-400" colSpan={6}>
-                  {error}
-                </td>
-              </tr>
-            ) : mappedRows.length === 0 ? (
-              <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={6}>
-                  Belum ada data class.
-                </td>
-              </tr>
-            ) : (
-              mappedRows.map((c) => {
-                const pct = c.capacity > 0 ? (c.enrolled / c.capacity) * 100 : 0;
-              return (
-                <tr key={c.id} className="table-row transition">
-                  <td className="px-6 py-4 font-bold text-white">{c.time}</td>
-                  <td className="px-6 py-4 font-medium text-white">{c.className}</td>
-                  <td className="px-6 py-4">
-                    <span className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-gray-700 shrink-0" />
-                      {c.trainer}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${branchBadgeClass(c.branchName)}`}
-                    >
-                      {c.location}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="bg-gray-700 h-2 rounded-full overflow-hidden w-24">
-                      <div
-                        className="bg-sweat h-full"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <span className="text-xs mt-1 block">
-                      {c.enrolled} / {c.capacity}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
+                {(
+                  [
+                    { label: "Time", key: "time" },
+                    { label: "Class Name", key: "className" },
+                    { label: "Trainer", key: "trainer" },
+                    { label: "Location", key: "location" },
+                    { label: "Capacity", key: "enrolled" },
+                  ] as { label: string; key: string }[]
+                ).map(({ label, key }) => (
+                  <th key={key} className="px-6 py-4">
                     <button
                       type="button"
-                      className="text-gray-400 hover:text-white mx-1"
-                      aria-label="Edit"
-                      onClick={() => {
-                        setSelected(c);
-                        setEditOpen(true);
-                      }}
+                      onClick={() => toggleSort(key)}
+                      className="flex items-center gap-1.5 hover:text-white transition group"
                     >
-                      <i className="fas fa-edit" aria-hidden />
+                      {label}
+                      <span className="flex flex-col leading-none text-[10px]">
+                        <i
+                          className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`}
+                          aria-hidden
+                        />
+                        <i
+                          className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`}
+                          aria-hidden
+                        />
+                      </span>
                     </button>
-                    <button
-                      type="button"
-                      className="text-red-500 hover:text-red-400 mx-1"
-                      aria-label="Delete"
-                      onClick={() => void deleteClass(c.id)}
-                    >
-                      <i className="fas fa-trash" aria-hidden />
-                    </button>
+                  </th>
+                ))}
+                <th className="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {loading ? (
+                <tr>
+                  <td className="px-6 py-6 text-gray-400" colSpan={6}>
+                    Loading...
                   </td>
                 </tr>
-              );
-            }))}
-          </tbody>
-        </table>
+              ) : error ? (
+                <tr>
+                  <td className="px-6 py-6 text-red-400" colSpan={6}>
+                    {error}
+                  </td>
+                </tr>
+              ) : mappedRows.length === 0 ? (
+                <tr>
+                  <td className="px-6 py-6 text-gray-400" colSpan={6}>
+                    Belum ada data class.
+                  </td>
+                </tr>
+              ) : (
+                mappedRows.map((c) => {
+                  const pct = c.capacity > 0 ? (c.enrolled / c.capacity) * 100 : 0;
+                  return (
+                    <tr key={c.id} className="table-row transition">
+                      <td className="px-6 py-4 font-bold text-white">{c.time}</td>
+                      <td className="px-6 py-4 font-medium text-white">{c.className}</td>
+                      <td className="px-6 py-4">
+                        <span className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-gray-700 shrink-0" />
+                          {c.trainer}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${branchBadgeClass(c.branchName)}`}
+                        >
+                          {c.location}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="bg-gray-700 h-2 rounded-full overflow-hidden w-24">
+                          <div
+                            className="bg-sweat h-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="text-xs mt-1 block">
+                          {c.enrolled} / {c.capacity}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          type="button"
+                          className="text-gray-400 hover:text-white mx-1"
+                          aria-label="Edit"
+                          onClick={() => {
+                            setSelected(c);
+                            setEditOpen(true);
+                          }}
+                        >
+                          <i className="fas fa-edit" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className="text-red-500 hover:text-red-400 mx-1"
+                          aria-label="Delete"
+                          onClick={() => void deleteClass(c.id)}
+                        >
+                          <i className="fas fa-trash" aria-hidden />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }))}
+            </tbody>
+          </table>
         </div>
       </div>
       <div className="px-4 sm:px-6 py-4 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -419,16 +424,18 @@ export function ClassesView() {
         initialValues={
           selected
             ? {
-                className: selected.className,
-                coachId: selected.coachId,
-                classDate: selected.classDate,
-                startTime: selected.startTime,
-                endTime: selected.endTime,
-                capacity: selected.capacity,
-                branchName: selected.branchName || "",
-                roomName: selected.roomName || "",
-                description: selected.description || "",
-              }
+              className: selected.className,
+              coachId: selected.coachId,
+              classDate: selected.classDate,
+              startTime: selected.startTime,
+              endTime: selected.endTime,
+              capacity: selected.capacity,
+              branchId: selected.branchId || "",
+              roomName: selected.roomName || "",
+              description: selected.description || "",
+              classType: selected.classType || "",
+              difficultyLevel: selected.difficultyLevel || "",
+            }
             : undefined
         }
         onSubmit={updateClass}

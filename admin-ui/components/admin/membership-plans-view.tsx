@@ -5,6 +5,8 @@ import {
     CreateMembershipPlanModal,
     type MembershipPlanFormValues,
 } from "@/components/admin/create-membership-plan-modal";
+import { API_BASE_URL } from "@/lib/auth/constants";
+import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 
 type SortDir = "asc" | "desc";
@@ -78,7 +80,7 @@ export function MembershipPlansView() {
             page: String(targetPage),
             pageSize: String(pageSize),
         });
-        const res = await fetch(`/api/v1/membership-plans?${params.toString()}`, {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/membership-plans?${params.toString()}`, {
             cache: "no-store",
         });
         if (redirectToLoginIfUnauthorized(res.status)) return;
@@ -117,7 +119,7 @@ export function MembershipPlansView() {
     }, [pageSize]);
 
     const loadBranches = useCallback(async () => {
-        const res = await fetch("/api/v1/branches?page=1&pageSize=100", {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/branches?page=1&pageSize=100`, {
             cache: "no-store",
         });
         if (redirectToLoginIfUnauthorized(res.status)) return;
@@ -168,7 +170,7 @@ export function MembershipPlansView() {
     }, [filteredPlans, sortKey, sortDir]);
 
     async function createPlan(values: MembershipPlanFormValues) {
-        const res = await fetch("/api/v1/membership-plans", {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/membership-plans`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(values),
@@ -183,7 +185,7 @@ export function MembershipPlansView() {
 
     async function updatePlan(values: MembershipPlanFormValues) {
         if (!selected) return;
-        const res = await fetch(`/api/v1/membership-plans/${selected.id}`, {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/membership-plans/${selected.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(values),
@@ -199,7 +201,7 @@ export function MembershipPlansView() {
     async function deletePlan(id: string) {
         const yes = window.confirm("Delete this membership plan?");
         if (!yes) return;
-        const res = await fetch(`/api/v1/membership-plans/${id}`, {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/membership-plans/${id}`, {
             method: "DELETE",
         });
         if (redirectToLoginIfUnauthorized(res.status)) return;

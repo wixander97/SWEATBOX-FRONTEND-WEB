@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { API_BASE_URL } from "@/lib/auth/constants";
+import { authFetch, clearAuthTokenLocal } from "@/lib/auth/client-fetch";
 import { useEffect, useState } from "react";
 import { adminPaths } from "@/lib/admin-routes";
 import { useRole } from "@/contexts/role-context";
@@ -51,7 +53,7 @@ export function AdminSidebar({ open = false, onClose }: Props) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
   useEffect(() => {
-    fetch("/api/v1/auth/profile", { cache: "no-store" })
+    authFetch(`${API_BASE_URL}/api/v1/auth/profile`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data: ProfileData | null) => { if (data) setProfile(data); })
       .catch(() => null);
@@ -63,8 +65,13 @@ export function AdminSidebar({ open = false, onClose }: Props) {
     || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
 
   async function logout() {
-    await fetch("/api/v1/auth/logout", { method: "POST" });
-    window.location.href = "/login";
+    clearAuthTokenLocal();
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch {
+      // ignore
+    }
+    window.location.replace("/login");
   }
 
   return (

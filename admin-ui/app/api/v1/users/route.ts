@@ -17,9 +17,11 @@ export async function GET(request: NextRequest) {
   const page = searchParams.get("page") ?? "1";
   const pageSize = searchParams.get("pageSize") ?? "10";
   const search = searchParams.get("search") ?? "";
+  const isActive = searchParams.get("isActive") ?? "";
 
   const params = new URLSearchParams({ page, pageSize });
   if (search) params.set("search", search);
+  if (isActive) params.set("isActive", isActive);
 
   const url = `${API_BASE_URL}/api/v1/users?${params.toString()}`;
   console.log(`[API/v1/users/GET] Fetching: ${url}`);

@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
+import { API_BASE_URL } from "@/lib/auth/constants";
+import { authFetch } from "@/lib/auth/client-fetch";
 
 type FilterTab = "all" | "active";
 type SortKey = keyof ApiMember;
@@ -232,7 +234,7 @@ export function MembersView() {
   useEffect(() => {
     async function loadBranches() {
       try {
-        const res = await fetch("/api/v1/branches");
+        const res = await authFetch(`${API_BASE_URL}/api/v1/branches`);
         if (res.ok) {
           const data = (await res.json()) as Branch[];
           setBranches(data.filter((b) => b.isActive));
@@ -249,7 +251,7 @@ export function MembersView() {
   useEffect(() => {
     async function loadMembershipPlans() {
       try {
-        const res = await fetch("/api/v1/membership-plans");
+        const res = await authFetch(`${API_BASE_URL}/api/v1/membership-plans`);
         if (res.ok) {
           const data = (await res.json()) as MembershipPlan[];
           setMembershipPlans(data.filter((p) => p.isActive));
@@ -276,7 +278,7 @@ export function MembersView() {
         params.set("isActive", "true");
       }
 
-      const res = await fetch(`/api/v1/members?${params.toString()}`, {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/members?${params.toString()}`, {
         cache: "no-store",
       });
       if (redirectToLoginIfUnauthorized(res.status)) return;
@@ -336,7 +338,7 @@ export function MembersView() {
       setMagicLoading(true);
       try {
         const res = await fetch(
-          `/api/v1/members/search?keyword=${encodeURIComponent(magicQuery)}`,
+          `${API_BASE_URL}/api/v1/members/search?keyword=${encodeURIComponent(magicQuery)}`,
           { cache: "no-store" }
         );
         if (res.ok) {
@@ -391,7 +393,7 @@ export function MembersView() {
     setImagePreview(m.profileImageUrl || null);
     setMemberForm(memberToForm(m));
     setMemberModal({ mode: "edit", id: m.id });
-    const res = await fetch(`/api/v1/members/${m.id}`, { cache: "no-store" });
+    const res = await authFetch(`${API_BASE_URL}/api/v1/members/${m.id}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     if (res.ok) {
       const data = (await res.json().catch(() => null)) as ApiMember | null;
@@ -439,7 +441,7 @@ export function MembersView() {
   function generateMemberCode(): string {
     const timestamp = Date.now().toString(36).toUpperCase();
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `MBR-${timestamp}-${random}`;
+    return `MBR - ${timestamp} - ${random}`;
   }
 
   async function saveMemberModal() {
@@ -480,7 +482,7 @@ export function MembersView() {
           isPtMember: formData.isPtMember,
         };
         console.log("[DEBUG] POST body:", JSON.stringify(body, null, 2));
-        const res = await fetch("/api/v1/members", {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/members`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
@@ -527,7 +529,7 @@ export function MembersView() {
         isWaiverSigned: memberForm.isWaiverSigned,
         isPtMember: memberForm.isPtMember,
       };
-      const res = await fetch(`/api/v1/members/${memberModal.id}`, {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/members/${memberModal.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -1009,7 +1011,7 @@ export function MembersView() {
                       disabled={branchesLoading}
                       className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat disabled:opacity-50"
                     >
-                      <option value="">{branchesLoading ? "Memuat branch..." : "Pilih Home Club..."}</option>
+                      <option value="">{branchesLoading ? "Memuat Home Club..." : "Pilih Home Club..."}</option>
                       {branches.map((b) => (
                         <option key={b.id} value={b.id}>
                           {b.branchName}
