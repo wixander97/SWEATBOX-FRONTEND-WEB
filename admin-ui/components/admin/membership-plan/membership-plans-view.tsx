@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     CreateMembershipPlanModal,
     type MembershipPlanFormValues,
-} from "@/components/admin/create-membership-plan-modal";
+} from "@/components/admin/membership-plan/create-membership-plan-modal";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";

@@ -5,18 +5,27 @@ import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 
 type StaffAttendance = {
   id: string;
-  staffId?: string | null;
-  staffName?: string | null;
-  role?: string | null;
-  branchName?: string | null;
-  clockIn?: string | null;
-  clockOut?: string | null;
-  date?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  selfieImageUrl?: string | null;
-  notes?: string | null;
-  status?: string | null;
+  staffId: string;
+  staffName: string;
+  branchId: string;
+  branchName: string;
+  attendanceDate: string;
+  clockInTime: string | null;
+  clockOutTime: string | null;
+  totalWorkingHours: number;
+  status: string;
+  latitude: number | null;
+  longitude: number | null;
+  selfieImageUrl: string | null;
+  notes: string | null;
+  deviceName: string | null;
+  ipAddress: string | null;
+  isLate: boolean;
+  lateMinutes: number;
+  isManualEntry: boolean;
+  approvedBy: string | null;
+  createdAt: string;
+  updatedAt: string | null;
 };
 
 type Staff = {
@@ -75,7 +84,7 @@ export default function ReportsPage() {
           : (data.items ?? data.data ?? []);
         setStaffList(list);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const loadAttendances = useCallback(async (staffId: string) => {
@@ -122,7 +131,7 @@ export default function ReportsPage() {
     });
   }, [attendances, sortKey, sortDir]);
 
-  const presentCount = attendances.filter((a) => a.clockIn).length;
+  const presentCount = attendances.filter((a) => a.clockInTime).length;
 
   function exportAttendanceCsv(rows: StaffAttendance[], filename: string) {
     const header = [
@@ -138,12 +147,11 @@ export default function ReportsPage() {
       "Longitude",
     ];
     const dataRows = rows.map((s) => [
-      formatDate(s.date ?? s.clockIn),
+      formatDate(s.attendanceDate ?? s.clockInTime),
       s.staffName || "",
-      s.role || "",
       s.branchName || "",
-      formatTime(s.clockIn),
-      formatTime(s.clockOut),
+      formatTime(s.clockInTime),
+      formatTime(s.clockOutTime),
       s.status || "",
       s.notes || "",
       s.latitude != null ? String(s.latitude) : "",
@@ -221,32 +229,32 @@ export default function ReportsPage() {
               ))}
             </select>
             <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void loadAttendances(selectedStaffId)}
-              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
-            >
-              <i className="fas fa-sync-alt mr-2" aria-hidden />
-              Refresh
-            </button>
-            <button
-              type="button"
-              onClick={() => void exportAllReport()}
-              disabled={loading}
-              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 disabled:opacity-50"
-            >
-              <i className="fas fa-file-export mr-2" aria-hidden />
-              Export report (all)
-            </button>
-            <button
-              type="button"
-              onClick={() => void exportCurrentStaffReport()}
-              disabled={loading || !selectedStaffId}
-              className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
-            >
-              <i className="fas fa-user-clock mr-2" aria-hidden />
-              Export per staff
-            </button>
+              <button
+                type="button"
+                onClick={() => void loadAttendances(selectedStaffId)}
+                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
+              >
+                <i className="fas fa-sync-alt mr-2" aria-hidden />
+                Refresh
+              </button>
+              <button
+                type="button"
+                onClick={() => void exportAllReport()}
+                disabled={loading}
+                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 disabled:opacity-50"
+              >
+                <i className="fas fa-file-export mr-2" aria-hidden />
+                Export report (all)
+              </button>
+              <button
+                type="button"
+                onClick={() => void exportCurrentStaffReport()}
+                disabled={loading || !selectedStaffId}
+                className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
+              >
+                <i className="fas fa-user-clock mr-2" aria-hidden />
+                Export per staff
+              </button>
             </div>
           </div>
         </div>
@@ -257,12 +265,11 @@ export default function ReportsPage() {
               <tr>
                 {(
                   [
-                    { label: "Date", key: "date" },
+                    { label: "Date", key: "attendanceDate" },
                     { label: "Staff Name", key: "staffName" },
-                    { label: "Role", key: "role" },
                     { label: "Location", key: "branchName" },
-                    { label: "Clock In", key: "clockIn" },
-                    { label: "Clock Out", key: "clockOut" },
+                    { label: "Clock In", key: "clockInTime" },
+                    { label: "Clock Out", key: "clockOutTime" },
                     { label: "Status", key: "status" },
                   ] as { label: string; key: SortKey }[]
                 ).map(({ label, key }) => (
@@ -292,19 +299,19 @@ export default function ReportsPage() {
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td className="px-6 py-6 text-gray-400" colSpan={8}>
+                  <td className="px-6 py-6 text-gray-400" colSpan={7}>
                     Loading...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td className="px-6 py-6 text-red-400" colSpan={8}>
+                  <td className="px-6 py-6 text-red-400" colSpan={7}>
                     {error}
                   </td>
                 </tr>
               ) : sortedRows.length === 0 ? (
                 <tr>
-                  <td className="px-6 py-6 text-gray-400" colSpan={8}>
+                  <td className="px-6 py-6 text-gray-400" colSpan={7}>
                     Tidak ada data attendance.
                   </td>
                 </tr>
@@ -312,12 +319,11 @@ export default function ReportsPage() {
                 sortedRows.map((s) => (
                   <tr key={s.id} className="table-row transition">
                     <td className="px-6 py-4 font-mono text-xs text-white">
-                      {formatDate(s.date ?? s.clockIn)}
+                      {formatDate(s.attendanceDate ?? s.clockInTime)}
                     </td>
                     <td className="px-6 py-4 font-bold text-white">
                       {s.staffName || "-"}
                     </td>
-                    <td className="px-6 py-4">{s.role || "-"}</td>
                     <td className="px-6 py-4">
                       <span className="flex items-center gap-2">
                         <i className="fas fa-map-marker-alt text-xs text-sweat" aria-hidden />
@@ -325,19 +331,18 @@ export default function ReportsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 font-mono text-green-400">
-                      {formatTime(s.clockIn)}
+                      {formatTime(s.clockInTime)}
                     </td>
                     <td className="px-6 py-4 font-mono text-yellow-400">
-                      {formatTime(s.clockOut)}
+                      {formatTime(s.clockOutTime)}
                     </td>
                     <td className="px-6 py-4">
                       {s.status ? (
                         <span
-                          className={`px-2 py-1 rounded text-xs font-bold ${
-                            s.status.toLowerCase().includes("late")
-                              ? "bg-red-500/10 text-red-400"
-                              : "bg-green-500/10 text-green-500 border border-green-500/20"
-                          }`}
+                          className={`px-2 py-1 rounded text-xs font-bold ${s.status.toLowerCase().includes("late")
+                            ? "bg-red-500/10 text-red-400"
+                            : "bg-green-500/10 text-green-500 border border-green-500/20"
+                            }`}
                         >
                           {s.status}
                         </span>

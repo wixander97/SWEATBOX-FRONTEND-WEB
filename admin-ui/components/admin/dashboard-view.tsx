@@ -81,6 +81,7 @@ type TodayClass = {
   coachName?: string;
   startTime?: string;
   time?: string;
+  classDate?: string;
   branchName?: string;
   location?: string;
   bookedCount?: number;
@@ -97,6 +98,19 @@ function getNum(obj: StatsPayload | null, ...keys: string[]): number | null {
     if (typeof v === "number") return v;
   }
   return null;
+}
+
+function toUtcDateStr(isoString: string): string {
+  const hasTime = /T\d{2}:\d{2}/.test(isoString);
+  const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(isoString);
+  const normalized = hasTime && !hasTz ? isoString + "Z" : isoString;
+  const d = new Date(normalized);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
+function isToday(isoString: string): boolean {
+  return toUtcDateStr(isoString) === new Date().toISOString().slice(0, 10);
 }
 
 function formatRupiah(amount: number): string {
@@ -274,9 +288,10 @@ export function DashboardView() {
 
       if (classesRes.status === "fulfilled" && classesRes.value.ok) {
         const data = await classesRes.value.json().catch(() => []);
-        const list: TodayClass[] = Array.isArray(data)
-          ? data.slice(0, 6)
-          : ((data?.items ?? data?.data ?? []) as TodayClass[]).slice(0, 6);
+        const raw: TodayClass[] = Array.isArray(data)
+          ? data
+          : ((data?.items ?? data?.data ?? []) as TodayClass[]);
+        const list = raw.filter((c) => c.classDate && isToday(c.classDate)).slice(0, 6);
         setTodayClasses(list);
       }
 
@@ -642,7 +657,7 @@ export function DashboardView() {
               ))}
             </div>
           ) : todayClasses.length === 0 ? (
-            <p className="text-gray-500 text-sm">No classes found.</p>
+            <p className="text-gray-500 text-sm">No classes scheduled for today.</p>
           ) : (
             <div className="space-y-3">
               {todayClasses.map((c) => {

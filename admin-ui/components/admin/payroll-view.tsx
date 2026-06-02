@@ -177,8 +177,8 @@ export function PayrollView() {
                     {r.estimatedPayout != null
                       ? formatRupiah(r.estimatedPayout)
                       : r.payrollRate != null
-                      ? formatRupiah(r.payrollRate)
-                      : "—"}
+                        ? formatRupiah(r.payrollRate)
+                        : "—"}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <span className="bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded text-xs font-bold border border-yellow-500/20">

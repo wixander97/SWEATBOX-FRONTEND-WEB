@@ -15,11 +15,14 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") ?? "";
+  // Accept either query param ?status=paid or direct path /paid
+  const pathSegment = request.nextUrl.pathname.replace(/^.*\/payments\/?/, "");
+  const statusKey = pathSegment || status;
 
   let backendPath = "/api/v1/payments";
-  if (status === "paid") backendPath = "/api/v1/payments/paid";
-  else if (status === "pending") backendPath = "/api/v1/payments/pending";
-  else if (status === "failed") backendPath = "/api/v1/payments/failed";
+  if (statusKey === "paid") backendPath = "/api/v1/payments/paid";
+  else if (statusKey === "pending") backendPath = "/api/v1/payments/pending";
+  else if (statusKey === "failed") backendPath = "/api/v1/payments/failed";
 
   const url = `${API_BASE_URL}${backendPath}`;
   console.log(`[API/v1/payments/GET] Fetching: ${url}`);

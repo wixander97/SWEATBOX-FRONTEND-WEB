@@ -70,9 +70,9 @@ export function PaymentsView() {
     setError("");
     const statusMap: Record<StatusTab, string> = {
       all: "",
-      paid: "?status=1",
-      pending: "?status=0",
-      failed: "?status=2",
+      paid: "/paid",
+      pending: "/pending",
+      failed: "/failed",
     };
     const params = statusMap[tab];
     const res = await authFetch(`${API_BASE_URL}/api/v1/payments${params}`, { cache: "no-store" });

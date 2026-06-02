@@ -9,55 +9,12 @@ type SortDir = "asc" | "desc";
 import {
   CreateClassModal,
   type ClassFormValues,
-} from "@/components/admin/create-class-modal";
+} from "@/components/admin/classes/create-class-modal";
+import { EditClassModal } from "@/components/admin/classes/edit-class-modal";
+import type { ApiClass, ApiCoach, PagedResponse } from "@/components/admin/classes/classes.types";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 
-type ApiClass = {
-  id: string;
-  className: string;
-  coachId: string;
-  coachName?: string | null;
-  branchId: string;
-  branchName?: string | null;
-  classDate: string;
-  startTime: string;
-  endTime: string;
-  capacity: number;
-  bookedCount?: number;
-  remainingSlots?: number;
-  roomName?: string | null;
-  description?: string | null;
-  classType?: string | null;
-  difficultyLevel?: string | null;
-  isActive: boolean;
-  isCancelled?: boolean;
-  cancelReason?: string | null;
-  isCompleted?: boolean;
-  isSessionActive?: boolean;
-  createdAt?: string;
-  updatedAt?: string | null;
-};
 
-type ApiCoach = {
-  id: string;
-  fullName?: string | null;
-  name?: string | null;
-};
-
-
-type PagedResponse<T> = {
-  items?: T[];
-  data?: T[];
-  totalCount?: number;
-  totalItems?: number;
-  total?: number;
-  totalPages?: number;
-  pageCount?: number;
-  pageSize?: number;
-  message?: string;
-};
-
-/** PIK vs Puri (and other branches) — quick visual scan in the schedule table. */
 function branchBadgeClass(branchName: string | null | undefined) {
   const n = (branchName ?? "").toLowerCase();
   if (n.includes("pik")) {
@@ -72,8 +29,8 @@ function branchBadgeClass(branchName: string | null | undefined) {
 export function ClassesView() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [editClass, setEditClass] = useState<ApiClass | null>(null);
   const [classes, setClasses] = useState<ApiClass[]>([]);
-  const [selected, setSelected] = useState<ApiClass | null>(null);
   const [trainers, setTrainers] = useState<Array<{ id: string; name: string }>>(
     []
   );
@@ -195,21 +152,6 @@ export function ClassesView() {
     const payload = (await res.json().catch(() => ({}))) as { message?: string };
     if (!res.ok) {
       throw new Error(payload.message || "Create class gagal");
-    }
-    await loadClasses(page);
-  }
-
-  async function updateClass(values: ClassFormValues) {
-    if (!selected) return;
-    const res = await authFetch(`${API_BASE_URL}/api/v1/class-schedules/${selected.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-    if (redirectToLoginIfUnauthorized(res.status)) return;
-    const payload = (await res.json().catch(() => ({}))) as { message?: string };
-    if (!res.ok) {
-      throw new Error(payload.message || "Update class gagal");
     }
     await loadClasses(page);
   }
@@ -360,7 +302,7 @@ export function ClassesView() {
                           className="text-gray-400 hover:text-white mx-1"
                           aria-label="Edit"
                           onClick={() => {
-                            setSelected(c);
+                            setEditClass(c);
                             setEditOpen(true);
                           }}
                         >
@@ -412,33 +354,15 @@ export function ClassesView() {
         trainerOptions={trainers}
         onSubmit={createClass}
       />
-      <CreateClassModal
+      <EditClassModal
+        cls={editClass}
         open={editOpen}
         onClose={() => {
           setEditOpen(false);
-          setSelected(null);
+          setEditClass(null);
         }}
-        title="Edit Class"
-        submitLabel="Save Changes"
         trainerOptions={trainers}
-        initialValues={
-          selected
-            ? {
-              className: selected.className,
-              coachId: selected.coachId,
-              classDate: selected.classDate,
-              startTime: selected.startTime,
-              endTime: selected.endTime,
-              capacity: selected.capacity,
-              branchId: selected.branchId || "",
-              roomName: selected.roomName || "",
-              description: selected.description || "",
-              classType: selected.classType || "",
-              difficultyLevel: selected.difficultyLevel || "",
-            }
-            : undefined
-        }
-        onSubmit={updateClass}
+        onSuccess={() => void loadClasses(page)}
       />
     </>
   );

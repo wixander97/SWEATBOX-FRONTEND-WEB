@@ -122,7 +122,11 @@ function emptyMemberForm(): MemberFormState {
 
 function parseDate(isoString: string | null | undefined): string {
   if (!isoString) return "";
-  const d = new Date(isoString);
+  // Ensure UTC parsing for datetime strings without explicit timezone
+  const hasTime = /T\d{2}:\d{2}/.test(isoString);
+  const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(isoString);
+  const normalized = hasTime && !hasTz ? isoString + "Z" : isoString;
+  const d = new Date(normalized);
   if (isNaN(d.getTime())) return "";
   return d.toISOString().slice(0, 10);
 }

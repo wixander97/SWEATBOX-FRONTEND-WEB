@@ -5,96 +5,9 @@ import Image from "next/image";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
-
-type User = {
-  id: string;
-  fullName?: string | null;
-  email?: string | null;
-  phoneNumber?: string | null;
-  password?: string | null;
-  roleId?: string | null;
-  roleName?: string | null;
-  role?: string | null;
-  specialization?: string | null;
-  department?: string | null;
-  hireDate?: number | null;
-  salary?: number | null;
-  branchId?: string | null;
-  branchName?: string | null;
-  profileImageUrl?: string | null;
-  isActive?: boolean;
-  position?: string | null;
-  notes?: string | null;
-  bio?: string | null;
-  payrollType?: string | null;
-  payrollRate?: number | null;
-};
-
-type Role = {
-  id: string;
-  name?: string | null;
-};
-
-type Branch = {
-  id: string;
-  branchName: string;
-  isActive: boolean;
-};
-
-type PagedResponse<T> = {
-  items?: T[];
-  data?: T[];
-  totalCount?: number;
-  totalItems?: number;
-  total?: number;
-  totalPages?: number;
-  pageCount?: number;
-  pageSize?: number;
-  message?: string;
-};
-
-type SortDir = "asc" | "desc";
-type SortKey = "fullName" | "email" | "roleName" | "isActive";
-
-type ResetPasswordForm = { newPassword: string };
-
-type UserCrudForm = {
-  fullName: string;
-  password: string;
-  email: string;
-  roleId: string;
-  branchId: string;
-  phoneNumber: string;
-  position: string;
-  department: string;
-  specialization: string;
-  notes: string;
-  bio: string;
-  payrollType: string;
-  payrollRate: string;
-  salary: string;
-  isActive: boolean;
-};
-
-function emptyUserCrudForm(): UserCrudForm {
-  return {
-    fullName: "",
-    password: "",
-    email: "",
-    roleId: "",
-    branchId: "",
-    phoneNumber: "",
-    position: "",
-    department: "",
-    specialization: "",
-    notes: "",
-    bio: "",
-    payrollType: "",
-    payrollRate: "",
-    salary: "",
-    isActive: true,
-  };
-}
+import type { User, Role, Branch, PagedResponse, SortKey, SortDir, ChangePasswordForm } from "./users.types";
+import { UserCreateForm } from "./user-create-form";
+import { UserEditForm } from "./user-edit-form";
 
 export function UsersView() {
   const [users, setUsers] = useState<User[]>([]);
@@ -114,17 +27,18 @@ export function UsersView() {
   const [showPassword, setShowPassword] = useState(false);
 
   const [selected, setSelected] = useState<User | null>(null);
-  const [resetForm, setResetForm] = useState<ResetPasswordForm | null>(null);
+  const [resetForm, setResetForm] = useState<ChangePasswordForm | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMsg, setResetMsg] = useState("");
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const [userCrud, setUserCrud] = useState<null | { mode: "create" } | { mode: "edit"; id: string }>(null);
-  const [crudForm, setCrudForm] = useState<UserCrudForm>(emptyUserCrudForm);
-  const [crudLoading, setCrudLoading] = useState(false);
-  const [crudMsg, setCrudMsg] = useState("");
+  const [userCrud, setUserCrud] = useState<null | { mode: "create" } | { mode: "edit"; id: string; user: User }>(null);
+
+  function openEditUser(u: User) {
+    setUserCrud({ mode: "edit", id: u.id, user: u });
+  }
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -217,22 +131,22 @@ export function UsersView() {
     setSearch(searchInput);
   }
 
-  async function handleResetPassword(userId: string) {
+  async function handleChangePassword() {
     if (!resetForm) return;
     setResetLoading(true);
     setResetMsg("");
-    const res = await authFetch(`${API_BASE_URL}/api/v1/users/${userId}/reset-password`, {
+    const res = await authFetch(`${API_BASE_URL}/api/v1/auth/change-password`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newPassword: resetForm.newPassword }),
+      body: JSON.stringify({ currentPassword: resetForm.currentPassword, newPassword: resetForm.newPassword }),
     });
     setResetLoading(false);
     if (res.ok) {
-      setResetMsg("Password reset successfully.");
+      setResetMsg("Password changed successfully.");
       setResetForm(null);
     } else {
       const data = await res.json().catch(() => ({})) as { message?: string };
-      setResetMsg(data.message ?? "Failed to reset password.");
+      setResetMsg(data.message ?? "Failed to change password.");
     }
   }
 
@@ -256,7 +170,7 @@ export function UsersView() {
     void loadUsers(page, search);
   }
 
-  function formFromUserRow(u: User): UserCrudForm {
+  function formFromUserRow(u: User) {
     return {
       fullName: u.fullName ?? "",
       password: "",
@@ -273,98 +187,8 @@ export function UsersView() {
       payrollRate: u.payrollRate != null ? String(u.payrollRate) : "",
       salary: u.salary != null ? String(u.salary) : "",
       isActive: u.isActive !== false,
+      profileImageUrl: u.profileImageUrl ?? "",
     };
-  }
-
-  async function openEditUser(u: User) {
-    setCrudMsg("");
-    setCrudForm(formFromUserRow(u));
-    setUserCrud({ mode: "edit", id: u.id });
-    const res = await authFetch(`${API_BASE_URL}/api/v1/users/${u.id}`, { cache: "no-store" });
-    if (res.ok) {
-      const data = (await res.json().catch(() => null)) as User | null;
-      if (data) {
-        setCrudForm(formFromUserRow(data));
-      }
-    }
-  }
-
-  async function submitUserCrud() {
-    if (!userCrud) return;
-    setCrudLoading(true);
-    setCrudMsg("");
-    try {
-      if (userCrud.mode === "create") {
-        if (!(crudForm.password ?? "").trim()) {
-          setCrudMsg("Password wajib diisi untuk user baru.");
-          setCrudLoading(false);
-          return;
-        }
-        const body: Record<string, unknown> = {
-          userId: currentUserId,
-          fullName: crudForm.fullName,
-          password: crudForm.password,
-          email: crudForm.email,
-          roleId: crudForm.roleId || null,
-          branchId: crudForm.branchId || null,
-          phoneNumber: crudForm.phoneNumber || null,
-          position: crudForm.position || null,
-          department: crudForm.department || null,
-          specialization: crudForm.specialization || null,
-          notes: crudForm.notes || null,
-          bio: crudForm.bio || null,
-          payrollType: crudForm.payrollType || null,
-          payrollRate: crudForm.payrollRate === "" ? null : Number(crudForm.payrollRate),
-          salary: crudForm.salary === "" ? null : Number(crudForm.salary),
-          isActive: crudForm.isActive,
-        };
-        const res = await authFetch(`${API_BASE_URL}/api/v1/users`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        const data = await res.json().catch(() => ({})) as { message?: string };
-        if (!res.ok) {
-          setCrudMsg(data.message ?? "Gagal membuat user.");
-          return;
-        }
-        setUserCrud(null);
-        void loadUsers(page, search);
-        return;
-      }
-      const body: Record<string, unknown> = {
-        id: userCrud.id,
-        userId: currentUserId,
-        fullName: crudForm.fullName,
-        email: crudForm.email,
-        roleId: crudForm.roleId || null,
-        branchId: crudForm.branchId || null,
-        phoneNumber: crudForm.phoneNumber || null,
-        position: crudForm.position || null,
-        department: crudForm.department || null,
-        specialization: crudForm.specialization || null,
-        notes: crudForm.notes || null,
-        bio: crudForm.bio || null,
-        payrollType: crudForm.payrollType || null,
-        payrollRate: crudForm.payrollRate === "" ? null : Number(crudForm.payrollRate),
-        salary: crudForm.salary === "" ? null : Number(crudForm.salary),
-        isActive: crudForm.isActive,
-      };
-      const res = await authFetch(`${API_BASE_URL}/api/v1/users/${userCrud.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json().catch(() => ({})) as { message?: string };
-      if (!res.ok) {
-        setCrudMsg(data.message ?? "Gagal memperbarui user.");
-        return;
-      }
-      setUserCrud(null);
-      void loadUsers(page, search);
-    } finally {
-      setCrudLoading(false);
-    }
   }
 
   const roleLabel = (u: User) => u.roleName ?? u.role ?? roles.find((r) => r.id === u.roleId)?.name ?? "—";
@@ -390,8 +214,6 @@ export function UsersView() {
         <button
           type="button"
           onClick={() => {
-            setCrudMsg("");
-            setCrudForm(emptyUserCrudForm());
             setUserCrud({ mode: "create" });
           }}
           className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 shrink-0"
@@ -579,27 +401,41 @@ export function UsersView() {
             <div className="border-t border-border pt-4">
               <button
                 type="button"
-                onClick={() => setResetForm({ newPassword: "" })}
+                onClick={() => setResetForm({ currentPassword: "", newPassword: "" })}
                 className="text-sm text-yellow-400 hover:text-yellow-300 flex items-center gap-2"
               >
                 <i className="fas fa-key" aria-hidden /> Reset Password
               </button>
 
               {resetForm && (
-                <div className="mt-3 flex gap-2">
-                  {/* Wrapper relative untuk memposisikan icon mata */}
+                <div className="mt-3 flex flex-col gap-2">
+                  {/* Current Password Field */}
                   <div className="relative flex-1">
                     <input
-                      // Tipe input berubah secara dinamis berdasarkan state
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Current password"
+                      value={resetForm.currentPassword}
+                      onChange={(e) => setResetForm((prev) => prev ? { ...prev, currentPassword: e.target.value } : { currentPassword: e.target.value, newPassword: "" })}
+                      className="w-full bg-sidebar border border-border rounded px-3 py-1.5 pr-10 text-sm text-white focus:outline-none focus:border-sweat"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 focus:outline-none"
+                    >
+                      <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} aria-hidden />
+                    </button>
+                  </div>
+
+                  {/* New Password Field */}
+                  <div className="relative flex-1">
+                    <input
                       type={showPassword ? "text" : "password"}
                       placeholder="New password"
                       value={resetForm.newPassword}
-                      onChange={(e) => setResetForm({ newPassword: e.target.value })}
-                      // Ditambahkan w-full dan pr-10 agar teks tidak tertutup icon
+                      onChange={(e) => setResetForm((prev) => prev ? { ...prev, newPassword: e.target.value } : { currentPassword: "", newPassword: e.target.value })}
                       className="w-full bg-sidebar border border-border rounded px-3 py-1.5 pr-10 text-sm text-white focus:outline-none focus:border-sweat"
                     />
-
-                    {/* Tombol Toggle Visible Password */}
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
@@ -611,8 +447,8 @@ export function UsersView() {
 
                   <button
                     type="button"
-                    disabled={resetLoading || !resetForm.newPassword}
-                    onClick={() => void handleResetPassword(selected.id)}
+                    disabled={resetLoading || !resetForm.currentPassword || !resetForm.newPassword}
+                    onClick={() => void handleChangePassword()}
                     className="bg-sweat text-black px-3 py-1.5 rounded text-sm font-bold disabled:opacity-50"
                   >
                     {resetLoading ? "..." : "Set"}
@@ -637,208 +473,25 @@ export function UsersView() {
             if (e.target === e.currentTarget) setUserCrud(null);
           }}
         >
-          <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold font-display uppercase">
-                {userCrud.mode === "create" ? "Add user" : "Edit user"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setUserCrud(null)}
-                className="text-gray-400 hover:text-white text-xl leading-none"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <div className="space-y-3 text-sm">
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Full Name</span>
-                <input
-                  value={crudForm.fullName}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, fullName: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Password</span>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={crudForm.password}
-                    onChange={(e) => setCrudForm((f) => ({ ...f, password: e.target.value }))}
-                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 pr-10 text-white focus:outline-none focus:border-sweat"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                    title={showPassword ? "Hide password" : "Show password"}
-                  >
-                    <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} aria-hidden />
-                  </button>
-                </div>
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Email</span>
-                <input
-                  type="email"
-                  value={crudForm.email}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, email: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Role</span>
-                <select
-                  value={crudForm.roleId}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, roleId: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                >
-                  <option value="">— Pilih role —</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name ?? r.id}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Phone</span>
-                <input
-                  value={crudForm.phoneNumber}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, phoneNumber: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Position</span>
-                <input
-                  value={crudForm.position}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, position: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Department</span>
-                <input
-                  value={crudForm.department}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, department: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Branch</span>
-                <select
-                  value={crudForm.branchId}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, branchId: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                >
-                  <option value="">— Pilih branch —</option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.branchName}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Specialization</span>
-                <input
-                  value={crudForm.specialization}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, specialization: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Notes</span>
-                <textarea
-                  value={crudForm.notes}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, notes: e.target.value }))}
-                  rows={2}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-none"
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Bio</span>
-                <textarea
-                  value={crudForm.bio}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, bio: e.target.value }))}
-                  rows={2}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-none"
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Payroll Type</span>
-                <select
-                  value={crudForm.payrollType}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, payrollType: e.target.value }))}
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                >
-                  <option value="">— Select type —</option>
-                  <option value="Hourly">Hourly</option>
-                  <option value="Daily">Daily</option>
-                  <option value="Monthly">Monthly</option>
-                  <option value="Fixed">Fixed</option>
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={crudForm.payrollRate}
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/[^0-9]/g, "");
-                    setCrudForm((f) => ({ ...f, payrollRate: raw }));
-                  }}
-                  placeholder="0"
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                />
-              </label>
-              <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Salary (Rp)</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={crudForm.salary}
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/[^0-9]/g, "");
-                    setCrudForm((f) => ({ ...f, salary: raw }));
-                  }}
-                  placeholder="0"
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                />
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={crudForm.isActive}
-                  onChange={(e) => setCrudForm((f) => ({ ...f, isActive: e.target.checked }))}
-                  className="rounded border-border"
-                />
-                <span className="text-gray-300">Active</span>
-              </label>
-            </div>
-            {crudMsg && <p className="mt-3 text-xs text-red-400">{crudMsg}</p>}
-            <div className="mt-6 flex gap-2">
-              <button
-                type="button"
-                disabled={crudLoading}
-                onClick={() => void submitUserCrud()}
-                className="flex-1 bg-sweat text-black py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
-              >
-                {crudLoading ? "Menyimpan…" : userCrud.mode === "create" ? "Create user" : "Save changes"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setUserCrud(null)}
-                className="px-4 py-2 rounded-lg text-sm border border-border text-gray-300 hover:text-white"
-              >
-                Batal
-              </button>
-            </div>
-          </div>
+          {userCrud.mode === "create" ? (
+            <UserCreateForm
+              roles={roles}
+              branches={branches}
+              currentUserId={currentUserId}
+              onSuccess={() => { setUserCrud(null); void loadUsers(page, search); }}
+              onCancel={() => setUserCrud(null)}
+            />
+          ) : (
+            <UserEditForm
+              userId={userCrud.id}
+              initialForm={formFromUserRow(userCrud.user)}
+              roles={roles}
+              branches={branches}
+              currentUserId={currentUserId}
+              onSuccess={() => { setUserCrud(null); void loadUsers(page, search); }}
+              onCancel={() => setUserCrud(null)}
+            />
+          )}
         </div>
       )}
 

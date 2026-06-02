@@ -77,7 +77,7 @@ function normalizeTime(time: string): string {
 
 function toIsoDate(value: string) {
   if (!value) return "";
-  return new Date(`${value}T00:00:00`).toISOString();
+  return new Date(`${value}T00:00:00.000Z`).toISOString();
 }
 
 export function CreateClassModal({
@@ -320,7 +320,7 @@ export function CreateClassModal({
                     Branch
                   </label>
                   <select
-                    value={initialValues?.branchId ?? form.branchId}
+                    value={form.branchId}
                     onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
                     disabled={branchesLoading}
                     className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat disabled:opacity-50"
