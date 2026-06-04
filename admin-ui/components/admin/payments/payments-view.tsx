@@ -5,6 +5,7 @@ import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { useRole } from "@/contexts/role-context";
+import { CreatePaymentModal } from "./create-payment-modal";
 
 type Payment = {
   id: string;
@@ -64,6 +65,7 @@ export function PaymentsView() {
   const [selected, setSelected] = useState<Payment | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const loadPayments = useCallback(async (tab: StatusTab) => {
     setLoading(true);
@@ -189,6 +191,13 @@ export function PaymentsView() {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={() => setCreateModalOpen(true)}
+            className="px-4 py-2 bg-sweat text-black rounded-lg text-sm font-bold hover:bg-yellow-400 transition"
+          >
+            Create Payment
+          </button>
         </div>
 
         {loading ? (
@@ -347,6 +356,17 @@ export function PaymentsView() {
             </div>
           </div>
         </div>
+      )}
+
+      {createModalOpen && (
+        <CreatePaymentModal
+          onClose={() => setCreateModalOpen(false)}
+          onSuccess={() => {
+            setCreateModalOpen(false);
+            void loadPayments(activeTab);
+            void loadSummary();
+          }}
+        />
       )}
     </>
   );

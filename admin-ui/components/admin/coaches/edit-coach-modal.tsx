@@ -195,17 +195,13 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
           {/* Payroll Type */}
           <div>
             <label className="block text-xs text-gray-400 mb-1">Payroll Type</label>
-            <select
+            <input
+              type="text"
               value={form.payrollType}
               onChange={(e) => setForm((f) => ({ ...f, payrollType: e.target.value }))}
+              placeholder="e.g. Hourly, Daily, Monthly"
               className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
-            >
-              <option value="">— Select type —</option>
-              <option value="Hourly">Hourly</option>
-              <option value="Daily">Daily</option>
-              <option value="Monthly">Monthly</option>
-              <option value="Fixed">Fixed</option>
-            </select>
+            />
           </div>
 
           {/* Payroll Rate */}

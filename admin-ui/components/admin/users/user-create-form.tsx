@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { API_BASE_URL } from "@/lib/auth/constants";
-import type { Branch, Role, UserCrudForm } from "./users.types";
+import { type Branch, type Role, type UserCrudForm, emptyUserCrudForm } from "./users.types";
 
 type Props = {
   roles: Role[];
@@ -14,23 +14,7 @@ type Props = {
 };
 
 export function UserCreateForm({ roles, branches, currentUserId, onSuccess, onCancel }: Props) {
-  const [form, setForm] = useState<UserCrudForm>({
-    fullName: "",
-    password: "",
-    email: "",
-    roleId: "",
-    branchId: "",
-    phoneNumber: "",
-    position: "",
-    department: "",
-    specialization: "",
-    notes: "",
-    bio: "",
-    payrollType: "",
-    payrollRate: "",
-    salary: "",
-    isActive: true,
-  });
+  const [form, setForm] = useState<UserCrudForm>(emptyUserCrudForm());
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -87,7 +71,7 @@ export function UserCreateForm({ roles, branches, currentUserId, onSuccess, onCa
           className="text-gray-400 hover:text-white text-xl leading-none"
           aria-label="Close"
         >
-          ×
+
         </button>
       </div>
       <div className="space-y-3 text-sm">
@@ -205,17 +189,13 @@ export function UserCreateForm({ roles, branches, currentUserId, onSuccess, onCa
         </label>
         <label className="block">
           <span className="text-gray-500 text-xs uppercase font-bold">Payroll Type</span>
-          <select
+          <input
+            type="text"
             value={form.payrollType}
             onChange={(e) => setForm((f) => ({ ...f, payrollType: e.target.value }))}
+            placeholder="e.g. Hourly, Daily, Monthly"
             className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-          >
-            <option value="">— Select type —</option>
-            <option value="Hourly">Hourly</option>
-            <option value="Daily">Daily</option>
-            <option value="Monthly">Monthly</option>
-            <option value="Fixed">Fixed</option>
-          </select>
+          />
         </label>
         <label className="block">
           <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>

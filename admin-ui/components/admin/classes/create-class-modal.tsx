@@ -372,38 +372,24 @@ export function CreateClassModal({
                   <label className="block text-gray-400 text-sm mb-1">
                     Class Type
                   </label>
-                  <select
+                  <input
+                    type="text"
                     className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                     name="classType"
                     value={form.classType}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, classType: e.target.value }))
                     }
+                    placeholder="e.g. HIIT, Boxing, Yoga"
                     required
-                  >
-                    <option value="" disabled>
-                      Select type
-                    </option>
-                    {[
-                      "HIIT",
-                      "Boxing",
-                      "Yoga",
-                      "Dance",
-                      "Strength",
-                      "Cardio",
-                      "Other",
-                    ].map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
                     Difficulty
                   </label>
-                  <select
+                  <input
+                    type="text"
                     className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                     name="difficultyLevel"
                     value={form.difficultyLevel}
@@ -413,19 +399,9 @@ export function CreateClassModal({
                         difficultyLevel: e.target.value,
                       }))
                     }
+                    placeholder="e.g. Beginner, Intermediate, Advanced"
                     required
-                  >
-                    <option value="" disabled>
-                      Select difficulty
-                    </option>
-                    {["Beginner", "Intermediate", "Advanced"].map(
-                      (level) => (
-                        <option key={level} value={level}>
-                          {level}
-                        </option>
-                      )
-                    )}
-                  </select>
+                  />
                 </div>
               </div>
 

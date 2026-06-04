@@ -166,17 +166,13 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
         </label>
 <label className="block">
           <span className="text-gray-500 text-xs uppercase font-bold">Payroll Type</span>
-          <select
+          <input
+            type="text"
             value={form.payrollType}
             onChange={(e) => setForm((f) => ({ ...f, payrollType: e.target.value }))}
+            placeholder="e.g. Hourly, Daily, Monthly"
             className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-          >
-            <option value="">— Select type —</option>
-            <option value="Hourly">Hourly</option>
-            <option value="Daily">Daily</option>
-            <option value="Monthly">Monthly</option>
-            <option value="Fixed">Fixed</option>
-          </select>
+          />
         </label>
         <label className="block">
           <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
