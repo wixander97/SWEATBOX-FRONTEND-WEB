@@ -10,6 +10,13 @@
 !.yarn/releases
 !.yarn/versions
 
+# pi dev 
+/docs/
+/.pi/ 
+
+# github copilot
+/.copilot/
+
 # testing
 /coverage
 

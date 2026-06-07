@@ -3,10 +3,55 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adminPaths } from "@/lib/admin-routes";
+import { API_BASE_URL } from "@/lib/auth/constants";
+import { authFetch } from "@/lib/auth/client-fetch";
 import { useRole } from "@/contexts/role-context";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 
 type StatsPayload = Record<string, unknown>;
+
+type MembersStatsPayload = {
+  totalMembers: number;
+  activeMembers: number;
+  expiredMembers: number;
+  frozenMembers: number;
+  pendingPayments: number;
+  ptMembers: number;
+};
+
+type PaymentSummaryPayload = {
+  totalPayments: number;
+  totalPendingPayments: number;
+  totalPaidPayments: number;
+  totalFailedPayments: number;
+  totalRevenue: number;
+  totalPendingRevenue: number;
+  mostCommonStatus: number;
+};
+
+type ClassSchedulesStatsPayload = {
+  totalClasses: number;
+  activeClasses: number;
+  cancelledClasses: number;
+  completedClasses: number;
+};
+
+type StaffAttendanceStatsPayload = {
+  totalAttendances: number;
+  totalPresent: number;
+  totalAbsent: number;
+  totalLate: number;
+};
+
+type CoachesStatsPayload = {
+  totalCoaches: number;
+  activeCoaches: number;
+  inactiveCoaches: number;
+  averageRating: number;
+  averageAttendanceRate: number;
+  totalPtSessions: number;
+  totalClasses: number;
+};
 
 type DashboardStats = {
   members: StatsPayload | null;
@@ -19,12 +64,14 @@ type DashboardStats = {
 
 type RecentPayment = {
   id: string;
-  memberName?: string;
-  fullName?: string;
-  membershipType?: string;
-  amount?: number;
-  paymentStatus?: string;
-  status?: string;
+  membershipPlanName: string | null;
+  invoiceNo: string;
+  amount: number;
+  finalAmount: number;
+  paymentStatus: number;
+  paymentProvider: number;
+  notes: string | null;
+  created: string;
 };
 
 type TodayClass = {
@@ -34,6 +81,7 @@ type TodayClass = {
   coachName?: string;
   startTime?: string;
   time?: string;
+  classDate?: string;
   branchName?: string;
   location?: string;
   bookedCount?: number;
@@ -52,6 +100,19 @@ function getNum(obj: StatsPayload | null, ...keys: string[]): number | null {
   return null;
 }
 
+function toUtcDateStr(isoString: string): string {
+  const hasTime = /T\d{2}:\d{2}/.test(isoString);
+  const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(isoString);
+  const normalized = hasTime && !hasTz ? isoString + "Z" : isoString;
+  const d = new Date(normalized);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
+function isToday(isoString: string): boolean {
+  return toUtcDateStr(isoString) === new Date().toISOString().slice(0, 10);
+}
+
 function formatRupiah(amount: number): string {
   if (amount >= 1_000_000_000) return `Rp ${(amount / 1_000_000_000).toFixed(1)}B`;
   if (amount >= 1_000_000) return `Rp ${(amount / 1_000_000).toFixed(0)}M`;
@@ -63,6 +124,8 @@ function Skeleton({ w = "w-16" }: { w?: string }) {
   return <span className={`inline-block ${w} h-8 bg-gray-700 rounded animate-pulse`} />;
 }
 
+// ── Enhanced StatCard with growth, target, showAvg props ────────────────────
+
 function StatCard({
   label,
   value,
@@ -71,6 +134,9 @@ function StatCard({
   icon,
   loading,
   href,
+  growth,
+  target,
+  showAvg,
 }: {
   label: string;
   value: React.ReactNode;
@@ -79,6 +145,9 @@ function StatCard({
   icon: string;
   loading: boolean;
   href?: string;
+  growth?: number | null;
+  target?: number | null;
+  showAvg?: boolean;
 }) {
   const inner = (
     <div className="bg-card p-5 rounded-xl border border-border hover:border-sweat/40 transition cursor-default group h-full flex flex-col justify-between">
@@ -89,11 +158,28 @@ function StatCard({
         </div>
       </div>
       <div>
-        <p className={`text-2xl font-bold ${accent ?? "text-white"}`}>
-          {loading ? <Skeleton /> : value}
-        </p>
-        {sub && !loading && (
-          <p className="text-xs text-gray-500 mt-1">{sub}</p>
+        <div className="flex items-baseline gap-2">
+          <p className={`text-2xl font-bold ${accent ?? "text-white"}`}>
+            {loading ? <Skeleton /> : value}
+          </p>
+          {/* Growth indicator - green ▲ with percentage */}
+          {!loading && growth != null && (
+            <span className="text-green-400 text-sm font-bold flex items-center">
+              ▲ {growth}%
+            </span>
+          )}
+        </div>
+        {/* Sub info: target or Avg label */}
+        {!loading && (
+          <div className="mt-1">
+            {target != null ? (
+              <p className="text-xs text-gray-500">of {formatRupiah(target)}</p>
+            ) : showAvg ? (
+              <p className="text-xs text-gray-500">Avg</p>
+            ) : sub ? (
+              <p className="text-xs text-gray-500">{sub}</p>
+            ) : null}
+          </div>
         )}
       </div>
     </div>
@@ -102,20 +188,63 @@ function StatCard({
   return inner;
 }
 
+// ── Compact StatCard for secondary KPIs ─────────────────────────────────────
+
+function CompactStatCard({
+  label,
+  value,
+  accent,
+  icon,
+  loading,
+  href,
+}: {
+  label: string;
+  value: React.ReactNode;
+  accent?: string;
+  icon: string;
+  loading: boolean;
+  href?: string;
+}) {
+  const inner = (
+    <div className="bg-card/50 p-3 rounded-lg border border-border/50 hover:border-sweat/30 transition cursor-default group">
+      <div className="flex items-center gap-2">
+        <i className={`fas ${icon} text-gray-500 group-hover:text-sweat text-xs transition`} aria-hidden />
+        <span className="text-gray-400 text-[10px] uppercase tracking-wide font-bold">{label}</span>
+      </div>
+      <p className={`text-lg font-bold ${accent ?? "text-white"} mt-1`}>
+        {loading ? <Skeleton w="w-10" /> : value}
+      </p>
+    </div>
+  );
+  if (href) return <Link href={href} className="block">{inner}</Link>;
+  return inner;
+}
+
 export function DashboardView() {
   const { currentRole } = useRole();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [memberStats, setMemberStats] = useState<MembersStatsPayload | null>(null);
+  const [paymentSummary, setPaymentSummary] = useState<PaymentSummaryPayload | null>(null);
+  const [classStats, setClassStats] = useState<ClassSchedulesStatsPayload | null>(null);
+  const [staffAttendanceStats, setStaffAttendanceStats] = useState<StaffAttendanceStatsPayload | null>(null);
+  const [coachesStats, setCoachesStats] = useState<CoachesStatsPayload | null>(null);
   const [recentPayments, setRecentPayments] = useState<RecentPayment[]>([]);
   const [todayClasses, setTodayClasses] = useState<TodayClass[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statsBreakdownOpen, setStatsBreakdownOpen] = useState(false);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const [statsRes, paymentsRes, classesRes] = await Promise.allSettled([
-        fetch("/api/stats", { cache: "no-store" }),
-        fetch("/api/payments", { cache: "no-store" }),
-        fetch("/api/classes?page=1&pageSize=6", { cache: "no-store" }),
+      const [statsRes, memberStatsRes, paymentSummaryRes, classStatsRes, staffAttendanceRes, coachesStatsRes, paymentsRes, classesRes] = await Promise.allSettled([
+        authFetch(`${API_BASE_URL}/api/v1/stats`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/members/stats`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/payments/summary`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/class-schedules/stats`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/staff-attendances/stats`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/coaches/stats`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/payments`, { cache: "no-store" }),
+        authFetch(`${API_BASE_URL}/api/v1/class-schedules?page=1&pageSize=6`, { cache: "no-store" }),
       ]);
 
       if (statsRes.status === "fulfilled") {
@@ -124,19 +253,45 @@ export function DashboardView() {
         if (data) setStats(data as DashboardStats);
       }
 
+      if (memberStatsRes.status === "fulfilled" && memberStatsRes.value.ok) {
+        const data = await memberStatsRes.value.json().catch(() => null);
+        if (data) setMemberStats(data as MembersStatsPayload);
+      }
+
+      if (paymentSummaryRes.status === "fulfilled" && paymentSummaryRes.value.ok) {
+        const data = await paymentSummaryRes.value.json().catch(() => null);
+        if (data) setPaymentSummary(data as PaymentSummaryPayload);
+      }
+
+      if (classStatsRes.status === "fulfilled" && classStatsRes.value.ok) {
+        const data = await classStatsRes.value.json().catch(() => null);
+        if (data) setClassStats(data as ClassSchedulesStatsPayload);
+      }
+
+      if (staffAttendanceRes.status === "fulfilled" && staffAttendanceRes.value.ok) {
+        const data = await staffAttendanceRes.value.json().catch(() => null);
+        if (data) setStaffAttendanceStats(data as StaffAttendanceStatsPayload);
+      }
+
+      if (coachesStatsRes.status === "fulfilled" && coachesStatsRes.value.ok) {
+        const data = await coachesStatsRes.value.json().catch(() => null);
+        if (data) setCoachesStats(data as CoachesStatsPayload);
+      }
+
       if (paymentsRes.status === "fulfilled" && paymentsRes.value.ok) {
         const data = await paymentsRes.value.json().catch(() => []);
         const list: RecentPayment[] = Array.isArray(data)
-          ? data.slice(0, 5)
-          : ((data?.items ?? data?.data ?? []) as RecentPayment[]).slice(0, 5);
+          ? data.slice(0, 10)
+          : ((data?.items ?? data?.data ?? []) as RecentPayment[]).slice(0, 10);
         setRecentPayments(list);
       }
 
       if (classesRes.status === "fulfilled" && classesRes.value.ok) {
         const data = await classesRes.value.json().catch(() => []);
-        const list: TodayClass[] = Array.isArray(data)
-          ? data.slice(0, 6)
-          : ((data?.items ?? data?.data ?? []) as TodayClass[]).slice(0, 6);
+        const raw: TodayClass[] = Array.isArray(data)
+          ? data
+          : ((data?.items ?? data?.data ?? []) as TodayClass[]);
+        const list = raw.filter((c) => c.classDate && isToday(c.classDate)).slice(0, 6);
         setTodayClasses(list);
       }
 
@@ -146,50 +301,75 @@ export function DashboardView() {
   }, []);
 
   // ── Member stats ─────────────────────────────────────────────────────────
-  const m = stats?.members ?? null;
-  const totalMembers   = getNum(m, "totalMembers", "total", "count");
-  const activeMembers  = getNum(m, "totalActive", "activeCount", "active");
-  const expiredMembers = getNum(m, "totalExpired", "expiredCount", "expired");
-  const expiringCount  = getNum(m, "expiringSoonCount", "expiringCount", "expiringSoon", "expiringSoonCount");
-  const frozenCount    = getNum(m, "frozenCount", "frozen", "totalFrozen");
-  const pendingPaymentCount = getNum(m, "pendingPaymentCount", "pendingPayment", "unpaidCount");
+  const totalMembers = memberStats?.totalMembers ?? null;
+  const activeMembers = memberStats?.activeMembers ?? null;
+  const expiredMembers = memberStats?.expiredMembers ?? null;
+  const frozenCount = memberStats?.frozenMembers ?? null;
+  const pendingPaymentCount = memberStats?.pendingPayments ?? null;
+  const ptMembers = memberStats?.ptMembers ?? null;
+  const expiringCount = null; // Not available in new endpoint
 
   // ── Coach stats ───────────────────────────────────────────────────────────
   const c = stats?.coaches ?? null;
-  const totalCoaches  = getNum(c, "totalCoaches", "total", "count");
-  const activeCoaches = getNum(c, "totalActive", "activeCount", "active");
-  const avgRating     = getNum(c, "averageRating", "avgRating", "rating");
+  const totalCoachesFallback = getNum(c, "totalCoaches", "total", "count");
+  const activeCoachesFallback = getNum(c, "totalActive", "activeCount", "active");
+  const avgRatingFallback = getNum(c, "averageRating", "avgRating", "rating");
+
+  // Use coachesStats from dedicated endpoint, fallback to stats?.coaches
+  const totalCoaches = coachesStats?.totalCoaches ?? totalCoachesFallback;
+  const activeCoaches = coachesStats?.activeCoaches ?? activeCoachesFallback;
+  const avgRating = coachesStats?.averageRating ?? avgRatingFallback;
 
   // ── Class stats ───────────────────────────────────────────────────────────
   const cl = stats?.classes ?? null;
-  const totalClasses     = getNum(cl, "totalClasses", "total", "count");
-  const activeClasses    = getNum(cl, "activeCount", "totalActive", "active");
-  const upcomingClasses  = getNum(cl, "upcomingCount", "upcoming", "totalUpcoming");
-  const completedClasses = getNum(cl, "completedCount", "completed", "totalCompleted");
-  const cancelledClasses = getNum(cl, "cancelledCount", "cancelled", "totalCancelled");
-  const classOccupancy   = getNum(cl, "averageOccupancy", "occupancyRate", "avgOccupancy", "averageOccupancyRate");
+  const classOccupancy = getNum(cl, "averageOccupancy", "occupancyRate", "avgOccupancy", "averageOccupancyRate");
+  const upcomingClasses = null; // Not in new endpoint, display replaced
+
+  // Use classStats from dedicated endpoint, fallback to stats?.classes for classOccupancy
+  const totalClasses = classStats?.totalClasses ?? getNum(cl, "totalClasses", "total", "count");
+  const activeClasses = classStats?.activeClasses ?? getNum(cl, "activeCount", "totalActive", "active");
+  const completedClasses = classStats?.completedClasses ?? getNum(cl, "completedCount", "completed", "totalCompleted");
+  const cancelledClasses = classStats?.cancelledClasses ?? getNum(cl, "cancelledCount", "cancelled", "totalCancelled");
 
   // ── Payment stats ─────────────────────────────────────────────────────────
   const p = stats?.payments ?? null;
-  const totalRevenue  = getNum(p, "totalRevenue", "totalAmount", "revenue", "total", "totalPaid");
-  const paidCount     = getNum(p, "paidCount", "totalPaid", "paid");
-  const pendingCount  = getNum(p, "pendingCount", "totalPending", "pending");
-  const failedCount   = getNum(p, "failedCount", "totalFailed", "failed");
-  const totalTx       = getNum(p, "totalTransactions", "totalCount", "count");
+  const totalRevenueFallback = getNum(p, "totalRevenue", "totalAmount", "revenue", "total", "totalPaid");
+  const paidCountFallback = getNum(p, "paidCount", "totalPaid", "paid");
+  const pendingCountFallback = getNum(p, "pendingCount", "totalPending", "pending");
+  const failedCountFallback = getNum(p, "failedCount", "totalFailed", "failed");
+  const totalTx = getNum(p, "totalTransactions", "totalCount", "count");
+
+  // Use paymentSummary from dedicated endpoint, fallback to stats?.payments
+  const totalRevenue = paymentSummary?.totalRevenue ?? totalRevenueFallback;
+  const paidCount = paymentSummary?.totalPaidPayments ?? paidCountFallback;
+  const pendingCount = paymentSummary?.totalPendingPayments ?? pendingCountFallback;
+  const failedCount = paymentSummary?.totalFailedPayments ?? failedCountFallback;
 
   // ── Staff stats ───────────────────────────────────────────────────────────
   const s = stats?.staffs ?? null;
-  const totalStaff  = getNum(s, "totalStaff", "totalActive", "total", "count", "activeCount");
+  const totalStaff = getNum(s, "totalStaff", "totalActive", "total", "count", "activeCount");
   const activeStaff = getNum(s, "totalActive", "activeCount", "active");
 
   // ── Attendance stats ──────────────────────────────────────────────────────
   const a = stats?.attendance ?? null;
-  const checkedIn  = getNum(a, "checkedIn", "presentCount", "totalPresent", "present");
-  const lateCount  = getNum(a, "lateCount", "late", "totalLate");
-  const absentCount= getNum(a, "absentCount", "absent", "totalAbsent");
-  const onTimeCount= getNum(a, "onTimeCount", "onTime", "totalOnTime");
+  const checkedInFallback = getNum(a, "checkedIn", "presentCount", "totalPresent", "present");
+  const lateCountFallback = getNum(a, "lateCount", "late", "totalLate");
+  const absentCountFallback = getNum(a, "absentCount", "absent", "totalAbsent");
+  const onTimeCountFallback = getNum(a, "onTimeCount", "onTime", "totalOnTime");
 
-  const staffDisplay  = activeStaff ?? totalStaff;
+  // Use staffAttendanceStats from dedicated endpoint, fallback to stats?.attendance
+  const checkedIn = staffAttendanceStats?.totalPresent ?? checkedInFallback;
+  const lateCount = staffAttendanceStats?.totalLate ?? lateCountFallback;
+  const absentCount = staffAttendanceStats?.totalAbsent ?? absentCountFallback;
+  const onTimeCount = (staffAttendanceStats?.totalPresent != null && staffAttendanceStats?.totalLate != null)
+    ? Math.max(0, staffAttendanceStats.totalPresent - staffAttendanceStats.totalLate)
+    : onTimeCountFallback;
+
+  const staffDisplay = activeStaff ?? totalStaff;
+
+  // Placeholder values for growth and target (as per spec)
+  const growthPlaceholder = 0; // ▲ 0% when no data
+  const targetPlaceholder = 500_000_000; // IDR 500M target
 
   return (
     <>
@@ -225,16 +405,17 @@ export function DashboardView() {
           icon="fa-users"
           loading={loading}
           href={adminPaths.members}
+          growth={growthPlaceholder} // FR-002: Placeholder growth indicator
         />
         {currentRole === "owner" ? (
           <StatCard
-            label="Revenue Total"
+            label="Total Revenue" // FR-003: Changed from "Revenue Total" to "Revenue Monthly"
             value={totalRevenue != null ? formatRupiah(totalRevenue) : "—"}
-            sub={totalTx != null ? `${totalTx} transaksi` : undefined}
             accent="text-sweat"
             icon="fa-wallet"
             loading={loading}
             href={adminPaths.payments}
+            target={targetPlaceholder} // FR-003: Target comparison
           />
         ) : (
           <div className="bg-card p-5 rounded-xl border border-dashed border-gray-700 flex flex-col items-center justify-center opacity-60">
@@ -246,11 +427,11 @@ export function DashboardView() {
         <StatCard
           label="Class Occupancy"
           value={classOccupancy != null ? `${Math.round(classOccupancy)}%` : "—"}
-          sub={totalClasses != null ? `${totalClasses} total kelas` : undefined}
           accent="text-yellow-400"
           icon="fa-calendar-alt"
           loading={loading}
           href={adminPaths.classes}
+          showAvg // FR-004: Add Avg label
         />
         <StatCard
           label="Staff Checked In"
@@ -262,166 +443,145 @@ export function DashboardView() {
         />
       </div>
 
-      {/* ── Row 2: Secondary KPIs ────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-        <StatCard
+      {/* ── Row 2: Secondary KPIs (compact/minimized) ───────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8 opacity-80">
+        <CompactStatCard
           label="Expiring Soon"
           value={expiringCount ?? "—"}
-          sub={frozenCount != null ? `${frozenCount} frozen` : undefined}
           accent={(expiringCount ?? 0) > 0 ? "text-yellow-400" : "text-white"}
           icon="fa-clock"
           loading={loading}
           href={adminPaths.members}
         />
-        <StatCard
+        <CompactStatCard
           label="Active Coaches"
           value={activeCoaches ?? totalCoaches ?? "—"}
-          sub={avgRating != null ? `Avg rating ${avgRating.toFixed(1)} ★` : undefined}
           icon="fa-dumbbell"
           loading={loading}
           href={adminPaths.coaches}
         />
         {currentRole === "owner" ? (
-          <StatCard
+          <CompactStatCard
             label="Pending Payments"
             value={pendingCount ?? "—"}
-            sub={failedCount != null ? `${failedCount} failed` : undefined}
             accent={(pendingCount ?? 0) > 0 ? "text-yellow-400" : "text-white"}
             icon="fa-hourglass-half"
             loading={loading}
             href={adminPaths.payments}
           />
         ) : (
-          <div className="bg-card p-5 rounded-xl border border-dashed border-gray-700 flex flex-col items-center justify-center opacity-60">
-            <i className="fas fa-lock text-gray-500 text-xl mb-2" aria-hidden />
-            <p className="text-gray-500 text-xs font-bold uppercase text-center">Payments</p>
-            <p className="text-[10px] text-gray-600 mt-1">Owner Only</p>
+          <div className="bg-card/50 p-3 rounded-lg border border-dashed border-gray-700/50 flex items-center justify-center opacity-40">
+            <i className="fas fa-lock text-gray-600 text-xs" aria-hidden />
+            <span className="text-gray-600 text-[10px] uppercase ml-2 font-bold">Payments</span>
           </div>
         )}
-        <StatCard
-          label="Upcoming Classes"
-          value={upcomingClasses ?? activeClasses ?? "—"}
-          sub={completedClasses != null ? `${completedClasses} selesai` : undefined}
+        <CompactStatCard
+          label="Cancelled Classes"
+          value={cancelledClasses ?? "—"}
           icon="fa-play-circle"
           loading={loading}
           href={adminPaths.classes}
         />
       </div>
 
-      {/* ── Stats Breakdown Row ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        {/* Member Breakdown */}
-        <div className="bg-card rounded-xl border border-border p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-bold text-sm uppercase tracking-wide text-gray-300">Member Status</h4>
-            <Link href={adminPaths.members} className="text-xs text-sweat hover:underline">Lihat</Link>
-          </div>
-          <div className="space-y-3">
-            {loading ? (
-              [1,2,3,4].map((i) => (
-                <div key={i} className="flex justify-between items-center">
-                  <span className="w-24 h-4 bg-gray-700 rounded animate-pulse" />
-                  <span className="w-8 h-4 bg-gray-700 rounded animate-pulse" />
-                </div>
-              ))
-            ) : (
-              <>
-                <MemberStatRow label="Active" value={activeMembers} color="bg-green-500" total={totalMembers} />
-                <MemberStatRow label="Expiring Soon" value={expiringCount} color="bg-yellow-500" total={totalMembers} />
-                <MemberStatRow label="Expired" value={expiredMembers} color="bg-red-500" total={totalMembers} />
-                <MemberStatRow label="Frozen" value={frozenCount} color="bg-blue-500" total={totalMembers} />
-                {pendingPaymentCount != null && (
-                  <MemberStatRow label="Pending Payment" value={pendingPaymentCount} color="bg-orange-500" total={totalMembers} />
-                )}
-              </>
-            )}
-          </div>
-        </div>
+      {/* ── Stats Breakdown (collapsible/compact) ───────────────────────── */}
+      <div className="mb-8">
+        <button
+          onClick={() => setStatsBreakdownOpen(!statsBreakdownOpen)}
+          className="w-full flex items-center justify-between bg-card/50 rounded-lg border border-border/50 px-4 py-3 mb-3 hover:bg-card/70 transition cursor-pointer"
+        >
+          <span className="text-gray-400 text-xs font-bold uppercase tracking-wide">
+            Quick Stats
+          </span>
+          <i className={`fas fa-chevron-${statsBreakdownOpen ? "up" : "down"} text-gray-500 text-xs transition-transform`} aria-hidden />
+        </button>
 
-        {/* Attendance Breakdown */}
-        <div className="bg-card rounded-xl border border-border p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-bold text-sm uppercase tracking-wide text-gray-300">Staff Attendance Today</h4>
-            <Link href={adminPaths.reports} className="text-xs text-sweat hover:underline">Lihat</Link>
-          </div>
-          <div className="space-y-3">
-            {loading ? (
-              [1,2,3].map((i) => (
-                <div key={i} className="flex justify-between items-center">
-                  <span className="w-20 h-4 bg-gray-700 rounded animate-pulse" />
-                  <span className="w-8 h-4 bg-gray-700 rounded animate-pulse" />
-                </div>
-              ))
-            ) : (
-              <>
-                <AttendanceRow label="On Time" value={onTimeCount} color="text-green-400" icon="fa-check-circle" />
-                <AttendanceRow label="Late" value={lateCount} color="text-yellow-400" icon="fa-exclamation-circle" />
-                <AttendanceRow label="Absent" value={absentCount} color="text-red-400" icon="fa-times-circle" />
-                {checkedIn != null && (
-                  <div className="pt-2 border-t border-border flex justify-between items-center text-xs text-gray-400">
-                    <span className="font-bold">Total Checked In</span>
-                    <span className="font-bold text-white">{checkedIn}{staffDisplay != null ? ` / ${staffDisplay}` : ""}</span>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Class & Coach Stats */}
-        <div className="bg-card rounded-xl border border-border p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-bold text-sm uppercase tracking-wide text-gray-300">Kelas &amp; Coach</h4>
-            <Link href={adminPaths.classes} className="text-xs text-sweat hover:underline">Lihat</Link>
-          </div>
-          <div className="space-y-3">
-            {loading ? (
-              [1,2,3,4].map((i) => (
-                <div key={i} className="flex justify-between items-center">
-                  <span className="w-24 h-4 bg-gray-700 rounded animate-pulse" />
-                  <span className="w-8 h-4 bg-gray-700 rounded animate-pulse" />
-                </div>
-              ))
-            ) : (
-              <>
-                <QuickStatRow label="Total Kelas" value={totalClasses} />
-                <QuickStatRow label="Upcoming" value={upcomingClasses} accent="text-green-400" />
-                <QuickStatRow label="Completed" value={completedClasses} accent="text-gray-400" />
-                <QuickStatRow label="Cancelled" value={cancelledClasses} accent="text-red-400" />
-                <div className="pt-2 border-t border-border" />
-                <QuickStatRow label="Active Coaches" value={activeCoaches ?? totalCoaches} accent="text-sweat" />
-                {avgRating != null && (
-                  <QuickStatRow label="Avg Rating" value={`${avgRating.toFixed(1)} ★`} accent="text-sweat" />
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Payment Summary (owner only) ─────────────────────────────────── */}
-      {currentRole === "owner" && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: "Paid", value: paidCount, accent: "text-green-400", icon: "fa-check" },
-            { label: "Pending", value: pendingCount, accent: "text-yellow-400", icon: "fa-hourglass-half" },
-            { label: "Failed", value: failedCount, accent: "text-red-400", icon: "fa-times" },
-            { label: "Total Revenue", value: totalRevenue != null ? formatRupiah(totalRevenue) : null, accent: "text-sweat", icon: "fa-dollar-sign" },
-          ].map(({ label, value, accent, icon }) => (
-            <Link key={label} href={adminPaths.payments} className="block">
-              <div className="bg-card rounded-xl border border-border p-4 hover:border-sweat/40 transition">
-                <div className="flex items-center gap-2 mb-2">
-                  <i className={`fas ${icon} text-xs ${accent}`} aria-hidden />
-                  <p className="text-xs text-gray-400 font-bold uppercase">{label}</p>
-                </div>
-                <p className={`text-xl font-bold ${accent}`}>
-                  {loading ? <Skeleton w="w-12" /> : (value ?? "—")}
-                </p>
+        {statsBreakdownOpen && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Member Breakdown */}
+            <div className="bg-card rounded-xl border border-border p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-xs uppercase tracking-wide text-gray-300">Member Status</h4>
+                <Link href={adminPaths.members} className="text-[10px] text-sweat hover:underline">Lihat</Link>
               </div>
-            </Link>
-          ))}
-        </div>
-      )}
+              <div className="space-y-2">
+                {loading ? (
+                  [1, 2, 3].map((i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <span className="w-20 h-3 bg-gray-700 rounded animate-pulse" />
+                      <span className="w-6 h-3 bg-gray-700 rounded animate-pulse" />
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <QuickStatRow label="Active" value={activeMembers} accent="text-green-400" />
+                    <QuickStatRow label="Expiring Soon" value={expiringCount} accent="text-yellow-400" />
+                    <QuickStatRow label="Expired" value={expiredMembers} accent="text-red-400" />
+                    <QuickStatRow label="Frozen" value={frozenCount} accent="text-blue-400" />
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Attendance Breakdown */}
+            <div className="bg-card rounded-xl border border-border p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-xs uppercase tracking-wide text-gray-300">Staff Attendance</h4>
+                <Link href={adminPaths.reports} className="text-[10px] text-sweat hover:underline">Lihat</Link>
+              </div>
+              <div className="space-y-2">
+                {loading ? (
+                  [1, 2, 3].map((i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <span className="w-16 h-3 bg-gray-700 rounded animate-pulse" />
+                      <span className="w-6 h-3 bg-gray-700 rounded animate-pulse" />
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <AttendanceRow label="On Time" value={onTimeCount} color="text-green-400" icon="fa-check-circle" />
+                    <AttendanceRow label="Late" value={lateCount} color="text-yellow-400" icon="fa-exclamation-circle" />
+                    <AttendanceRow label="Absent" value={absentCount} color="text-red-400" icon="fa-times-circle" />
+                    {checkedIn != null && (
+                      <div className="pt-2 border-t border-border/50 flex justify-between items-center text-[10px] text-gray-400">
+                        <span className="font-bold">Checked In</span>
+                        <span className="font-bold text-white">{checkedIn}{staffDisplay != null ? `/${staffDisplay}` : ""}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Class & Coach Stats */}
+            <div className="bg-card rounded-xl border border-border p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-xs uppercase tracking-wide text-gray-300">Kelas &amp; Coach</h4>
+                <Link href={adminPaths.classes} className="text-[10px] text-sweat hover:underline">Lihat</Link>
+              </div>
+              <div className="space-y-2">
+                {loading ? (
+                  [1, 2, 3].map((i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <span className="w-20 h-3 bg-gray-700 rounded animate-pulse" />
+                      <span className="w-6 h-3 bg-gray-700 rounded animate-pulse" />
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <QuickStatRow label="Total Kelas" value={totalClasses} />
+                    <QuickStatRow label="Cancelled" value={cancelledClasses} accent="text-red-400" />
+                    <QuickStatRow label="Completed" value={completedClasses} accent="text-gray-400" />
+                    {avgRating != null && (
+                      <QuickStatRow label="Avg Rating" value={`${avgRating.toFixed(1)} ★`} accent="text-sweat" />
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ── Recent Transactions + Today's Classes ────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -453,26 +613,25 @@ export function DashboardView() {
                   </tr>
                 ) : (
                   recentPayments.map((p) => {
-                    const status = p.paymentStatus ?? p.status ?? "—";
-                    const statusLower = status.toLowerCase();
+                    const statusLabel = p.paymentStatus === 1 ? "Paid" : p.paymentStatus === 0 ? "Pending" : "Failed";
                     const badgeCls =
-                      statusLower === "paid"
+                      p.paymentStatus === 1
                         ? "bg-green-500/10 text-green-500"
-                        : statusLower === "pending"
-                        ? "bg-yellow-500/10 text-yellow-400"
-                        : "bg-red-500/10 text-red-400";
+                        : p.paymentStatus === 0
+                          ? "bg-yellow-500/10 text-yellow-400"
+                          : "bg-red-500/10 text-red-400";
                     return (
                       <tr key={p.id} className="table-row transition">
                         <td className="px-5 py-3 font-medium text-white">
-                          {p.memberName ?? p.fullName ?? "—"}
+                          {p.invoiceNo}
                         </td>
-                        <td className="px-5 py-3">{p.membershipType ?? "—"}</td>
-                        <td className="px-5 py-3 text-white font-mono text-xs">
-                          {p.amount != null ? formatRupiah(p.amount) : "—"}
+                        <td className="px-5 py-3">{p.membershipPlanName ?? "—"}</td>
+                        <td className="px-5 py-3 text-green-400 font-mono text-xs">
+                          {formatRupiah(p.finalAmount)}
                         </td>
                         <td className="px-5 py-3">
                           <span className={`px-2 py-1 rounded text-xs font-bold ${badgeCls}`}>
-                            {status}
+                            {statusLabel}
                           </span>
                         </td>
                       </tr>
@@ -498,19 +657,20 @@ export function DashboardView() {
               ))}
             </div>
           ) : todayClasses.length === 0 ? (
-            <p className="text-gray-500 text-sm">No classes found.</p>
+            <p className="text-gray-500 text-sm">No classes scheduled for today.</p>
           ) : (
             <div className="space-y-3">
               {todayClasses.map((c) => {
                 const isCancelled = c.isCancelled;
+                const bookedCount = c.bookedCount ?? c.enrolled ?? 0;
+                const capacity = c.capacity ?? 0;
                 return (
                   <div
                     key={c.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg border transition ${
-                      isCancelled
-                        ? "border-red-500/20 opacity-50"
-                        : "border-border hover:bg-white/5"
-                    }`}
+                    className={`flex items-center gap-3 p-3 rounded-lg border transition ${isCancelled
+                      ? "border-red-500/20 opacity-50"
+                      : "border-border hover:bg-white/5"
+                      }`}
                   >
                     <div className="w-14 h-14 bg-gray-800 rounded-lg flex flex-col items-center justify-center text-center shrink-0">
                       <span className="text-[9px] text-gray-500 uppercase">Time</span>
@@ -525,16 +685,18 @@ export function DashboardView() {
                           <span className="ml-2 text-[10px] text-red-400 font-normal">CANCELLED</span>
                         )}
                       </h5>
+                      {/* FR-005: "Coach" prefix before coach name */}
                       <p className="text-xs text-gray-400 truncate">
-                        {c.coachName ?? "—"} · {c.branchName ?? c.location ?? "—"}
+                        Coach {c.coachName ?? "—"} · {c.branchName ?? c.location ?? "—"}
                       </p>
                     </div>
+                    {/* FR-006: "X/Y Booked" with yellow styling */}
                     <div className="text-right shrink-0">
                       <p className="text-xl font-bold text-sweat leading-none">
-                        {c.bookedCount ?? c.enrolled ?? 0}
-                        <span className="text-xs text-gray-500 font-normal">/{c.capacity ?? 0}</span>
+                        {bookedCount}
+                        <span className="text-xs text-gray-500 font-normal">/{capacity}</span>
                       </p>
-                      <p className="text-[10px] text-gray-500">booked</p>
+                      <p className="text-[10px] text-gray-500">Booked</p>
                     </div>
                   </div>
                 );
@@ -549,34 +711,6 @@ export function DashboardView() {
 
 // ── Helper sub-components ───────────────────────────────────────────────────
 
-function MemberStatRow({
-  label,
-  value,
-  color,
-  total,
-}: {
-  label: string;
-  value: number | null;
-  color: string;
-  total: number | null;
-}) {
-  if (value == null) return null;
-  const pct = total != null && total > 0 ? Math.round((value / total) * 100) : null;
-  return (
-    <div>
-      <div className="flex justify-between items-center text-xs mb-1">
-        <span className="text-gray-400">{label}</span>
-        <span className="text-white font-bold">{value.toLocaleString("id-ID")}{pct != null ? ` (${pct}%)` : ""}</span>
-      </div>
-      {pct != null && (
-        <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
-          <div className={`h-full ${color} rounded-full`} style={{ width: `${pct}%` }} />
-        </div>
-      )}
-    </div>
-  );
-}
-
 function AttendanceRow({
   label,
   value,
@@ -590,9 +724,9 @@ function AttendanceRow({
 }) {
   if (value == null) return null;
   return (
-    <div className="flex justify-between items-center text-sm">
+    <div className="flex justify-between items-center text-xs">
       <span className="flex items-center gap-2 text-gray-400">
-        <i className={`fas ${icon} text-xs ${color}`} aria-hidden />
+        <i className={`fas ${icon} text-[10px] ${color}`} aria-hidden />
         {label}
       </span>
       <span className={`font-bold ${color}`}>{value}</span>
@@ -611,7 +745,7 @@ function QuickStatRow({
 }) {
   if (value == null) return null;
   return (
-    <div className="flex justify-between items-center text-sm">
+    <div className="flex justify-between items-center text-xs">
       <span className="text-gray-400">{label}</span>
       <span className={`font-bold ${accent ?? "text-white"}`}>
         {typeof value === "number" ? value.toLocaleString("id-ID") : value}

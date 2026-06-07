@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRole } from "@/contexts/role-context";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
+import { API_BASE_URL } from "@/lib/auth/constants";
+import { authFetch } from "@/lib/auth/client-fetch";
 
 type PayrollRow = {
   coachId?: string;
@@ -41,7 +43,7 @@ export function PayrollView() {
   const loadPayroll = useCallback(async () => {
     setLoading(true);
     setError("");
-    const res = await fetch("/api/coaches?page=1&pageSize=100", { cache: "no-store" });
+    const res = await authFetch(`${API_BASE_URL}/api/v1/coaches?page=1&pageSize=100`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = await res.json().catch(() => ({})) as {
       items?: PayrollRow[];
@@ -175,8 +177,8 @@ export function PayrollView() {
                     {r.estimatedPayout != null
                       ? formatRupiah(r.estimatedPayout)
                       : r.payrollRate != null
-                      ? formatRupiah(r.payrollRate)
-                      : "—"}
+                        ? formatRupiah(r.payrollRate)
+                        : "—"}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <span className="bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded text-xs font-bold border border-yellow-500/20">

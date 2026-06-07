@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { API_BASE_URL } from "@/lib/auth/constants";
+import { authFetch, clearAuthTokenLocal } from "@/lib/auth/client-fetch";
 import { useEffect, useState } from "react";
 import { adminPaths } from "@/lib/admin-routes";
 import { useRole } from "@/contexts/role-context";
@@ -24,6 +26,7 @@ const mainNav: { href: string; label: string; icon: string; id: string }[] = [
 ];
 
 const dataNav: { href: string; label: string; icon: string; id: string }[] = [
+  { href: adminPaths.membershipPlans, label: "Membership Plans", icon: "fa-ticket-alt", id: "membership-plans" },
   { href: adminPaths.payments, label: "Payments", icon: "fa-credit-card", id: "payments" },
   { href: adminPaths.workout, label: "Workout Master", icon: "fa-running", id: "workout" },
   { href: adminPaths.payroll, label: "Coaches Payroll", icon: "fa-file-invoice-dollar", id: "payroll" },
@@ -50,7 +53,7 @@ export function AdminSidebar({ open = false, onClose }: Props) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/profile", { cache: "no-store" })
+    authFetch(`${API_BASE_URL}/api/v1/auth/profile`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data: ProfileData | null) => { if (data) setProfile(data); })
       .catch(() => null);
@@ -62,8 +65,13 @@ export function AdminSidebar({ open = false, onClose }: Props) {
     || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
 
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/login";
+    clearAuthTokenLocal();
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch {
+      // ignore
+    }
+    window.location.replace("/login");
   }
 
   return (
@@ -72,14 +80,12 @@ export function AdminSidebar({ open = false, onClose }: Props) {
         type="button"
         aria-label="Close sidebar overlay"
         onClick={onClose}
-        className={`fixed inset-0 z-30 bg-black/50 transition-opacity lg:hidden ${
-          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 z-30 bg-black/50 transition-opacity lg:hidden ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
       />
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-sidebar border-r border-border flex flex-col justify-between overflow-y-auto transform transition-transform lg:static lg:z-auto lg:w-64 lg:max-w-none lg:translate-x-0 ${
-          open ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-sidebar border-r border-border flex flex-col justify-between overflow-y-auto transform transition-transform lg:static lg:z-auto lg:w-64 lg:max-w-none lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div>
           <div className="p-6 flex items-center justify-between gap-3">

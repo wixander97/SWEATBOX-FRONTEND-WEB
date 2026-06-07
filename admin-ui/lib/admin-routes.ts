@@ -8,6 +8,7 @@ export const adminPaths = {
   payroll: "/admin/payroll",
   payments: "/admin/payments",
   users: "/admin/users",
+  membershipPlans: "/admin/membership-plans",
 } as const;
 
 export type AdminNavKey = keyof typeof adminPaths;
@@ -22,4 +23,5 @@ export const pageTitleByPath: Record<string, string> = {
   [adminPaths.payroll]: "Coaches Payroll",
   [adminPaths.payments]: "Payments",
   [adminPaths.users]: "User Management",
+  [adminPaths.membershipPlans]: "Membership Plans",
 };

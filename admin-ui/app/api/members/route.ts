@@ -51,6 +51,9 @@ export async function POST(req: Request) {
   if (!token) return unauthorized();
   const body = await req.json();
 
+  console.log("[DEBUG] Backend POST to:", `${API_BASE_URL}/api/v1/members`);
+  console.log("[DEBUG] Backend request body:", JSON.stringify(body, null, 2));
+
   const res = await fetch(`${API_BASE_URL}/api/v1/members`, {
     method: "POST",
     headers: {
@@ -59,10 +62,22 @@ export async function POST(req: Request) {
     },
     body: JSON.stringify(body),
   });
-  const data = await res.json().catch(() => ({}));
+  
+  // Log raw response for debugging
+  const rawText = await res.text();
+  console.log("[DEBUG] Backend response status:", res.status);
+  console.log("[DEBUG] Backend response body:", rawText);
+  
+  let data: Record<string, unknown> = {};
+  try {
+    data = JSON.parse(rawText);
+  } catch {
+    data = { raw: rawText };
+  }
+  
   if (!res.ok) {
     return NextResponse.json(
-      { message: data?.message ?? "Failed to create member" },
+      { message: data?.message ?? "Failed to create member", details: data },
       { status: res.status }
     );
   }
