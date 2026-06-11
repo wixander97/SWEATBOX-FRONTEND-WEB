@@ -120,6 +120,35 @@ function formatRupiah(amount: number): string {
   return `Rp ${amount.toLocaleString("id-ID")}`;
 }
 
+/**
+ * Calculate class occupancy using weighted average formula
+ * Formula: (Total Booked Spots / Total Available Capacity) × 100
+ * Excludes cancelled classes to reflect actual capacity utilization
+ */
+function calculateClassOccupancy(classes: TodayClass[]): number | null {
+  if (!classes || classes.length === 0) return null;
+
+  const activeClasses = classes.filter((c) => !c.isCancelled);
+  if (activeClasses.length === 0) return null;
+
+  let totalBooked = 0;
+  let totalCapacity = 0;
+
+  for (const c of activeClasses) {
+    const booked = c.bookedCount ?? c.enrolled ?? 0;
+    const capacity = c.capacity ?? 0;
+
+    if (capacity > 0) {
+      totalBooked += booked;
+      totalCapacity += capacity;
+    }
+  }
+
+  if (totalCapacity === 0) return null;
+
+  return (totalBooked / totalCapacity) * 100;
+}
+
 function Skeleton({ w = "w-16" }: { w?: string }) {
   return <span className={`inline-block ${w} h-8 bg-gray-700 rounded animate-pulse`} />;
 }
@@ -322,7 +351,7 @@ export function DashboardView() {
 
   // ── Class stats ───────────────────────────────────────────────────────────
   const cl = stats?.classes ?? null;
-  const classOccupancy = getNum(cl, "averageOccupancy", "occupancyRate", "avgOccupancy", "averageOccupancyRate");
+  const classOccupancy = getNum(cl, "averageOccupancy", "occupancyRate", "avgOccupancy", "averageOccupancyRate") ?? calculateClassOccupancy(todayClasses);
   const upcomingClasses = null; // Not in new endpoint, display replaced
 
   // Use classStats from dedicated endpoint, fallback to stats?.classes for classOccupancy
@@ -407,7 +436,7 @@ export function DashboardView() {
           href={adminPaths.members}
           growth={growthPlaceholder} // FR-002: Placeholder growth indicator
         />
-        {currentRole === "owner" ? (
+        {currentRole === "superadmin" ? (
           <StatCard
             label="Total Revenue" // FR-003: Changed from "Revenue Total" to "Revenue Monthly"
             value={totalRevenue != null ? formatRupiah(totalRevenue) : "—"}
@@ -460,7 +489,7 @@ export function DashboardView() {
           loading={loading}
           href={adminPaths.coaches}
         />
-        {currentRole === "owner" ? (
+        {currentRole === "superadmin" ? (
           <CompactStatCard
             label="Pending Payments"
             value={pendingCount ?? "—"}
@@ -584,64 +613,66 @@ export function DashboardView() {
       </div>
 
       {/* ── Recent Transactions + Today's Classes ────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="p-5 border-b border-border flex justify-between items-center">
-            <h4 className="font-bold text-lg">Recent Transactions</h4>
-            <Link href={adminPaths.payments} className="text-xs text-sweat hover:underline">
-              View All
-            </Link>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[460px] text-left text-sm text-gray-400">
-              <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
-                <tr>
-                  <th className="px-5 py-3">Member</th>
-                  <th className="px-5 py-3">Plan</th>
-                  <th className="px-5 py-3">Amount</th>
-                  <th className="px-5 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {loading ? (
+      <div className={`grid grid-cols-1 ${currentRole === "superadmin" ? "lg:grid-cols-2" : ""} gap-6`}>
+        {currentRole === "superadmin" && (
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
+            <div className="p-5 border-b border-border flex justify-between items-center">
+              <h4 className="font-bold text-lg">Recent Transactions</h4>
+              <Link href={adminPaths.payments} className="text-xs text-sweat hover:underline">
+                View All
+              </Link>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[460px] text-left text-sm text-gray-400">
+                <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
                   <tr>
-                    <td colSpan={4} className="px-5 py-6 text-center text-gray-500">Loading...</td>
+                    <th className="px-5 py-3">Member</th>
+                    <th className="px-5 py-3">Plan</th>
+                    <th className="px-5 py-3">Amount</th>
+                    <th className="px-5 py-3">Status</th>
                   </tr>
-                ) : recentPayments.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-5 py-6 text-center text-gray-500">No recent transactions</td>
-                  </tr>
-                ) : (
-                  recentPayments.map((p) => {
-                    const statusLabel = p.paymentStatus === 1 ? "Paid" : p.paymentStatus === 0 ? "Pending" : "Failed";
-                    const badgeCls =
-                      p.paymentStatus === 1
-                        ? "bg-green-500/10 text-green-500"
-                        : p.paymentStatus === 0
-                          ? "bg-yellow-500/10 text-yellow-400"
-                          : "bg-red-500/10 text-red-400";
-                    return (
-                      <tr key={p.id} className="table-row transition">
-                        <td className="px-5 py-3 font-medium text-white">
-                          {p.invoiceNo}
-                        </td>
-                        <td className="px-5 py-3">{p.membershipPlanName ?? "—"}</td>
-                        <td className="px-5 py-3 text-green-400 font-mono text-xs">
-                          {formatRupiah(p.finalAmount)}
-                        </td>
-                        <td className="px-5 py-3">
-                          <span className={`px-2 py-1 rounded text-xs font-bold ${badgeCls}`}>
-                            {statusLabel}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={4} className="px-5 py-6 text-center text-gray-500">Loading...</td>
+                    </tr>
+                  ) : recentPayments.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-5 py-6 text-center text-gray-500">No recent transactions</td>
+                    </tr>
+                  ) : (
+                    recentPayments.map((p) => {
+                      const statusLabel = p.paymentStatus === 1 ? "Paid" : p.paymentStatus === 0 ? "Pending" : "Failed";
+                      const badgeCls =
+                        p.paymentStatus === 1
+                          ? "bg-green-500/10 text-green-500"
+                          : p.paymentStatus === 0
+                            ? "bg-yellow-500/10 text-yellow-400"
+                            : "bg-red-500/10 text-red-400";
+                      return (
+                        <tr key={p.id} className="table-row transition">
+                          <td className="px-5 py-3 font-medium text-white">
+                            {p.invoiceNo}
+                          </td>
+                          <td className="px-5 py-3">{p.membershipPlanName ?? "—"}</td>
+                          <td className="px-5 py-3 text-green-400 font-mono text-xs">
+                            {formatRupiah(p.finalAmount)}
+                          </td>
+                          <td className="px-5 py-3">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${badgeCls}`}>
+                              {statusLabel}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex justify-between items-center mb-5">

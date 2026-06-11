@@ -1,17 +1,36 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { pageTitleByPath } from "@/lib/admin-routes";
-import { useRole, type SimulatedRole } from "@/contexts/role-context";
+import { useRole } from "@/contexts/role-context";
+import { API_BASE_URL } from "@/lib/auth/constants";
+import { authFetch } from "@/lib/auth/client-fetch";
 
 type Props = {
   onOpenMenu?: () => void;
 };
 
+type ProfileData = {
+  roleName?: string | null;
+  role?: string | null;
+};
+
 export function AdminHeader({ onOpenMenu }: Props) {
   const pathname = usePathname();
-  const { currentRole, setCurrentRole } = useRole();
+  const { displayRole, setRoleFromAuth } = useRole();
   const title = pageTitleByPath[pathname] ?? "Sweatbox Admin";
+
+  useEffect(() => {
+    authFetch(`${API_BASE_URL}/api/v1/auth/profile`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: ProfileData | null) => {
+        if (data) {
+          setRoleFromAuth(data.roleName ?? data.role);
+        }
+      })
+      .catch(() => null);
+  }, [setRoleFromAuth]);
 
   return (
     <header className="min-h-16 bg-sidebar border-b border-border flex justify-between items-center px-4 sm:px-6 lg:px-8 gap-3">
@@ -30,19 +49,11 @@ export function AdminHeader({ onOpenMenu }: Props) {
       </div>
       <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
         <div className="flex items-center gap-2 bg-card px-3 py-1.5 rounded-lg border border-gray-700">
-          <span className="hidden sm:inline text-xs text-gray-400 font-bold">
-            <i className="fas fa-eye text-sweat mr-1" aria-hidden /> View As:
-          </span>
-          <select
-            id="role-simulator"
-            value={currentRole}
-            onChange={(e) => setCurrentRole(e.target.value as SimulatedRole)}
-            className="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer appearance-none"
-            aria-label="Simulate role"
-          >
-            <option value="owner">Owner / Manager</option>
-            <option value="admin">Admin / Staff</option>
-          </select>
+          <i
+            className={`fas ${displayRole === "Superadmin" ? "fa-shield-alt text-sweat" : "fa-user-shield text-gray-400"} text-xs`}
+            aria-hidden
+          />
+          <span className="text-xs text-white font-bold">{displayRole}</span>
         </div>
 
         <div className="hidden sm:block w-px h-6 bg-gray-700" />

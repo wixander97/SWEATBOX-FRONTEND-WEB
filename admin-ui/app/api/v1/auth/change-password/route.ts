@@ -7,22 +7,22 @@ function unauthorized() {
   return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 }
 
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   const token = await getAuthTokenFromCookie();
   if (!token) {
-    console.warn("[API/v1/auth/change-password/PUT] Unauthorized - no token");
+    console.warn("[API/v1/auth/change-password/POST] Unauthorized - no token");
     return unauthorized();
   }
 
   const body = await request.json().catch(() => ({}));
-  console.log("[API/v1/auth/change-password/PUT] Payload:", body);
+  console.log("[API/v1/auth/change-password/POST] Payload:", body);
 
   const url = `${API_BASE_URL}/api/v1/auth/change-password`;
-  console.log(`[API/v1/auth/change-password/PUT] Sending to: ${url}`);
+  console.log(`[API/v1/auth/change-password/POST] Sending to: ${url}`);
 
   try {
     const res = await fetch(url, {
-      method: "PUT",
+      method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -31,7 +31,7 @@ export async function PUT(request: NextRequest) {
     });
 
     const data = await res.json().catch(() => ({}));
-    console.log(`[API/v1/auth/change-password/PUT] Status: ${res.status}`, res.ok ? "✓ OK" : "✗ ERROR", data);
+    console.log(`[API/v1/auth/change-password/POST] Status: ${res.status}`, res.ok ? "✓ OK" : "✗ ERROR", data);
 
     if (!res.ok) {
       return NextResponse.json({ message: data?.message ?? "Failed to change password" }, { status: res.status });
@@ -39,7 +39,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (err) {
-    console.error("[API/v1/auth/change-password/PUT] Network error:", err);
+    console.error("[API/v1/auth/change-password/POST] Network error:", err);
     return NextResponse.json({ message: "Network error" }, { status: 500 });
   }
 }

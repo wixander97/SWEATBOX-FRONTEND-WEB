@@ -136,7 +136,7 @@ export function UsersView() {
     setResetLoading(true);
     setResetMsg("");
     const res = await authFetch(`${API_BASE_URL}/api/v1/auth/change-password`, {
-      method: "PUT",
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ currentPassword: resetForm.currentPassword, newPassword: resetForm.newPassword }),
     });

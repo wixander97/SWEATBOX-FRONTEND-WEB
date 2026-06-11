@@ -86,6 +86,14 @@ type BranchOption = {
   isActive: boolean;
 };
 
+type CoachAttendanceRecord = {
+  classDate: string;
+  className: string;
+  branchName?: string | null;
+  isPresent: boolean;
+  status: string;
+};
+
 export function CoachesView() {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [page, setPage] = useState(1);
@@ -130,6 +138,10 @@ export function CoachesView() {
     isActive: true,
   };
   const [addForm, setAddForm] = useState<AddForm>(defaultAddForm);
+  const [detailTab, setDetailTab] = useState<"info" | "history">("info");
+  const [attendanceHistory, setAttendanceHistory] = useState<CoachAttendanceRecord[]>([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [attendanceError, setAttendanceError] = useState("");
 
   function toggleSort(key: CoachSortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -273,6 +285,9 @@ export function CoachesView() {
     setSelected(null);
     setEditMode(false);
     setEditError("");
+    setDetailTab("info");
+    setAttendanceHistory([]);
+    setAttendanceError("");
     const res = await authFetch(`${API_BASE_URL}/api/v1/coaches/${id}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => ({}))) as CoachDetail & { data?: CoachDetail; message?: string };
@@ -284,6 +299,30 @@ export function CoachesView() {
     const coach = payload.data ?? payload;
     setSelected(coach);
     setDetailLoading(false);
+  }
+
+  async function loadAttendanceHistory(coachId: string) {
+    setAttendanceLoading(true);
+    setAttendanceError("");
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/coaches/${coachId}/attendance-history`, {
+        cache: "no-store",
+      });
+      if (redirectToLoginIfUnauthorized(res.status)) return;
+      if (res.ok) {
+        const payload = await res.json();
+        const list = Array.isArray(payload) ? payload : (payload.items ?? payload.data ?? []);
+        setAttendanceHistory(list);
+      } else {
+        setAttendanceError("Failed to load attendance history");
+        setAttendanceHistory([]);
+      }
+    } catch {
+      setAttendanceError("Failed to load attendance history");
+      setAttendanceHistory([]);
+    } finally {
+      setAttendanceLoading(false);
+    }
   }
 
   function startEdit(coach: CoachDetail) {
@@ -514,11 +553,42 @@ export function CoachesView() {
               </button>
             </div>
 
+            {/* Tab Buttons */}
+            <div className="flex gap-1 mb-4 border-b border-border">
+              <button
+                type="button"
+                onClick={() => setDetailTab("info")}
+                className={`px-4 py-2 text-sm font-bold transition border-b-2 ${
+                  detailTab === "info"
+                    ? "border-sweat text-sweat"
+                    : "border-transparent text-gray-500 hover:text-white"
+                }`}
+              >
+                Info
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDetailTab("history");
+                  if (selected && attendanceHistory.length === 0 && !attendanceLoading) {
+                    void loadAttendanceHistory(selected.id);
+                  }
+                }}
+                className={`px-4 py-2 text-sm font-bold transition border-b-2 ${
+                  detailTab === "history"
+                    ? "border-sweat text-sweat"
+                    : "border-transparent text-gray-500 hover:text-white"
+                }`}
+              >
+                History
+              </button>
+            </div>
+
             {detailLoading ? (
               <p className="text-gray-400">Loading detail...</p>
             ) : detailError ? (
               <p className="text-red-400">{detailError}</p>
-            ) : (
+            ) : detailTab === "info" ? (
               <div className="space-y-2 text-sm text-gray-300">
                 {[
                   ["Name", selected.fullName],
@@ -553,6 +623,61 @@ export function CoachesView() {
                     Edit Coach
                   </button>
                 </div>
+              </div>
+            ) : (
+              <div>
+                {attendanceLoading ? (
+                  <p className="text-gray-400 text-center py-8">Loading attendance history...</p>
+                ) : attendanceError ? (
+                  <p className="text-red-400 text-center py-8">{attendanceError}</p>
+                ) : attendanceHistory.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">No attendance history found</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm text-gray-400">
+                      <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+                        <tr>
+                          <th className="px-3 py-2">Date</th>
+                          <th className="px-3 py-2">Class</th>
+                          <th className="px-3 py-2">Branch</th>
+                          <th className="px-3 py-2 text-center">Present</th>
+                          <th className="px-3 py-2">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {attendanceHistory.map((record, idx) => (
+                          <tr key={idx} className="transition hover:bg-white/5">
+                            <td className="px-3 py-2 text-white text-xs">
+                              {new Date(record.classDate).toLocaleDateString("id-ID", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </td>
+                            <td className="px-3 py-2 text-xs">{record.className}</td>
+                            <td className="px-3 py-2 text-xs">{record.branchName || "—"}</td>
+                            <td className="px-3 py-2 text-center">
+                              {record.isPresent ? (
+                                <span className="text-green-500">
+                                  <i className="fas fa-check" aria-hidden />
+                                </span>
+                              ) : (
+                                <span className="text-red-500">
+                                  <i className="fas fa-times" aria-hidden />
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">
+                                {record.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </div>

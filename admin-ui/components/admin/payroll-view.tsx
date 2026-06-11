@@ -90,7 +90,7 @@ export function PayrollView() {
     });
   }, [rows, sortKey, sortDir]);
 
-  if (currentRole !== "owner") {
+  if (currentRole !== "superadmin") {
     return (
       <div className="bg-card rounded-xl border border-dashed border-red-500 p-6 sm:p-12 text-center">
         <i className="fas fa-lock text-red-500 text-5xl mb-4" aria-hidden />
