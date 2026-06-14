@@ -20,7 +20,7 @@ export const pageTitleByPath: Record<string, string> = {
   [adminPaths.members]: "Membership CRM",
   [adminPaths.reports]: "Attendance Reports",
   [adminPaths.coaches]: "Coach Management",
-  [adminPaths.workout]: "Workout Master",
+  // [adminPaths.workout]: "Workout Master",
   [adminPaths.payroll]: "Coaches Payroll",
   [adminPaths.payments]: "Payments",
   [adminPaths.users]: "User Management",

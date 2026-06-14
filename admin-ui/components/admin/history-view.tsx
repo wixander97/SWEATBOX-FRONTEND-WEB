@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 type HistoryTab = "coaches" | "members";
 
@@ -26,11 +27,18 @@ type CoachAttendanceRecord = {
 };
 
 type MemberBookingRecord = {
-  bookingDate: string;
+  id: string;
+  memberId: string;
+  memberName: string;
+  classScheduleId: string;
   className: string;
-  branchName?: string | null;
-  status: string;
-  bookingId?: string;
+  coachName: string;
+  classDate: string;
+  startTime: string;
+  endTime: string;
+  bookingDate: string;
+  bookingStatus: string;
+  isCancelled: boolean;
 };
 
 // Skeleton Components
@@ -87,9 +95,11 @@ function BookingTableSkeleton({ rows = 5 }: { rows?: number }) {
       <table className="w-full min-w-[640px] text-left text-sm">
         <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
           <tr>
-            <th className="px-4 py-3">Date</th>
             <th className="px-4 py-3">Class Name</th>
-            <th className="px-4 py-3">Branch</th>
+            <th className="px-4 py-3">Coach</th>
+            <th className="px-4 py-3">Date</th>
+            <th className="px-4 py-3">Time</th>
+            <th className="px-4 py-3">Booked On</th>
             <th className="px-4 py-3">Status</th>
           </tr>
         </thead>
@@ -104,6 +114,12 @@ function BookingTableSkeleton({ rows = 5 }: { rows?: number }) {
               </td>
               <td className="px-4 py-3">
                 <div className="h-4 bg-gray-700/50 rounded w-1/2" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-4 bg-gray-700/50 rounded w-1/3" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-4 bg-gray-700/50 rounded w-2/3" />
               </td>
               <td className="px-4 py-3">
                 <div className="h-6 bg-gray-700/50 rounded w-20" />
@@ -123,7 +139,6 @@ export function HistoryView() {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [coachesLoading, setCoachesLoading] = useState(false);
   const [selectedCoachId, setSelectedCoachId] = useState<string>("");
-  const [coachSearch, setCoachSearch] = useState("");
   const [attendanceHistory, setAttendanceHistory] = useState<CoachAttendanceRecord[]>([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [attendanceError, setAttendanceError] = useState("");
@@ -132,7 +147,6 @@ export function HistoryView() {
   const [members, setMembers] = useState<Member[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
-  const [memberSearch, setMemberSearch] = useState("");
   const [bookingHistory, setBookingHistory] = useState<MemberBookingRecord[]>([]);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState("");
@@ -251,14 +265,6 @@ export function HistoryView() {
     }
   }, [selectedMemberId, loadBookingHistory]);
 
-  const filteredCoaches = coaches.filter((c) =>
-    (c.fullName ?? "").toLowerCase().includes(coachSearch.toLowerCase())
-  );
-
-  const filteredMembers = members.filter((m) =>
-    (m.fullName ?? "").toLowerCase().includes(memberSearch.toLowerCase())
-  );
-
   function formatDate(dateStr: string): string {
     try {
       const date = new Date(dateStr);
@@ -271,6 +277,29 @@ export function HistoryView() {
       });
     } catch {
       return dateStr;
+    }
+  }
+
+  function formatClassDate(dateStr: string): string {
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
+  }
+
+  function formatTimeRange(startTime: string, endTime: string): string {
+    try {
+      const start = startTime.substring(0, 5); // HH:MM
+      const end = endTime.substring(0, 5); // HH:MM
+      return `${start} - ${end}`;
+    } catch {
+      return `${startTime} - ${endTime}`;
     }
   }
 
@@ -312,59 +341,16 @@ export function HistoryView() {
             <label className="block text-xs uppercase font-bold text-gray-500 mb-2">
               Select Coach
             </label>
-            {coachesLoading ? (
-              <DropdownSkeleton />
-            ) : (
-              <>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search coach..."
-                    value={coachSearch}
-                    onChange={(e) => setCoachSearch(e.target.value)}
-                    className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                  />
-                  {coachSearch && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCoachSearch("");
-                        setSelectedCoachId("");
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                      aria-label="Clear search"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-
-                {/* Coach Dropdown */}
-                {coachSearch && filteredCoaches.length > 0 && (
-                  <div className="mt-1 bg-sidebar border border-border rounded-lg max-h-48 overflow-y-auto">
-                    {filteredCoaches.map((coach) => (
-                      <button
-                        key={coach.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedCoachId(coach.id);
-                          setCoachSearch(coach.fullName ?? "");
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10 transition"
-                      >
-                        {coach.fullName ?? "Unnamed Coach"}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {selectedCoachId && (
-                  <p className="mt-2 text-xs text-gray-400">
-                    Selected: <span className="text-sweat font-bold">{coachSearch}</span>
-                  </p>
-                )}
-              </>
-            )}
+            <SearchableSelect
+              options={coaches}
+              value={selectedCoachId || null}
+              onChange={(value) => setSelectedCoachId(value || "")}
+              getOptionValue={(coach) => coach.id}
+              getOptionLabel={(coach) => coach.fullName || "Unnamed Coach"}
+              placeholder="Search and select a coach..."
+              loading={coachesLoading}
+              emptyText="No coaches found"
+            />
           </div>
 
           {/* Attendance History Table */}
@@ -445,59 +431,16 @@ export function HistoryView() {
             <label className="block text-xs uppercase font-bold text-gray-500 mb-2">
               Select Member
             </label>
-            {membersLoading ? (
-              <DropdownSkeleton />
-            ) : (
-              <>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search member..."
-                    value={memberSearch}
-                    onChange={(e) => setMemberSearch(e.target.value)}
-                    className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                  />
-                  {memberSearch && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMemberSearch("");
-                        setSelectedMemberId("");
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                      aria-label="Clear search"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-
-                {/* Member Dropdown */}
-                {memberSearch && filteredMembers.length > 0 && (
-                  <div className="mt-1 bg-sidebar border border-border rounded-lg max-h-48 overflow-y-auto">
-                    {filteredMembers.map((member) => (
-                      <button
-                        key={member.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedMemberId(member.id);
-                          setMemberSearch(member.fullName ?? "");
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10 transition"
-                      >
-                        {member.fullName ?? "Unnamed Member"}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {selectedMemberId && (
-                  <p className="mt-2 text-xs text-gray-400">
-                    Selected: <span className="text-sweat font-bold">{memberSearch}</span>
-                  </p>
-                )}
-              </>
-            )}
+            <SearchableSelect
+              options={members}
+              value={selectedMemberId || null}
+              onChange={(value) => setSelectedMemberId(value || "")}
+              getOptionValue={(member) => member.id}
+              getOptionLabel={(member) => member.fullName || "Unnamed Member"}
+              placeholder="Search and select a member..."
+              loading={membersLoading}
+              emptyText="No members found"
+            />
           </div>
 
           {/* Booking History Table */}
@@ -530,22 +473,36 @@ export function HistoryView() {
               <table className="w-full min-w-[640px] text-left text-sm text-gray-400">
                 <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
                   <tr>
-                    <th className="px-4 py-3">Date</th>
                     <th className="px-4 py-3">Class Name</th>
-                    <th className="px-4 py-3">Branch</th>
+                    <th className="px-4 py-3">Coach</th>
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Time</th>
+                    <th className="px-4 py-3">Booked On</th>
                     <th className="px-4 py-3">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {bookingHistory.map((record, idx) => (
-                    <tr key={idx} className="transition hover:bg-white/5">
+                  {bookingHistory.map((record) => (
+                    <tr key={record.id} className="transition hover:bg-white/5">
+                      <td className="px-4 py-3 text-white">{record.className}</td>
+                      <td className="px-4 py-3">{record.coachName || "—"}</td>
+                      <td className="px-4 py-3">{formatClassDate(record.classDate)}</td>
+                      <td className="px-4 py-3">{formatTimeRange(record.startTime, record.endTime)}</td>
                       <td className="px-4 py-3 text-white">{formatDate(record.bookingDate)}</td>
-                      <td className="px-4 py-3">{record.className}</td>
-                      <td className="px-4 py-3">{record.branchName || "—"}</td>
                       <td className="px-4 py-3">
-                        <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">
-                          {record.status}
-                        </span>
+                        {record.isCancelled ? (
+                          <span className="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-500/20">
+                            Cancelled
+                          </span>
+                        ) : record.bookingStatus === "Attended" ? (
+                          <span className="bg-green-500/10 text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-500/20">
+                            {record.bookingStatus}
+                          </span>
+                        ) : (
+                          <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">
+                            {record.bookingStatus}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}
