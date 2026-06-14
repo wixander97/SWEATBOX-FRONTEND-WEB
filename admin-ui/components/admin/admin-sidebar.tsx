@@ -28,8 +28,9 @@ const mainNav: { href: string; label: string; icon: string; id: string }[] = [
 const dataNav: { href: string; label: string; icon: string; id: string }[] = [
   { href: adminPaths.membershipPlans, label: "Membership Plans", icon: "fa-ticket-alt", id: "membership-plans" },
   { href: adminPaths.payments, label: "Payments", icon: "fa-credit-card", id: "payments" },
-  { href: adminPaths.workout, label: "Workout Master", icon: "fa-running", id: "workout" },
+  // { href: adminPaths.workout, label: "Workout Master", icon: "fa-running", id: "workout" },
   { href: adminPaths.payroll, label: "Coaches Payroll", icon: "fa-file-invoice-dollar", id: "payroll" },
+  { href: adminPaths.history, label: "History", icon: "fa-history", id: "history" },
   { href: adminPaths.users, label: "User Management", icon: "fa-user-shield", id: "users" },
 ];
 
@@ -49,8 +50,17 @@ type Props = {
 
 export function AdminSidebar({ open = false, onClose }: Props) {
   const pathname = usePathname();
-  const { displayName, displayRole } = useRole();
+  const { displayName, displayRole, currentRole } = useRole();
   const [profile, setProfile] = useState<ProfileData | null>(null);
+
+  const isSuperadmin = currentRole === "superadmin";
+
+  const filteredDataNav = dataNav.filter((item) => {
+    if (!isSuperadmin && (item.id === "payments" || item.id === "payroll" || item.id === "users")) {
+      return false;
+    }
+    return true;
+  });
 
   useEffect(() => {
     authFetch(`${API_BASE_URL}/api/v1/auth/profile`, { cache: "no-store" })
@@ -125,7 +135,7 @@ export function AdminSidebar({ open = false, onClose }: Props) {
               <p className="px-4 text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">
                 Data &amp; Finance
               </p>
-              {dataNav.map((item) => (
+              {filteredDataNav.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

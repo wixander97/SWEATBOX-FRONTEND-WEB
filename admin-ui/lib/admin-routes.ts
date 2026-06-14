@@ -9,6 +9,7 @@ export const adminPaths = {
   payments: "/admin/payments",
   users: "/admin/users",
   membershipPlans: "/admin/membership-plans",
+  history: "/admin/history",
 } as const;
 
 export type AdminNavKey = keyof typeof adminPaths;
@@ -19,9 +20,10 @@ export const pageTitleByPath: Record<string, string> = {
   [adminPaths.members]: "Membership CRM",
   [adminPaths.reports]: "Attendance Reports",
   [adminPaths.coaches]: "Coach Management",
-  [adminPaths.workout]: "Workout Master",
+  // [adminPaths.workout]: "Workout Master",
   [adminPaths.payroll]: "Coaches Payroll",
   [adminPaths.payments]: "Payments",
   [adminPaths.users]: "User Management",
   [adminPaths.membershipPlans]: "Membership Plans",
+  [adminPaths.history]: "History",
 };
