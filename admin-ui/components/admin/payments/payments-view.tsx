@@ -145,7 +145,7 @@ export function PaymentsView() {
 
   return (
     <>
-      {currentRole === "owner" && summary && (
+      {currentRole === "superadmin" && summary && (
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
           {totalRevenue !== undefined && (
             <div className="bg-card border border-border rounded-xl p-4">
@@ -274,7 +274,7 @@ export function PaymentsView() {
                           >
                             Detail
                           </button>
-                          {currentRole === "owner" && (
+                          {currentRole === "superadmin" && (
                             <button
                               type="button"
                               onClick={() => setDeleteId(p.id)}

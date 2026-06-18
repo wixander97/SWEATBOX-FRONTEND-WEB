@@ -200,7 +200,7 @@ export function CreateClassModal({
               {/* Class Name */}
               <div>
                 <label className="block text-gray-400 text-sm mb-1">
-                  Class Name
+                  Class Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -219,7 +219,7 @@ export function CreateClassModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
-                    Trainer
+                    Trainer <span className="text-red-400">*</span>
                   </label>
                   <select
                     className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
@@ -242,7 +242,7 @@ export function CreateClassModal({
                 </div>
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
-                    Capacity
+                    Capacity <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="number"
@@ -265,7 +265,7 @@ export function CreateClassModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
-                    Class Date
+                    Class Date <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="date"
@@ -281,7 +281,7 @@ export function CreateClassModal({
                 </div>
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
-                    Start Time
+                    Start Time <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="time"
@@ -301,7 +301,7 @@ export function CreateClassModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
-                    End Time
+                    End Time <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="time"
@@ -317,7 +317,7 @@ export function CreateClassModal({
                 </div>
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
-                    Branch
+                    Branch <span className="text-red-400">*</span>
                   </label>
                   <select
                     value={form.branchId}
@@ -351,7 +351,7 @@ export function CreateClassModal({
               {/* Room */}
               <div>
                 <label className="block text-gray-400 text-sm mb-1">
-                  Room
+                  Room <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -370,7 +370,7 @@ export function CreateClassModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
-                    Class Type
+                    Class Type <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -386,7 +386,7 @@ export function CreateClassModal({
                 </div>
                 <div>
                   <label className="block text-gray-400 text-sm mb-1">
-                    Difficulty
+                    Difficulty <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"

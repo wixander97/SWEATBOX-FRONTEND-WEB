@@ -113,7 +113,6 @@ export function AdminSidebar({ open = false, onClose }: Props) {
               className="lg:hidden text-gray-400 hover:text-white text-xl"
               aria-label="Close menu"
             >
-              ×
             </button>
           </div>
 
