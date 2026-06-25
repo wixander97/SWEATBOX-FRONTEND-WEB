@@ -5,9 +5,11 @@ import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { useRole } from "@/contexts/role-context";
-import { CreatePaymentModal } from "./create-payment-modal";
+// TODO: Re-enable create payment feature
+// import { CreatePaymentModal } from "./create-payment-modal";
+import { PaymentDetailModal } from "./payment-detail-modal";
 
-type Payment = {
+export type Payment = {
   id: string;
   userId: string;
   membershipPlanId: string;
@@ -65,7 +67,8 @@ export function PaymentsView() {
   const [selected, setSelected] = useState<Payment | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  // TODO: Re-enable create payment feature
+  // const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const loadPayments = useCallback(async (tab: StatusTab) => {
     setLoading(true);
@@ -191,6 +194,7 @@ export function PaymentsView() {
               </button>
             ))}
           </div>
+          {/* TODO: Re-enable create payment feature
           <button
             type="button"
             onClick={() => setCreateModalOpen(true)}
@@ -198,6 +202,7 @@ export function PaymentsView() {
           >
             Create Payment
           </button>
+          */}
         </div>
 
         {loading ? (
@@ -295,41 +300,10 @@ export function PaymentsView() {
       </div>
 
       {selected && (
-        <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm"
-          onClick={(e) => { if (e.currentTarget === e.target) setSelected(null); }}
-        >
-          <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold font-display uppercase">Payment Detail</h3>
-              <button type="button" onClick={() => setSelected(null)} className="text-gray-400 hover:text-white text-xl">×</button>
-            </div>
-            <div className="space-y-2 text-sm text-gray-300">
-              {[
-                ["Invoice No", selected.invoiceNo],
-                ["Plan Name", selected.membershipPlanName],
-                ["Amount", formatRupiah(selected.amount)],
-                ["Discount", formatRupiah(selected.discount)],
-                ["Tax", formatRupiah(selected.tax)],
-                ["Final Amount", formatRupiah(selected.finalAmount)],
-                ["Payment Method", selected.paymentMethod],
-                ["Payment Provider", selected.paymentProvider],
-                ["Status", statusBadge(selected.paymentStatus).label],
-                ["Provider Order ID", selected.providerOrderId],
-                ["Expiry At", new Date(selected.expiryAt).toLocaleString("id-ID")],
-                ["Paid At", selected.paidAt ? new Date(selected.paidAt).toLocaleString("id-ID") : null],
-                ["Notes", selected.notes],
-                ["Created", new Date(selected.created).toLocaleString("id-ID")],
-              ].map(([label, val]) =>
-                val != null ? (
-                  <p key={String(label)}>
-                    <span className="text-gray-500">{label}:</span> {String(val)}
-                  </p>
-                ) : null
-              )}
-            </div>
-          </div>
-        </div>
+        <PaymentDetailModal
+          payment={selected}
+          onClose={() => setSelected(null)}
+        />
       )}
 
       {deleteId && (
@@ -358,6 +332,7 @@ export function PaymentsView() {
         </div>
       )}
 
+      {/* TODO: Re-enable create payment feature
       {createModalOpen && (
         <CreatePaymentModal
           onClose={() => setCreateModalOpen(false)}
@@ -368,6 +343,7 @@ export function PaymentsView() {
           }}
         />
       )}
+      */}
     </>
   );
 }

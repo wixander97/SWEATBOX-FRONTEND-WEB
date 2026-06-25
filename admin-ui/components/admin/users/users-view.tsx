@@ -125,6 +125,14 @@ export function UsersView() {
     });
   }, [users, sortKey, sortDir]);
 
+  const staffRoles = useMemo(
+    () => roles.filter((r) => {
+      const n = (r.name ?? "").toLowerCase();
+      return n === "coach" || n === "staff";
+    }),
+    [roles]
+  );
+
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     setPage(1);
@@ -475,7 +483,7 @@ export function UsersView() {
         >
           {userCrud.mode === "create" ? (
             <UserCreateForm
-              roles={roles}
+              roles={staffRoles}
               branches={branches}
               currentUserId={currentUserId}
               onSuccess={() => { setUserCrud(null); void loadUsers(page, search); }}
@@ -485,7 +493,7 @@ export function UsersView() {
             <UserEditForm
               userId={userCrud.id}
               initialForm={formFromUserRow(userCrud.user)}
-              roles={roles}
+              roles={staffRoles}
               branches={branches}
               currentUserId={currentUserId}
               onSuccess={() => { setUserCrud(null); void loadUsers(page, search); }}
