@@ -47,7 +47,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
   const [error, setError] = useState("");
   const [polling, setPolling] = useState(false);
   const [pollingStatus, setPollingStatus] = useState<PollingStatus>(null);
-  
+
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pollingAttemptsRef = useRef(0);
   const midtransWindowRef = useRef<Window | null>(null);
@@ -63,7 +63,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
 
   useEffect(() => {
     async function loadData() {
-      
+
       setPlansLoading(true);
       const planRes = await authFetch(`${API_BASE_URL}/api/v1/membership-plans`);
       if (planRes.ok) {
@@ -76,7 +76,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
         } else if (planPayload.data && Array.isArray(planPayload.data)) {
           planList = planPayload.data;
         }
-        
+
         setPlans(planList.filter((p) => p.isActive !== false));
       }
       setPlansLoading(false);
@@ -87,29 +87,29 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
   // Polling function to check payment status
   async function pollPaymentStatus(paymentId: string) {
     const MAX_ATTEMPTS = 120; // 10 minutes (5s * 120)
-    
+
     pollingIntervalRef.current = setInterval(async () => {
       pollingAttemptsRef.current += 1;
-      
+
       // Timeout check
       if (pollingAttemptsRef.current >= MAX_ATTEMPTS) {
         stopPolling('timeout');
         return;
       }
-      
+
       try {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/payments/${paymentId}`, { 
-          cache: "no-store" 
+        const res = await authFetch(`${API_BASE_URL}/api/v1/payments/${paymentId}`, {
+          cache: "no-store"
         });
-        
+
         if (!res.ok) {
           console.error('Polling failed:', res.status);
           return; // Continue polling on error
         }
-        
+
         const payment = await res.json();
         const status = payment.paymentStatus;
-        
+
         if (status === 1) { // Paid
           stopPolling('success');
         } else if (status === -1) { // Failed
@@ -129,7 +129,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
-    
+
     // Close Midtrans tab
     if (midtransWindowRef.current && !midtransWindowRef.current.closed) {
       try {
@@ -138,11 +138,11 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
         console.warn('Could not close Midtrans tab:', err);
       }
     }
-    
+
     // Update status
     setPollingStatus(finalStatus);
     setPolling(false);
-    
+
     // Handle final status
     if (finalStatus === 'success') {
       // Show success message for 2 seconds, then close modal
@@ -195,12 +195,12 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
         body: JSON.stringify(body),
       });
 
-      const data = (await res.json().catch(() => ({}))) as { 
-        id?: string; 
-        message?: string; 
-        redirectUrl?: string 
+      const data = (await res.json().catch(() => ({}))) as {
+        id?: string;
+        message?: string;
+        redirectUrl?: string
       };
-      
+
       if (!res.ok) {
         setError(data.message || "Failed to create payment");
         return;
@@ -214,6 +214,17 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
         return;
       }
 
+      // Cash payment — no Midtrans, immediate success
+      if (paymentMethodNum === 0) {
+        setPolling(true);
+        setPollingStatus('success');
+        setTimeout(() => {
+          onSuccess();
+          onClose();
+        }, 2000);
+        return;
+      }
+
       // Open Midtrans in new tab and store reference
       if (data.redirectUrl) {
         midtransWindowRef.current = window.open(data.redirectUrl, '_blank');
@@ -223,7 +234,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
       setPolling(true);
       setPollingStatus('waiting');
       pollPaymentStatus(data.id);
-      
+
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -266,7 +277,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
                 </div>
               </div>
             )}
-            
+
             {pollingStatus === 'success' && (
               <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <div className="flex items-center gap-3">
@@ -278,7 +289,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
                 </div>
               </div>
             )}
-            
+
             {pollingStatus === 'failed' && (
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <div className="flex items-center gap-3">
@@ -290,7 +301,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
                 </div>
               </div>
             )}
-            
+
             {pollingStatus === 'timeout' && (
               <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                 <div className="flex items-center gap-3">
@@ -310,7 +321,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
           <div className="space-y-3">
             {/* Membership Plan Selection */}
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Membership Plan</label>
+              <label className="block text-xs text-gray-400 mb-1">Membership Plan <span className="text-red-400">*</span></label>
               <select
                 value={form.membershipPlanId}
                 onChange={(e) => setForm((f) => ({ ...f, membershipPlanId: e.target.value }))}
@@ -329,7 +340,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
 
             {/* Payment Method Selection */}
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Payment Method</label>
+              <label className="block text-xs text-gray-400 mb-1">Payment Method <span className="text-red-400">*</span></label>
               <select
                 value={form.paymentMethod}
                 onChange={(e) => setForm((f) => ({ ...f, paymentMethod: e.target.value }))}

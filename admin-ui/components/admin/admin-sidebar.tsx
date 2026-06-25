@@ -23,13 +23,14 @@ const mainNav: { href: string; label: string; icon: string; id: string }[] = [
   { href: adminPaths.members, label: "Memberships", icon: "fa-users", id: "members" },
   { href: adminPaths.reports, label: "Attendance Reports", icon: "fa-clipboard-check", id: "reports" },
   { href: adminPaths.coaches, label: "Coach Management", icon: "fa-dumbbell", id: "coaches" },
+  { href: adminPaths.pt, label: "Personal Training", icon: "fa-id-badge", id: "pt" },
 ];
 
 const dataNav: { href: string; label: string; icon: string; id: string }[] = [
   { href: adminPaths.membershipPlans, label: "Membership Plans", icon: "fa-ticket-alt", id: "membership-plans" },
   { href: adminPaths.payments, label: "Payments", icon: "fa-credit-card", id: "payments" },
   // { href: adminPaths.workout, label: "Workout Master", icon: "fa-running", id: "workout" },
-  { href: adminPaths.payroll, label: "Coaches Payroll", icon: "fa-file-invoice-dollar", id: "payroll" },
+  // { href: adminPaths.payroll, label: "Coaches Payroll", icon: "fa-file-invoice-dollar", id: "payroll" },
   { href: adminPaths.history, label: "History", icon: "fa-history", id: "history" },
   { href: adminPaths.users, label: "User Management", icon: "fa-user-shield", id: "users" },
 ];
@@ -113,7 +114,6 @@ export function AdminSidebar({ open = false, onClose }: Props) {
               className="lg:hidden text-gray-400 hover:text-white text-xl"
               aria-label="Close menu"
             >
-              ×
             </button>
           </div>
 

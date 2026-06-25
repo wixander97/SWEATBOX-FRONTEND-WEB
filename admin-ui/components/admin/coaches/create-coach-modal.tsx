@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 
@@ -104,15 +104,8 @@ export function CreateCoachModal({ onClose, onSuccess }: CreateCoachModalProps) 
     void loadData();
   });
 
-  async function handleSubmit() {
-    if (!form.userId) {
-      setError("Please select a user.");
-      return;
-    }
-    if (!form.specialization.trim()) {
-      setError("Specialization is required.");
-      return;
-    }
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
     setLoading(true);
     setError("");
@@ -171,148 +164,152 @@ export function CreateCoachModal({ onClose, onSuccess }: CreateCoachModalProps) 
           </button>
         </div>
 
-        <div className="space-y-3">
-          {/* User Selection */}
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">
-              User <span className="text-red-400">*</span>
-            </label>
-            <select
-              value={form.userId}
-              onChange={(e) => setForm((f) => ({ ...f, userId: e.target.value }))}
-              disabled={usersLoading}
-              className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat disabled:opacity-50"
-            >
-              <option value="">{usersLoading ? "Loading users..." : "Select a user"}</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.fullName ?? "—"}{u.email ? ` (${u.email})` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Text fields */}
-          {([
-            ["Specialization", "specialization", true],
-            ["Bio", "bio", false],
-            ["Certification", "certification", false],
-            ["Emergency Contact", "emergencyContact", false],
-          ] as [string, keyof AddForm, boolean][]).map(([label, field]) => (
-            <div key={field}>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-3">
+            {/* User Selection */}
+            <div>
               <label className="block text-xs text-gray-400 mb-1">
-                {label}{field === "specialization" ? <span className="text-red-400">*</span> : null}
+                User <span className="text-red-400">*</span>
               </label>
-              <input
-                type="text"
-                value={String(form[field])}
-                onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
-                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
-              />
+              <select
+                value={form.userId}
+                onChange={(e) => setForm((f) => ({ ...f, userId: e.target.value }))}
+                disabled={usersLoading}
+                required
+                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat disabled:opacity-50"
+              >
+                <option value="">{usersLoading ? "Loading users..." : "Select a user"}</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.fullName ?? "—"}{u.email ? ` (${u.email})` : ""}
+                  </option>
+                ))}
+              </select>
             </div>
-          ))}
 
-          {/* Payroll Type */}
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Payroll Type</label>
-            <input
-              type="text"
-              value={form.payrollType}
-              onChange={(e) => setForm((f) => ({ ...f, payrollType: e.target.value }))}
-              placeholder="e.g. Hourly, Daily, Monthly"
-              className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
-            />
-          </div>
-
-          {/* Payroll Rate */}
-          <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={form.payrollRate}
-              onChange={(e) => {
-                const raw = e.target.value.replace(/[^0-9]/g, "");
-                setForm((f) => ({ ...f, payrollRate: raw }));
-              }}
-              placeholder="0"
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-            />
-          </label>
-
-          {/* Branch Selection */}
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Branch</label>
-            <select
-              value={form.branchId}
-              onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
-              disabled={branchesLoading}
-              className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat disabled:opacity-50"
-            >
-              <option value="">{branchesLoading ? "Loading branches..." : "Select a branch"}</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.branchName ?? "—"}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-3">
+            {/* Text fields */}
             {([
-              ["Rating", "rating"],
-              ["Attendance Rate", "attendanceRate"],
-              ["Total Classes", "totalClasses"],
-              ["Total Members", "totalMembers"],
-              ["Total PT Sessions", "totalPtSessions"],
-            ] as [string, keyof AddForm][]).map(([label, field]) => (
+              ["Specialization", "specialization", true],
+              ["Bio", "bio", false],
+              ["Certification", "certification", false],
+              ["Emergency Contact", "emergencyContact", false],
+            ] as [string, keyof AddForm, boolean][]).map(([label, field]) => (
               <div key={field}>
-                <label className="block text-xs text-gray-400 mb-1">{label}</label>
+                <label className="block text-xs text-gray-400 mb-1">
+                  {label}{field === "specialization" ? <span className="text-red-400">*</span> : null}
+                </label>
                 <input
-                  type="number"
+                  type="text"
                   value={String(form[field])}
                   onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
+                  required={field === "specialization"}
                   className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
                 />
               </div>
             ))}
-          </div>
 
-          {/* Active Checkbox */}
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="addIsActive"
-              checked={form.isActive}
-              onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
-              className="w-4 h-4"
-            />
-            <label htmlFor="addIsActive" className="text-sm text-gray-300">Active</label>
-          </div>
+            {/* Payroll Type */}
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Payroll Type</label>
+              <input
+                type="text"
+                value={form.payrollType}
+                onChange={(e) => setForm((f) => ({ ...f, payrollType: e.target.value }))}
+                placeholder="e.g. Hourly, Daily, Monthly"
+                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
+              />
+            </div>
 
-          {/* Error Message */}
-          {error && <p className="text-red-400 text-xs">{error}</p>}
+            {/* Payroll Rate */}
+            <label className="block">
+              <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.payrollRate}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, "");
+                  setForm((f) => ({ ...f, payrollRate: raw }));
+                }}
+                placeholder="0"
+                className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              />
+            </label>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => void handleSubmit()}
-              disabled={loading}
-              className="flex-1 bg-sweat text-black py-2 rounded-lg text-sm font-bold disabled:opacity-50"
-            >
-              {loading ? "Creating..." : "Create Coach"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm"
-            >
-              Cancel
-            </button>
+            {/* Branch Selection */}
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Branch <span className="text-red-500">*</span></label>
+              <select
+                value={form.branchId}
+                onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
+                disabled={branchesLoading}
+                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat disabled:opacity-50"
+                required
+              >
+                <option value="">{branchesLoading ? "Loading branches..." : "Select a branch"}</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.branchName ?? "—"}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {([
+                ["Rating", "rating"],
+                ["Attendance Rate", "attendanceRate"],
+                ["Total Classes", "totalClasses"],
+                ["Total Members", "totalMembers"],
+                ["Total PT Sessions", "totalPtSessions"],
+              ] as [string, keyof AddForm][]).map(([label, field]) => (
+                <div key={field}>
+                  <label className="block text-xs text-gray-400 mb-1">{label}</label>
+                  <input
+                    type="number"
+                    value={String(form[field])}
+                    onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
+                    className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Active Checkbox */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="addIsActive"
+                checked={form.isActive}
+                onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+                className="w-4 h-4"
+              />
+              <label htmlFor="addIsActive" className="text-sm text-gray-300">Active</label>
+            </div>
+
+            {/* Error Message */}
+            {error && <p className="text-red-400 text-xs">{error}</p>}
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-sweat text-black py-2 rounded-lg text-sm font-bold disabled:opacity-50"
+              >
+                {loading ? "Creating..." : "Create Coach"}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

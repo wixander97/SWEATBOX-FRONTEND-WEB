@@ -182,11 +182,14 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
             ["Emergency Contact", "emergencyContact"],
           ] as [string, keyof EditForm][]).map(([label, field]) => (
             <div key={field}>
-              <label className="block text-xs text-gray-400 mb-1">{label}</label>
+              <label className="block text-xs text-gray-400 mb-1">
+                {label}{field === "specialization" ? <span className="text-red-400">*</span> : null}
+              </label>
               <input
                 type="text"
                 value={String(form[field])}
                 onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
+                required={field === "specialization"}
                 className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
               />
             </div>

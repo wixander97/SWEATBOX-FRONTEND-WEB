@@ -656,6 +656,7 @@ export function MembersView() {
                     setShowDropdown(false);
                   }
                 }}
+                required
                 className="bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm w-full focus:outline-none focus:border-sweat"
               />
               {magicLoading && (
@@ -866,262 +867,277 @@ export function MembersView() {
                 ×
               </button>
             </div>
-            <div className="space-y-4 text-sm">
-              {/* Section 1: Account Information */}
+            <form onSubmit={(e) => { e.preventDefault(); void saveMemberModal(); }}>
+              <div className="space-y-4 text-sm">
+                {/* Section 1: Account Information */}
 
 
-              {/* Section 2: Basic Information */}
-              <div className="border-b border-border pb-4">
-                <h4 className="text-xs uppercase font-bold text-sweat mb-3">Basic Information</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Section 2: Basic Information */}
+                <div className="border-b border-border pb-4">
+                  <h4 className="text-xs uppercase font-bold text-sweat mb-3">Basic Information</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Full Name <span className="text-red-500">*</span></span>
-                    <input
-                      value={memberForm.fullName}
-                      onChange={(e) => {
-                        console.log("[DEBUG] fullName onChange:", e.target.value);
-                        setMemberForm((f) => ({ ...f, fullName: e.target.value }));
-                      }}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Full Name <span className="text-red-500">*</span></span>
+                      <input
+                        value={memberForm.fullName}
+                        onChange={(e) => {
+                          console.log("[DEBUG] fullName onChange:", e.target.value);
+                          setMemberForm((f) => ({ ...f, fullName: e.target.value }));
+                        }}
+                        required
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                      />
+                    </label>
 
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Phone Number</span>
-                    <input
-                      value={memberForm.phoneNumber}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, phoneNumber: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Phone Number <span className="text-red-500">*</span></span>
+                      <input
+                        value={memberForm.phoneNumber}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, phoneNumber: e.target.value }))}
+                        required
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Section 3: Personal Details */}
+                <div className="border-b border-border pb-4">
+                  <h4 className="text-xs uppercase font-bold text-sweat mb-3">Personal Details</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Gender <span className="text-red-500">*</span></span>
+                      <select
+                        value={memberForm.gender}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, gender: e.target.value }))}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                        required
+                      >
+                        <option value="">Select...</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Date of Birth <span className="text-red-500">*</span></span>
+                      <input
+                        type="date"
+                        value={memberForm.dateOfBirth}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, dateOfBirth: e.target.value }))}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                        required
+                        style={{ colorScheme: 'dark' }}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Height (cm) <span className="text-red-500">*</span></span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={memberForm.heightCm}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, heightCm: e.target.value }))}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                        required
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Weight (kg) <span className="text-red-500">*</span></span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={memberForm.weightKg}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, weightKg: e.target.value }))}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                        required
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Section 4: Address */}
+                <div className="border-b border-border pb-4">
+                  <h4 className="text-xs uppercase font-bold text-sweat mb-3">Address</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Address <span className="text-red-500">*</span></span>
+                      <textarea
+                        value={memberForm.address}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, address: e.target.value }))}
+                        rows={2}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-y"
+                        required
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">City <span className="text-red-500">*</span></span>
+                      <input
+                        value={memberForm.city}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, city: e.target.value }))}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                        required
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Section 5: Emergency Contact */}
+                <div className="border-b border-border pb-4">
+                  <h4 className="text-xs uppercase font-bold text-sweat mb-3">Emergency Contact</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Emergency Contact Name <span className="text-red-500">*</span></span>
+                      <input
+                        value={memberForm.emergencyContactName}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, emergencyContactName: e.target.value }))}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                        required
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Emergency Contact Phone <span className="text-red-500">*</span></span>
+                      <input
+                        value={memberForm.emergencyContactPhone}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, emergencyContactPhone: e.target.value }))}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                        required
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Section 6: Membership Details */}
+                <div className="border-b border-border pb-4">
+                  <h4 className="text-xs uppercase font-bold text-sweat mb-3">Membership Details</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Membership Source <span className="text-red-500">*</span></span>
+                      <input
+                        value={memberForm.membershipSource}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, membershipSource: e.target.value }))}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                        required
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Home Club <span className="text-red-500">*</span></span>
+                      <select
+                        value={memberForm.homeClubBranchId}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, homeClubBranchId: e.target.value }))}
+                        disabled={branchesLoading}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat disabled:opacity-50"
+                        required
+                      >
+                        <option value="">{branchesLoading ? "Memuat Home Club..." : "Pilih Home Club..."}</option>
+                        {branches.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.branchName}
+                          </option>
+                        ))}
+                        {!branchesLoading && branches.length === 0 && (
+                          <option value="" disabled>Tidak ada branch aktif</option>
+                        )}
+                        {!branchesLoading && memberForm.homeClubBranchId && !branches.find((b) => b.id === memberForm.homeClubBranchId) && (
+                          <option value={memberForm.homeClubBranchId} disabled>
+                            ⚠️ Branch tidak ditemukan (ID: {memberForm.homeClubBranchId})
+                          </option>
+                        )}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Membership Plan <span className="text-red-500">*</span></span>
+                      <select
+                        value={memberForm.membershipPlanId}
+                        onChange={(e) => handleMembershipPlanChange(e.target.value)}
+                        disabled={membershipPlansLoading}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat disabled:opacity-50"
+                        required
+                      >
+                        <option value="">{membershipPlansLoading ? "Memuat plan..." : "Pilih Membership Plan..."}</option>
+                        {membershipPlans.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.planName} ({p.credits} credits)
+                          </option>
+                        ))}
+                        {!membershipPlansLoading && membershipPlans.length === 0 && (
+                          <option value="" disabled>Tidak ada plan aktif</option>
+                        )}
+                        {!membershipPlansLoading && memberForm.membershipPlanId && !membershipPlans.find((p) => p.id === memberForm.membershipPlanId) && (
+                          <option value={memberForm.membershipPlanId} disabled>
+                            ⚠️ Plan tidak ditemukan (ID: {memberForm.membershipPlanId})
+                          </option>
+                        )}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Remaining Credits <span className="text-red-500">*</span></span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={memberForm.remainingCredits}
+                        readOnly
+                        className="mt-1 w-full bg-gray-800 border border-border rounded-lg px-3 py-2 text-gray-400 cursor-not-allowed"
+                        required
+                      />
+                    </label>
+                  </div>
+                </div>
+
+
+
+                {/* Section 8: Account Status */}
+                <div>
+                  <h4 className="text-xs uppercase font-bold text-sweat mb-3">Account Status</h4>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={memberForm.isWaiverSigned}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, isWaiverSigned: e.target.checked }))}
+                        className="rounded border-border"
+                      />
+                      <span className="text-gray-300">Waiver Signed</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={memberForm.isPtMember}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, isPtMember: e.target.checked }))}
+                        className="rounded border-border"
+                      />
+                      <span className="text-gray-300">PT Member</span>
+                    </label>
+                    <label className="block">
+                      <span className="text-gray-500 text-xs uppercase font-bold">Notes</span>
+                      <textarea
+                        value={memberForm.notes}
+                        onChange={(e) => setMemberForm((f) => ({ ...f, notes: e.target.value }))}
+                        rows={2}
+                        className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-y"
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
-
-              {/* Section 3: Personal Details */}
-              <div className="border-b border-border pb-4">
-                <h4 className="text-xs uppercase font-bold text-sweat mb-3">Personal Details</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Gender</span>
-                    <select
-                      value={memberForm.gender}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, gender: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    >
-                      <option value="">Select...</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Date of Birth</span>
-                    <input
-                      type="date"
-                      value={memberForm.dateOfBirth}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, dateOfBirth: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                      style={{ colorScheme: 'dark' }}
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Height (cm)</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={memberForm.heightCm}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, heightCm: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Weight (kg)</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={memberForm.weightKg}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, weightKg: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
-                </div>
+              {memberModalError && <p className="mt-3 text-xs text-red-400">{memberModalError}</p>}
+              <div className="mt-6 flex gap-2">
+                <button
+                  type="submit"
+                  disabled={memberSaving}
+                  className="flex-1 bg-sweat text-black py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
+                >
+                  {memberSaving ? "Menyimpan..." : memberModal.mode === "create" ? "Create member" : "Save changes"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMemberModal(null)}
+                  className="px-4 py-2 rounded-lg text-sm border border-border text-gray-300 hover:text-white"
+                >
+                  Batal
+                </button>
               </div>
-
-              {/* Section 4: Address */}
-              <div className="border-b border-border pb-4">
-                <h4 className="text-xs uppercase font-bold text-sweat mb-3">Address</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Address</span>
-                    <textarea
-                      value={memberForm.address}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, address: e.target.value }))}
-                      rows={2}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-y"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">City</span>
-                    <input
-                      value={memberForm.city}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, city: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              {/* Section 5: Emergency Contact */}
-              <div className="border-b border-border pb-4">
-                <h4 className="text-xs uppercase font-bold text-sweat mb-3">Emergency Contact</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Emergency Contact Name</span>
-                    <input
-                      value={memberForm.emergencyContactName}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, emergencyContactName: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Emergency Contact Phone</span>
-                    <input
-                      value={memberForm.emergencyContactPhone}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, emergencyContactPhone: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              {/* Section 6: Membership Details */}
-              <div className="border-b border-border pb-4">
-                <h4 className="text-xs uppercase font-bold text-sweat mb-3">Membership Details</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Membership Source</span>
-                    <input
-                      value={memberForm.membershipSource}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, membershipSource: e.target.value }))}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Home Club</span>
-                    <select
-                      value={memberForm.homeClubBranchId}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, homeClubBranchId: e.target.value }))}
-                      disabled={branchesLoading}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat disabled:opacity-50"
-                    >
-                      <option value="">{branchesLoading ? "Memuat Home Club..." : "Pilih Home Club..."}</option>
-                      {branches.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.branchName}
-                        </option>
-                      ))}
-                      {!branchesLoading && branches.length === 0 && (
-                        <option value="" disabled>Tidak ada branch aktif</option>
-                      )}
-                      {!branchesLoading && memberForm.homeClubBranchId && !branches.find((b) => b.id === memberForm.homeClubBranchId) && (
-                        <option value={memberForm.homeClubBranchId} disabled>
-                          ⚠️ Branch tidak ditemukan (ID: {memberForm.homeClubBranchId})
-                        </option>
-                      )}
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Membership Plan</span>
-                    <select
-                      value={memberForm.membershipPlanId}
-                      onChange={(e) => handleMembershipPlanChange(e.target.value)}
-                      disabled={membershipPlansLoading}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat disabled:opacity-50"
-                    >
-                      <option value="">{membershipPlansLoading ? "Memuat plan..." : "Pilih Membership Plan..."}</option>
-                      {membershipPlans.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.planName} ({p.credits} credits)
-                        </option>
-                      ))}
-                      {!membershipPlansLoading && membershipPlans.length === 0 && (
-                        <option value="" disabled>Tidak ada plan aktif</option>
-                      )}
-                      {!membershipPlansLoading && memberForm.membershipPlanId && !membershipPlans.find((p) => p.id === memberForm.membershipPlanId) && (
-                        <option value={memberForm.membershipPlanId} disabled>
-                          ⚠️ Plan tidak ditemukan (ID: {memberForm.membershipPlanId})
-                        </option>
-                      )}
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Remaining Credits</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={memberForm.remainingCredits}
-                      readOnly
-                      className="mt-1 w-full bg-gray-800 border border-border rounded-lg px-3 py-2 text-gray-400 cursor-not-allowed"
-                    />
-                  </label>
-                </div>
-              </div>
-
-
-
-              {/* Section 8: Account Status */}
-              <div>
-                <h4 className="text-xs uppercase font-bold text-sweat mb-3">Account Status</h4>
-                <div className="space-y-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={memberForm.isWaiverSigned}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, isWaiverSigned: e.target.checked }))}
-                      className="rounded border-border"
-                    />
-                    <span className="text-gray-300">Waiver Signed</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={memberForm.isPtMember}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, isPtMember: e.target.checked }))}
-                      className="rounded border-border"
-                    />
-                    <span className="text-gray-300">PT Member</span>
-                  </label>
-                  <label className="block">
-                    <span className="text-gray-500 text-xs uppercase font-bold">Notes</span>
-                    <textarea
-                      value={memberForm.notes}
-                      onChange={(e) => setMemberForm((f) => ({ ...f, notes: e.target.value }))}
-                      rows={2}
-                      className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-y"
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-            {memberModalError && <p className="mt-3 text-xs text-red-400">{memberModalError}</p>}
-            <div className="mt-6 flex gap-2">
-              <button
-                type="button"
-                disabled={memberSaving}
-                onClick={() => void saveMemberModal()}
-                className="flex-1 bg-sweat text-black py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
-              >
-                {memberSaving ? "Menyimpan..." : memberModal.mode === "create" ? "Create member" : "Save changes"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMemberModal(null)}
-                className="px-4 py-2 rounded-lg text-sm border border-border text-gray-300 hover:text-white"
-              >
-                Batal
-              </button>
-            </div>
+            </form>
           </div>
         </div>
       )}
