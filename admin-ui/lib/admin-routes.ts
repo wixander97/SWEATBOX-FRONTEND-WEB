@@ -11,6 +11,8 @@ export const adminPaths = {
   membershipPlans: "/admin/membership-plans",
   history: "/admin/history",
   pt: "/admin/pt",
+  systemSettings: "/admin/system-settings",
+  dropIn: "/admin/drop-in",
 } as const;
 
 export type AdminNavKey = keyof typeof adminPaths;
@@ -28,4 +30,6 @@ export const pageTitleByPath: Record<string, string> = {
   [adminPaths.membershipPlans]: "Membership Plans",
   [adminPaths.history]: "History",
   [adminPaths.pt]: "Personal Training",
+  [adminPaths.systemSettings]: "System Settings",
+  [adminPaths.dropIn]: "Drop In",
 };
