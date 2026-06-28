@@ -6,6 +6,13 @@ import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 
 type SortDir = "asc" | "desc";
+
+type Branch = {
+  id: string;
+  branchName: string;
+  isActive: boolean;
+};
+
 import {
   CreateClassModal,
   type ClassFormValues,
@@ -14,6 +21,13 @@ import { EditClassModal } from "@/components/admin/classes/edit-class-modal";
 import type { ApiClass, ApiCoach, PagedResponse } from "@/components/admin/classes/classes.types";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 
+
+// Match the backend's accepted date format (ISO 8601 UTC), used elsewhere
+// for class schedules (see create-class-modal.tsx toIsoDate).
+function toIsoDateValue(value: string) {
+  if (!value) return "";
+  return new Date(`${value}T00:00:00.000Z`).toISOString();
+}
 
 function branchBadgeClass(branchName: string | null | undefined) {
   const n = (branchName ?? "").toLowerCase();
@@ -42,6 +56,9 @@ export function ClassesView() {
   const [error, setError] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [filterDate, setFilterDate] = useState("");
+  const [filterLocation, setFilterLocation] = useState("");
+  const [branches, setBranches] = useState<Branch[]>([]);
 
   function toggleSort(key: string) {
     if (sortKey === key) {
@@ -52,48 +69,91 @@ export function ClassesView() {
     }
   }
 
-  const loadClasses = useCallback(async (targetPage: number) => {
-    setLoading(true);
-    setError("");
-    const params = new URLSearchParams({
-      page: String(targetPage),
-      pageSize: String(pageSize),
-    });
-    const res = await authFetch(`${API_BASE_URL}/api/v1/class-schedules?${params.toString()}`, { cache: "no-store" });
-    if (redirectToLoginIfUnauthorized(res.status)) return;
-    const payload = (await res.json().catch(() => [])) as
-      | ApiClass[]
-      | PagedResponse<ApiClass>;
-    if (!res.ok) {
-      const msg =
-        typeof payload === "object" && !Array.isArray(payload)
-          ? payload.message
-          : "Gagal mengambil class schedule";
-      setError(msg || "Gagal mengambil class schedule");
-      setClasses([]);
-      setTotalItems(0);
-      setTotalPages(1);
+  const applyPayload = useCallback(
+    (payload: ApiClass[] | PagedResponse<ApiClass>, fallbackList?: ApiClass[]) => {
+      if (Array.isArray(payload)) {
+        setClasses(payload);
+        setTotalItems(payload.length);
+        setTotalPages(1);
+      } else {
+        const list = fallbackList ?? payload.items ?? payload.data ?? [];
+        const computedTotalItems =
+          payload.totalCount ?? payload.totalItems ?? payload.total ?? list.length;
+        const computedTotalPages =
+          payload.totalPages ??
+          payload.pageCount ??
+          Math.max(1, Math.ceil(computedTotalItems / (payload.pageSize ?? pageSize)));
+        setClasses(list);
+        setTotalItems(computedTotalItems);
+        setTotalPages(computedTotalPages);
+      }
+    },
+    [pageSize]
+  );
+
+  const loadClasses = useCallback(
+    async (targetPage: number) => {
+      setLoading(true);
+      setError("");
+      const hasDate = filterDate.trim() !== "";
+      const hasLocation = filterLocation.trim() !== "";
+
+      let url: string;
+      // Both filters active: fetch by branch, then client-side date filter.
+      if (hasLocation && hasDate) {
+        url = `${API_BASE_URL}/api/v1/class-schedules/branch/${encodeURIComponent(filterLocation)}?page=1&pageSize=1000`;
+      } else if (hasDate) {
+        url = `${API_BASE_URL}/api/v1/class-schedules/date?date=${encodeURIComponent(toIsoDateValue(filterDate))}&page=${targetPage}&pageSize=${pageSize}`;
+      } else if (hasLocation) {
+        url = `${API_BASE_URL}/api/v1/class-schedules/branch/${encodeURIComponent(filterLocation)}?page=${targetPage}&pageSize=${pageSize}`;
+      } else {
+        const params = new URLSearchParams({
+          page: String(targetPage),
+          pageSize: String(pageSize),
+        });
+        url = `${API_BASE_URL}/api/v1/class-schedules?${params.toString()}`;
+      }
+
+      const res = await authFetch(url, { cache: "no-store" });
+      if (redirectToLoginIfUnauthorized(res.status)) return;
+      const payload = (await res.json().catch(() => [])) as
+        | ApiClass[]
+        | PagedResponse<ApiClass>;
+      if (!res.ok) {
+        const msg =
+          typeof payload === "object" && !Array.isArray(payload)
+            ? payload.message
+            : "Gagal mengambil class schedule";
+        setError(msg || "Gagal mengambil class schedule");
+        setClasses([]);
+        setTotalItems(0);
+        setTotalPages(1);
+        setLoading(false);
+        return;
+      }
+
+      // Combined filters: client-side date filter + local pagination.
+      if (hasLocation && hasDate) {
+        const raw = Array.isArray(payload)
+          ? payload
+          : payload.items ?? payload.data ?? [];
+        const filtered = raw.filter(
+          (c) => (c.classDate ?? "").slice(0, 10) === filterDate
+        );
+        const total = filtered.length;
+        const pages = Math.max(1, Math.ceil(total / pageSize));
+        const start = (targetPage - 1) * pageSize;
+        const paged = filtered.slice(start, start + pageSize);
+        setClasses(paged);
+        setTotalItems(total);
+        setTotalPages(pages);
+      } else {
+        applyPayload(payload);
+      }
       setLoading(false);
-      return;
-    }
-    if (Array.isArray(payload)) {
-      setClasses(payload);
-      setTotalItems(payload.length);
-      setTotalPages(1);
-    } else {
-      const list = payload.items || payload.data || [];
-      const computedTotalItems =
-        payload.totalCount ?? payload.totalItems ?? payload.total ?? list.length;
-      const computedTotalPages =
-        payload.totalPages ??
-        payload.pageCount ??
-        Math.max(1, Math.ceil(computedTotalItems / (payload.pageSize ?? pageSize)));
-      setClasses(list);
-      setTotalItems(computedTotalItems);
-      setTotalPages(computedTotalPages);
-    }
-    setLoading(false);
-  }, [pageSize]);
+    },
+    [pageSize, filterDate, filterLocation, applyPayload]
+  );
 
   const loadCoaches = useCallback(async () => {
     const res = await authFetch(`${API_BASE_URL}/api/v1/coaches?page=1&pageSize=100`, { cache: "no-store" });
@@ -116,10 +176,23 @@ export function ClassesView() {
     );
   }, []);
 
+  const loadBranches = useCallback(async () => {
+    const res = await authFetch(`${API_BASE_URL}/api/v1/branches`, { cache: "no-store" });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
+    const payload = (await res.json().catch(() => [])) as Branch[] | { data?: Branch[]; items?: Branch[] };
+    const list = Array.isArray(payload) ? payload : payload.data ?? payload.items ?? [];
+    if (!res.ok || !Array.isArray(list)) {
+      setBranches([]);
+      return;
+    }
+    setBranches(list.filter((b) => b.isActive));
+  }, []);
+
   useEffect(() => {
     void loadClasses(page);
     void loadCoaches();
-  }, [loadClasses, loadCoaches, page]);
+    void loadBranches();
+  }, [loadClasses, loadCoaches, loadBranches, page]);
 
   const mappedRows = useMemo(() => {
     const rows = classes.map((c) => {
@@ -177,12 +250,27 @@ export function ClassesView() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <input
                 type="date"
-                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+                value={filterDate}
+                onChange={(e) => {
+                  setFilterDate(e.target.value);
+                  setPage(1);
+                }}
+                className="[color-scheme:dark] bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
               />
-              <select className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat">
-                <option>All Locations</option>
-                <option>Puri Indah</option>
-                <option>PIK Avenue</option>
+              <select
+                value={filterLocation}
+                onChange={(e) => {
+                  setFilterLocation(e.target.value);
+                  setPage(1);
+                }}
+                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+              >
+                <option value="">All Locations</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.branchName}
+                  </option>
+                ))}
               </select>
             </div>
             <p className="text-[11px] text-gray-500 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -232,11 +320,11 @@ export function ClassesView() {
                       {label}
                       <span className="flex flex-col leading-none text-[10px]">
                         <i
-                          className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`}
+                          className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-sweat" : "text-gray-400 group-hover:text-gray-200"}`}
                           aria-hidden
                         />
                         <i
-                          className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`}
+                          className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-sweat" : "text-gray-400 group-hover:text-gray-200"}`}
                           aria-hidden
                         />
                       </span>
@@ -299,7 +387,7 @@ export function ClassesView() {
                       <td className="px-6 py-4 text-right">
                         <button
                           type="button"
-                          className="text-gray-400 hover:text-white mx-1"
+                          className="text-white hover:text-sweat mx-1"
                           aria-label="Edit"
                           onClick={() => {
                             setEditClass(c);

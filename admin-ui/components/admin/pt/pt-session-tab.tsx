@@ -151,12 +151,6 @@ export function PtSessionTab() {
     const found = branches.find((b) => b.id === id);
     return found ? branchLabel(found) : id;
   }
-  function packageName(id?: string | null): string {
-    if (!id) return "-";
-    const found = packages.find((p) => p.id === id);
-    return found ? found.name : id;
-  }
-
   function participantCount(s: PtSession): number {
     if (typeof s.participantCount === "number") return s.participantCount;
     return Array.isArray(s.participants) ? s.participants.length : 0;
@@ -167,6 +161,7 @@ export function PtSessionTab() {
   }
 
   function isCancelled(s: PtSession): boolean {
+    if (s.isCancelled === true) return true;
     const status = String(s.status ?? "").toLowerCase();
     return status === "cancelled" || status === "canceled";
   }
@@ -231,25 +226,19 @@ export function PtSessionTab() {
   }
 
   async function handleCancel(session: PtSession, reason: string) {
-    setError("");
-    try {
-      const url = new URL(`${API_BASE_URL}/api/v1/pt-sessions/${session.id}/cancel`);
-      if (reason.trim()) url.searchParams.set("reason", reason.trim());
-      const res = await authFetch(url.toString(), {
-        method: "POST",
-        cache: "no-store",
-      });
-      if (redirectToLoginIfUnauthorized(res.status)) return;
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { message?: string };
-        setError(data?.message ?? "Gagal membatalkan PT session");
-        return;
-      }
-      setCancelTarget(null);
-      void loadSessions(page);
-    } catch {
-      setError("Gagal membatalkan PT session");
+    const url = new URL(`${API_BASE_URL}/api/v1/pt-sessions/${session.id}/cancel`);
+    if (reason.trim()) url.searchParams.set("reason", reason.trim());
+    const res = await authFetch(url.toString(), {
+      method: "POST",
+      cache: "no-store",
+    });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      throw new Error(data?.message ?? "Gagal membatalkan PT session");
     }
+    setCancelTarget(null);
+    void loadSessions(page);
   }
 
   return (
@@ -275,7 +264,6 @@ export function PtSessionTab() {
         <table className="w-full min-w-[960px] text-left text-sm">
           <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
             <tr>
-              <th className="px-4 py-3">Package</th>
               <th className="px-4 py-3">Coach</th>
               <th className="px-4 py-3">Branch</th>
               <th className="px-4 py-3">Date</th>
@@ -290,22 +278,19 @@ export function PtSessionTab() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                   Memuat...
                 </td>
               </tr>
             ) : sessions.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                   Tidak ada PT session.
                 </td>
               </tr>
             ) : (
               sessions.map((s) => (
                 <tr key={s.id} className="hover:bg-white/5 transition">
-                  <td className="px-4 py-3 font-semibold text-white">
-                    {s.packageName || packageName(s.ptPackageId)}
-                  </td>
                   <td className="px-4 py-3 text-gray-300">
                     {s.coachName || coachName(s.coachId)}
                   </td>
@@ -341,7 +326,7 @@ export function PtSessionTab() {
                           : "bg-green-500/15 text-green-400"
                       }`}
                     >
-                      {s.status || "Active"}
+                      {isCancelled(s) ? "Cancelled" : "Active"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">

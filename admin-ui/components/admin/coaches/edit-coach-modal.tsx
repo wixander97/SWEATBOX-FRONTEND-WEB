@@ -99,11 +99,15 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
   }, []);
 
   async function handleSubmit() {
-    setLoading(true);
     setError("");
+    if (!form.branchId.trim()) {
+      setError("Branch wajib diisi");
+      return;
+    }
+    setLoading(true);
 
     const body = {
-      branchId: form.branchId || undefined,
+      branchId: form.branchId,
       specialization: form.specialization || undefined,
       bio: form.bio || undefined,
       rating: Number(form.rating) || 0,
@@ -158,10 +162,16 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
         <div className="space-y-3">
           {/* Branch Selection */}
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Branch</label>
+            <label className="block text-xs text-gray-400 mb-1">
+              Branch <span className="text-red-400">*</span>
+            </label>
             <select
+              required
               value={form.branchId}
-              onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, branchId: e.target.value }));
+                if (error) setError("");
+              }}
               disabled={branchesLoading}
               className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat disabled:opacity-50"
             >

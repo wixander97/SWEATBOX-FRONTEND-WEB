@@ -137,7 +137,6 @@ export default function ReportsPage() {
     const header = [
       "Date",
       "Staff Name",
-      "Role",
       "Location",
       "Clock In",
       "Clock Out",
