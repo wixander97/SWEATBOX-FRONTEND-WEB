@@ -11,6 +11,7 @@ import {
 } from "@/components/admin/pt/create-pt-session-modal";
 import { AddPtSessionParticipantModal } from "@/components/admin/pt/add-pt-session-participant-modal";
 import { CancelPtSessionModal } from "@/components/admin/pt/cancel-pt-session-modal";
+import { PtSessionDetailModal } from "@/components/admin/pt/pt-session-detail-modal";
 import {
   type Coach,
   type Branch,
@@ -42,6 +43,7 @@ export function PtSessionTab() {
   const [saving, setSaving] = useState(false);
   const [addMemberTarget, setAddMemberTarget] = useState<PtSession | null>(null);
   const [cancelTarget, setCancelTarget] = useState<PtSession | null>(null);
+  const [detailTarget, setDetailTarget] = useState<PtSession | null>(null);
 
   const loadSessions = useCallback(
     async (targetPage: number) => {
@@ -330,6 +332,14 @@ export function PtSessionTab() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <button
+                      type="button"
+                      title="View Detail"
+                      onClick={() => setDetailTarget(s)}
+                      className="text-gray-400 hover:text-white mx-1"
+                    >
+                      <i className="fas fa-eye" aria-hidden />
+                    </button>
                     {isGroup(s) && !isCancelled(s) && (
                       <button
                         type="button"
@@ -413,6 +423,13 @@ export function PtSessionTab() {
           onSubmit={async (reason) => {
             await handleCancel(cancelTarget, reason);
           }}
+        />
+      )}
+
+      {detailTarget && (
+        <PtSessionDetailModal
+          session={detailTarget}
+          onClose={() => setDetailTarget(null)}
         />
       )}
     </div>

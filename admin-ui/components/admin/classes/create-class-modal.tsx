@@ -191,7 +191,7 @@ export function CreateClassModal({
             className="text-gray-400 hover:text-white text-xl"
             aria-label="Close"
           >
-
+            ×
           </button>
         </div>
         <div id="modal-content">

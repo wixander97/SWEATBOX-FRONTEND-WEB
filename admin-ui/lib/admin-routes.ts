@@ -19,8 +19,8 @@ export type AdminNavKey = keyof typeof adminPaths;
 
 export const pageTitleByPath: Record<string, string> = {
   [adminPaths.dashboard]: "Dashboard Overview",
-  [adminPaths.classes]: "Class Management",
-  [adminPaths.members]: "Membership CRM",
+  [adminPaths.classes]: "Class Schedule",
+  [adminPaths.members]: "Membership",
   [adminPaths.reports]: "Attendance Reports",
   [adminPaths.coaches]: "Coach Management",
   // [adminPaths.workout]: "Workout Master",

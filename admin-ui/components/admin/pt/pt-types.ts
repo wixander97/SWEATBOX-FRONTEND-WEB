@@ -52,6 +52,7 @@ export type PtSession = {
   notes?: string | null;
   status?: string | null;
   isCancelled?: boolean;
+  isCompleted?: boolean;
   participants?: PtSessionParticipant[];
   participantCount?: number;
 };

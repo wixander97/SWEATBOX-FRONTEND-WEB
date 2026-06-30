@@ -68,7 +68,7 @@ export function UserCreateForm({ roles, branches, currentUserId, onSuccess, onCa
           className="text-gray-400 hover:text-white text-xl leading-none"
           aria-label="Close"
         >
-
+          ×
         </button>
       </div>
       <form onSubmit={handleSubmit}>

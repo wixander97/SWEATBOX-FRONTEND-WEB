@@ -113,8 +113,14 @@ export function CreateMemberModal({
                 <label className="block">
                   <span className="text-gray-500 text-xs uppercase font-bold">Phone Number <span className="text-red-500">*</span></span>
                   <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={13}
                     value={form.phoneNumber}
-                    onChange={(e) => setForm((f) => ({ ...f, phoneNumber: e.target.value }))}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/[^0-9]/g, "").slice(0, 13);
+                      setForm((f) => ({ ...f, phoneNumber: digits }));
+                    }}
                     required
                     className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                   />
@@ -218,8 +224,14 @@ export function CreateMemberModal({
                 <label className="block">
                   <span className="text-gray-500 text-xs uppercase font-bold">Emergency Contact Phone <span className="text-red-500">*</span></span>
                   <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={13}
                     value={form.emergencyContactPhone}
-                    onChange={(e) => setForm((f) => ({ ...f, emergencyContactPhone: e.target.value }))}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/[^0-9]/g, "").slice(0, 13);
+                      setForm((f) => ({ ...f, emergencyContactPhone: digits }));
+                    }}
                     className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                     required
                   />

@@ -55,11 +55,15 @@ function statusBadge(status: number) {
   return { label: "Failed", class: "bg-red-500/10 text-red-500 border-red-500/20" };
 }
 
-export function PaymentsView() {
+const ALLOWED_TABS: StatusTab[] = ["all", "paid", "pending", "failed"];
+
+export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
   const { currentRole } = useRole();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [summary, setSummary] = useState<PaymentSummary | null>(null);
-  const [activeTab, setActiveTab] = useState<StatusTab>("all");
+  const [activeTab, setActiveTab] = useState<StatusTab>(
+    initialStatus && ALLOWED_TABS.includes(initialStatus) ? initialStatus : "all"
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("created");
