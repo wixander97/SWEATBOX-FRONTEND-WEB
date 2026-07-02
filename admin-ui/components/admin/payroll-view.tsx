@@ -24,7 +24,7 @@ type SortDir = "asc" | "desc";
 type PayrollSortKey = "coachName" | "totalClasses" | "totalMembers" | "estimatedPayout" | "status";
 
 function formatRupiah(amount: number): string {
-  return `Rp ${amount.toLocaleString("id-ID")}`;
+  return amount.toLocaleString("id-ID");
 }
 
 export function PayrollView() {

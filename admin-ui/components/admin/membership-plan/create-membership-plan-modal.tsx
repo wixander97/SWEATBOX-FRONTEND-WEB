@@ -233,38 +233,28 @@ export function CreateMembershipPlanModal({
                                     <label className="block text-gray-400 text-sm mb-1">
                                         Price <span className="text-red-400">*</span>
                                     </label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
-                                            Rp
-                                        </span>
-                                        <input
-                                            type="text"
-                                            inputMode="decimal"
-                                            className="w-full bg-sidebar border border-border text-white pl-12 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
-                                            placeholder="0"
-                                            value={formatCurrencyInput(price)}
-                                            onChange={(e) => setPrice(parseCurrencyInput(e.target.value))}
-                                            required
-                                        />
-                                    </div>
+                                    <input
+                                        type="text"
+                                        inputMode="decimal"
+                                        className="w-full bg-sidebar border border-border text-white pl-4 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        placeholder="0"
+                                        value={formatCurrencyInput(price)}
+                                        onChange={(e) => setPrice(parseCurrencyInput(e.target.value))}
+                                        required
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-gray-400 text-sm mb-1">
                                         Registration Fee
                                     </label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
-                                            Rp
-                                        </span>
-                                        <input
-                                            type="text"
-                                            inputMode="decimal"
-                                            className="w-full bg-sidebar border border-border text-white pl-12 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
-                                            placeholder="0"
-                                            value={formatCurrencyInput(registrationFee)}
-                                            onChange={(e) => setRegistrationFee(parseCurrencyInput(e.target.value))}
-                                        />
-                                    </div>
+                                    <input
+                                        type="text"
+                                        inputMode="decimal"
+                                        className="w-full bg-sidebar border border-border text-white pl-4 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        placeholder="0"
+                                        value={formatCurrencyInput(registrationFee)}
+                                        onChange={(e) => setRegistrationFee(parseCurrencyInput(e.target.value))}
+                                    />
                                 </div>
                             </div>
 

@@ -3,13 +3,6 @@ export type LoginRequest = {
   password: string;
 };
 
-export type RegisterRequest = {
-  fullName: string;
-  email: string;
-  password: string;
-  role: string;
-};
-
 export type AuthApiSuccess = {
   ok: true;
   token: string;

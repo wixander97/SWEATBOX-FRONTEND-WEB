@@ -114,10 +114,10 @@ function isToday(isoString: string): boolean {
 }
 
 function formatRupiah(amount: number): string {
-  if (amount >= 1_000_000_000) return `Rp ${(amount / 1_000_000_000).toFixed(1)}B`;
-  if (amount >= 1_000_000) return `Rp ${(amount / 1_000_000).toFixed(0)}M`;
-  if (amount >= 1_000) return `Rp ${(amount / 1_000).toFixed(0)}K`;
-  return `Rp ${amount.toLocaleString("id-ID")}`;
+  if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(1)}B`;
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(0)}M`;
+  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}K`;
+  return amount.toLocaleString("id-ID");
 }
 
 /**

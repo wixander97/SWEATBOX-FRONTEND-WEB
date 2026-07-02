@@ -332,7 +332,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
                 {plans.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.planName ?? "—"}
-                    {p.price ? ` - Rp ${p.price.toLocaleString("id-ID")}` : ""}
+                    {p.price ? ` - ${p.price.toLocaleString("id-ID")}` : ""}
                   </option>
                 ))}
               </select>

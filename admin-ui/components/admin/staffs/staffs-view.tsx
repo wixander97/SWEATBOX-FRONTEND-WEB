@@ -206,7 +206,7 @@ export function StaffsView() {
       };
       const val = (s?: string | null) => s || "-";
       const money = (n?: number | null) =>
-        n != null ? `Rp ${Number(n).toLocaleString("id-ID")}` : "-";
+        n != null ? Number(n).toLocaleString("id-ID") : "-";
       const yesNo = (v?: boolean | null) => (v ? "Yes" : "No");
 
       const header = [

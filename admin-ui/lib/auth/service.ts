@@ -3,7 +3,6 @@ import type {
   AuthApiFailure,
   AuthApiSuccess,
   LoginRequest,
-  RegisterRequest,
 } from "./types";
 
 const TOKEN_KEYS = ["token", "accessToken", "access_token", "jwt"] as const;
@@ -76,16 +75,4 @@ export async function loginWithApi(
   return { ok: true, token, raw: result.payload };
 }
 
-export async function registerWithApi(
-  payload: RegisterRequest
-): Promise<{ ok: true } | AuthApiFailure> {
-  const result = await postJson("/api/v1/auth/register", payload);
-  if (!result.ok) {
-    return {
-      ok: false,
-      status: result.status,
-      error: getErrorMessage(result.payload),
-    };
-  }
-  return { ok: true };
-}
+
