@@ -243,17 +243,100 @@ export function PtSessionTab() {
     void loadSessions(page);
   }
 
+  async function exportCsv() {
+    const res = await authFetch(`${API_BASE_URL}/api/v1/pt-sessions`, {
+      cache: "no-store",
+    });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
+    const payload = (await res.json().catch(() => [])) as
+      | PtSession[]
+      | PagedResponse<PtSession>;
+    const all = Array.isArray(payload)
+      ? payload
+      : (payload.items ?? payload.data ?? parseList(payload));
+
+    const val = (s?: string | null) => s || "—";
+    const yesNo = (v?: boolean | null) => (v ? "Yes" : "No");
+    const fmtDateTime = (iso?: string | null) =>
+      iso ? new Date(iso).toLocaleString("id-ID") : "—";
+    const fmtTime = (t?: string | null) => (t ? t.slice(0, 5) : "—");
+
+    const header = [
+      "Package",
+      "Coach",
+      "Branch",
+      "Session Date",
+      "Start Time",
+      "End Time",
+      "Training Type",
+      "Max Participants",
+      "Participant Count",
+      "Participants",
+      "Status",
+      "Cancelled",
+      "Completed",
+      "Notes",
+    ];
+    const rows = all.map((s) => {
+      const count =
+        typeof s.participantCount === "number"
+          ? s.participantCount
+          : Array.isArray(s.participants)
+            ? s.participants.length
+            : 0;
+      const participantNames = Array.isArray(s.participants) && s.participants.length > 0
+        ? s.participants.map((p) => p.memberName ?? p.memberId ?? "").join("; ")
+        : "—";
+      return [
+        val(s.packageName),
+        val(s.coachName || coachName(s.coachId)),
+        val(s.branchName || branchName(s.branchId)),
+        fmtDateTime(s.sessionDate),
+        fmtTime(s.startTime),
+        fmtTime(s.endTime),
+        val(s.trainingType),
+        String(s.maxParticipants ?? 0),
+        String(count),
+        participantNames,
+        val(s.status),
+        yesNo(s.isCancelled),
+        yesNo(s.isCompleted),
+        val(s.notes),
+      ];
+    });
+    const csv = [header, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "pt-sessions.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-lg font-display font-bold text-white">PT Sessions</h2>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 w-full sm:w-auto"
-        >
-          <i className="fas fa-plus" aria-hidden /> Create Session
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <button
+            type="button"
+            onClick={() => void exportCsv()}
+            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center justify-center gap-2 w-full sm:w-auto"
+          >
+            <i className="fas fa-file-export" aria-hidden />
+            Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 w-full sm:w-auto"
+          >
+            <i className="fas fa-plus" aria-hidden /> Create Session
+          </button>
+        </div>
       </div>
 
       {error && (

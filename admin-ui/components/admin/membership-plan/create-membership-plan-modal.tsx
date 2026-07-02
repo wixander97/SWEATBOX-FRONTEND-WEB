@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState, type FormEvent } from "react";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency";
 
 type Branch = {
     id: string;
@@ -44,6 +45,10 @@ export function CreateMembershipPlanModal({
 }: Props) {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
+    const [price, setPrice] = useState<number>(initialValues?.price ?? 0);
+    const [registrationFee, setRegistrationFee] = useState<number>(
+        initialValues?.registrationFee ?? 0
+    );
 
     const handleSubmit = useCallback(
         async (e: FormEvent<HTMLFormElement>) => {
@@ -55,7 +60,7 @@ export function CreateMembershipPlanModal({
                 branchId: String(fd.get("branchId") ?? ""),
                 planName: String(fd.get("planName") ?? ""),
                 description: String(fd.get("description") ?? ""),
-                price: Number(fd.get("price") ?? 0),
+                price: price,
                 credits: Number(fd.get("credits") ?? 0),
                 validityDays: Number(fd.get("validityDays") ?? 30),
                 isUnlimitedClasses: fd.get("isUnlimitedClasses") === "on",
@@ -63,7 +68,7 @@ export function CreateMembershipPlanModal({
                 ptSessions: Number(fd.get("ptSessions") ?? 0),
                 isPopular: fd.get("isPopular") === "on",
                 planCategory: String(fd.get("planCategory") ?? ""),
-                registrationFee: Number(fd.get("registrationFee") ?? 0),
+                registrationFee: registrationFee,
                 allowMultiBranchAccess: fd.get("allowMultiBranchAccess") === "on",
                 isActive: fd.get("isActive") === "on",
             };
@@ -102,7 +107,7 @@ export function CreateMembershipPlanModal({
                 setSubmitting(false);
             }
         },
-        [onClose, onSubmit]
+        [onClose, onSubmit, price, registrationFee]
     );
 
     if (!isOpen) return null;
@@ -226,30 +231,40 @@ export function CreateMembershipPlanModal({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-gray-400 text-sm mb-1">
-                                        Price (Rp) <span className="text-red-400">*</span>
+                                        Price <span className="text-red-400">*</span>
                                     </label>
-                                    <input
-                                        type="number"
-                                        className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
-                                        placeholder="0"
-                                        name="price"
-                                        defaultValue={initialValues?.price ?? 0}
-                                        min={0}
-                                        required
-                                    />
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
+                                            Rp
+                                        </span>
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            className="w-full bg-sidebar border border-border text-white pl-12 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                            placeholder="0"
+                                            value={formatCurrencyInput(price)}
+                                            onChange={(e) => setPrice(parseCurrencyInput(e.target.value))}
+                                            required
+                                        />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-gray-400 text-sm mb-1">
-                                        Registration Fee (Rp)
+                                        Registration Fee
                                     </label>
-                                    <input
-                                        type="number"
-                                        className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
-                                        placeholder="0"
-                                        name="registrationFee"
-                                        defaultValue={initialValues?.registrationFee ?? 0}
-                                        min={0}
-                                    />
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
+                                            Rp
+                                        </span>
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            className="w-full bg-sidebar border border-border text-white pl-12 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                            placeholder="0"
+                                            value={formatCurrencyInput(registrationFee)}
+                                            onChange={(e) => setRegistrationFee(parseCurrencyInput(e.target.value))}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

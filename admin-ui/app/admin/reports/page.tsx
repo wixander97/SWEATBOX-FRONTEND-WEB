@@ -292,7 +292,7 @@ export default function ReportsPage() {
                     </button>
                   </th>
                 ))}
-                <th className="px-6 py-4">Selfie</th>
+                <th className="px-6 py-4">Photo</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">

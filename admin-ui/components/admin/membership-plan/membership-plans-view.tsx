@@ -213,6 +213,66 @@ export function MembershipPlansView() {
         await loadPlans(page);
     }
 
+    async function exportCsv() {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/membership-plans`, {
+            cache: "no-store",
+        });
+        if (redirectToLoginIfUnauthorized(res.status)) return;
+        const payload = (await res.json().catch(() => [])) as
+            | ApiMembershipPlan[]
+            | PagedResponse<ApiMembershipPlan>;
+        const all = Array.isArray(payload)
+            ? payload
+            : (payload.items ?? payload.data ?? []);
+
+        const val = (s?: string | null) => s || "—";
+        const yesNo = (v?: boolean | null) => (v ? "Yes" : "No");
+        const num = (n?: number | null) => (n != null ? n.toLocaleString("id-ID") : "—");
+
+        const header = [
+            "Plan Name",
+            "Description",
+            "Price",
+            "Credits",
+            "Validity (Days)",
+            "Active",
+            "Branch",
+            "Unlimited Classes",
+            "PT Included",
+            "PT Sessions",
+            "Popular",
+            "Plan Category",
+            "Registration Fee",
+            "Allow Multi-Branch Access",
+        ];
+        const rows = all.map((p) => [
+            val(p.planName),
+            val(p.description),
+            num(p.price),
+            String(p.credits ?? 0),
+            String(p.validityDays ?? 0),
+            yesNo(p.isActive),
+            val(p.branchName),
+            yesNo(p.isUnlimitedClasses),
+            yesNo(p.isPtIncluded),
+            String(p.ptSessions ?? 0),
+            yesNo(p.isPopular),
+            val(p.planCategory),
+            num(p.registrationFee),
+            yesNo(p.allowMultiBranchAccess),
+        ]);
+        const csv = [header, ...rows]
+            .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
+            .join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "membership-plans.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
     return (
         <>
             <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -245,17 +305,27 @@ export function MembershipPlansView() {
                             </span>
                         </p>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setSelected(null);
-                            setModalOpen(true);
-                        }}
-                        className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 w-full sm:w-auto"
-                    >
-                        <i className="fas fa-plus" aria-hidden />
-                        Create New Plan
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
+                        <button
+                            type="button"
+                            onClick={() => void exportCsv()}
+                            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center justify-center gap-2 w-full sm:w-auto"
+                        >
+                            <i className="fas fa-file-export" aria-hidden />
+                            Export CSV
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSelected(null);
+                                setModalOpen(true);
+                            }}
+                            className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 w-full sm:w-auto"
+                        >
+                            <i className="fas fa-plus" aria-hidden />
+                            Create New Plan
+                        </button>
+                    </div>
                 </div>
                 {error && (
                     <div className="p-4 sm:p-6 bg-red-500/10 border-b border-red-500/30 text-red-200 text-sm">

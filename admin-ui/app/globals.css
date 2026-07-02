@@ -69,6 +69,15 @@ select {
   color-scheme: dark;
 }
 
+/* Native date/time pickers: render icons light in dark theme */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"],
+input[type="week"] {
+  color-scheme: dark;
+}
+
 select option {
   background-color: #1a1a1a;
   color: #ffffff;

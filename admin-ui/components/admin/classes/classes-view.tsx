@@ -366,34 +366,85 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
               ))}
             </div>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <input
-                type="date"
-                value={filterDate}
-                onChange={(e) => {
-                  setFilterDate(e.target.value);
-                  setPage(1);
-                }}
-                disabled={statusTab !== "all"}
-                className="[color-scheme:dark] bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat disabled:opacity-50"
-              />
-              <select
-                value={filterLocation}
-                onChange={(e) => {
-                  setFilterLocation(e.target.value);
-                  setPage(1);
-                }}
-                disabled={statusTab !== "all"}
-                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat disabled:opacity-50"
-              >
-                <option value="">All Locations</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.branchName}
-                  </option>
-                ))}
-              </select>
+              {/* Date filter */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 text-xs uppercase font-bold text-gray-400">
+                    <i className="fas fa-calendar" aria-hidden />
+                    Date
+                  </label>
+                  {filterDate && statusTab === "all" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilterDate("");
+                        setPage(1);
+                      }}
+                      title="Clear date"
+                      className="text-gray-500 hover:text-white"
+                      aria-label="Clear date"
+                    >
+                      <i className="fas fa-times" aria-hidden />
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="date"
+                  value={filterDate}
+                  onChange={(e) => {
+                    setFilterDate(e.target.value);
+                    setPage(1);
+                  }}
+                  disabled={statusTab !== "all"}
+                  className={`[color-scheme:dark] bg-sidebar border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat disabled:opacity-50 ${filterDate && statusTab === "all" ? "border-sweat" : "border-border"
+                    }`}
+                />
+              </div>
+
+              {/* Location filter */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 text-xs uppercase font-bold text-gray-400">
+                    <i className="fas fa-map-marker-alt" aria-hidden />
+                    Location
+                  </label>
+                  {filterLocation && statusTab === "all" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilterLocation("");
+                        setPage(1);
+                      }}
+                      title="Clear location"
+                      className="text-gray-500 hover:text-white"
+                      aria-label="Clear location"
+                    >
+                      <i className="fas fa-times" aria-hidden />
+                    </button>
+                  )}
+                </div>
+                <select
+                  value={filterLocation}
+                  onChange={(e) => {
+                    setFilterLocation(e.target.value);
+                    setPage(1);
+                  }}
+                  disabled={statusTab !== "all"}
+                  className={`bg-sidebar border text-white px-4 py-2      
+                  rounded-lg text-sm focus:outline-none focus:border-sweat disabled:opacity-50   
+                  ${filterLocation && statusTab === "all" ? "border-sweat" : "border-border"
+                    }`}
+                >
+                  <option value="">All Locations</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.branchName}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <p className="text-[11px] text-gray-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <p className="text-[11px] text-white flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="font-bold uppercase tracking-wide text-gray-400">Lokasi</span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-sky-400" aria-hidden />

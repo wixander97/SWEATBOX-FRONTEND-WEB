@@ -5,16 +5,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
-import { CreateMemberModal } from "@/components/admin/members/create-member-modal";
 import { EditMemberModal } from "@/components/admin/members/edit-member-modal";
 import {
   type ApiMember,
   type Branch,
-  type MemberFormState,
   type MembershipPlan,
   type PagedResponse,
-  dateToIso,
-  parseIntSafe,
 } from "@/components/admin/members/members.types";
 
 type FilterTab = "all" | "active";
@@ -54,9 +50,7 @@ export function MembersView() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [memberModal, setMemberModal] = useState<
-    | { mode: "create" }
-    | { mode: "edit"; member: ApiMember }
-    | null
+    { mode: "edit"; member: ApiMember } | null
   >(null);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [branchesLoading, setBranchesLoading] = useState(true);
@@ -229,51 +223,6 @@ export function MembersView() {
     });
   }, [members, sortKey, sortDir]);
 
-  async function createSubmit(form: MemberFormState) {
-    const body: Record<string, unknown> = {
-      fullName: form.fullName || null,
-      phoneNumber: form.phoneNumber || null,
-      gender: form.gender || null,
-      dateOfBirth: dateToIso(form.dateOfBirth),
-      emergencyContactName: form.emergencyContactName || null,
-      emergencyContactPhone: form.emergencyContactPhone || null,
-      membershipSource: form.membershipSource || null,
-      remainingCredits: parseIntSafe(form.remainingCredits),
-      remainingPtSessions: parseIntSafe(form.remainingPtSessions),
-      expiryDate: dateToIso(form.expiryDate),
-      homeClubBranchId: form.homeClubBranchId || null,
-      membershipPlanId: form.membershipPlanId || null,
-      address: form.address || null,
-      city: form.city || null,
-      heightCm: parseIntSafe(form.heightCm),
-      weightKg: parseIntSafe(form.weightKg),
-      profileImageUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(form.fullName || "Member")}&background=random&size=200`,
-      notes: form.notes || null,
-      isWaiverSigned: form.isWaiverSigned,
-      isPtMember: form.isPtMember,
-    };
-    const res = await authFetch(`${API_BASE_URL}/api/v1/members`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = (await res.json().catch(() => ({}))) as { message?: string; errors?: unknown };
-    if (redirectToLoginIfUnauthorized(res.status)) return;
-    if (!res.ok) {
-      let errorMsg = data?.message ?? "Gagal menambah member.";
-      // Handle ASP.NET Core validation errors format
-      if (data?.errors && typeof data.errors === "object") {
-        const errObj = data.errors as Record<string, string[]>;
-        const fieldErrors = Object.entries(errObj)
-          .map(([field, msgs]) => `${field}: ${msgs.join(", ")}`)
-          .join("; ");
-        if (fieldErrors) errorMsg = fieldErrors;
-      }
-      throw new Error(errorMsg);
-    }
-    void loadMembers(keyword, memberFilterTab, page);
-  }
-
   function exportCsv() {
     const fmtDate = (iso?: string | null) =>
       iso ? new Date(iso).toLocaleDateString("id-ID") : "-";
@@ -387,16 +336,6 @@ export function MembersView() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:flex-wrap">
-          <button
-            type="button"
-            onClick={() => {
-              setMemberModal({ mode: "create" });
-            }}
-            className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 w-full sm:w-auto shrink-0"
-          >
-            <i className="fas fa-user-plus" aria-hidden />
-            Add new member
-          </button>
           {/* Magic Search */}
           <div ref={searchWrapperRef} className="relative w-full sm:w-72">
             <div className="relative">
@@ -615,16 +554,6 @@ export function MembersView() {
         </div>
       </div>
 
-      {memberModal?.mode === "create" && (
-        <CreateMemberModal
-          branches={branches}
-          branchesLoading={branchesLoading}
-          membershipPlans={membershipPlans}
-          membershipPlansLoading={membershipPlansLoading}
-          onClose={() => setMemberModal(null)}
-          onSubmit={createSubmit}
-        />
-      )}
       {memberModal?.mode === "edit" && (
         <EditMemberModal
           member={memberModal.member}

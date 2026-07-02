@@ -5,7 +5,6 @@ import Image from "next/image";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
-import { CreateCoachModal } from "./create-coach-modal";
 import { EditCoachModal } from "./edit-coach-modal";
 
 type SortDir = "asc" | "desc";
@@ -57,35 +56,6 @@ type EditForm = {
   isActive: boolean;
 };
 
-type AddForm = {
-  userId: string;
-  branchId: string;
-  specialization: string;
-  bio: string;
-  rating: string;
-  attendanceRate: string;
-  totalClasses: string;
-  totalMembers: string;
-  totalPtSessions: string;
-  payrollType: string;
-  payrollRate: string;
-  certification: string;
-  emergencyContact: string;
-  isActive: boolean;
-};
-
-type UserOption = {
-  id: string;
-  fullName?: string | null;
-  email?: string | null;
-};
-
-type BranchOption = {
-  id: string;
-  branchName?: string | null;
-  isActive: boolean;
-};
-
 type CoachAttendanceRecord = {
   classDate: string;
   className: string;
@@ -114,30 +84,6 @@ export function CoachesView() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
-  const [addModalOpen, setAddModalOpen] = useState(false);
-  const [addLoading, setAddLoading] = useState(false);
-  const [addError, setAddError] = useState("");
-  const [users, setUsers] = useState<UserOption[]>([]);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [branches, setBranches] = useState<BranchOption[]>([]);
-  const [branchesLoading, setBranchesLoading] = useState(false);
-  const defaultAddForm: AddForm = {
-    userId: "",
-    branchId: "",
-    specialization: "",
-    bio: "",
-    rating: "0",
-    attendanceRate: "0",
-    totalClasses: "0",
-    totalMembers: "0",
-    totalPtSessions: "0",
-    payrollType: "",
-    payrollRate: "0",
-    certification: "",
-    emergencyContact: "",
-    isActive: true,
-  };
-  const [addForm, setAddForm] = useState<AddForm>(defaultAddForm);
   const [detailTab, setDetailTab] = useState<"info" | "history">("info");
   const [attendanceHistory, setAttendanceHistory] = useState<CoachAttendanceRecord[]>([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
@@ -146,93 +92,6 @@ export function CoachesView() {
   function toggleSort(key: CoachSortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
-  }
-
-  async function loadUsers() {
-    setUsersLoading(true);
-    const params = new URLSearchParams({ page: "1", pageSize: "100", isActive: "true", roleId: "6a3efc88-def9-4b73-b328-9570b704341d" });
-    const res = await authFetch(`/api/v1/users/paged?${params.toString()}`, { cache: "no-store" });
-    if (redirectToLoginIfUnauthorized(res.status)) { setUsersLoading(false); return; }
-    const payload = await res.json().catch(() => ({}));
-    // Handle various response structures: { data: [] }, { items: [] }, or direct array
-    let list: UserOption[] = [];
-    if (Array.isArray(payload)) {
-      list = payload as UserOption[];
-    } else if (payload.data && Array.isArray(payload.data)) {
-      list = payload.data;
-    } else if (payload.items && Array.isArray(payload.items)) {
-      list = payload.items;
-    }
-    setUsers(list);
-    setUsersLoading(false);
-  }
-
-  async function loadBranches() {
-    setBranchesLoading(true);
-    const res = await authFetch(`${API_BASE_URL}/api/v1/branches`);
-    if (redirectToLoginIfUnauthorized(res.status)) { setBranchesLoading(false); return; }
-    const payload = await res.json().catch(() => []);
-    let list: BranchOption[] = [];
-    if (Array.isArray(payload)) {
-      list = payload as BranchOption[];
-    } else if (payload.data && Array.isArray(payload.data)) {
-      list = payload.data;
-    } else if (payload.items && Array.isArray(payload.items)) {
-      list = payload.items;
-    }
-    setBranches(list);
-    setBranchesLoading(false);
-  }
-
-  function openAddModal() {
-    setAddForm(defaultAddForm);
-    setAddError("");
-    setAddModalOpen(true);
-    void loadUsers();
-    void loadBranches();
-  }
-
-  async function handleAddCoach() {
-    if (!addForm.userId) {
-      setAddError("Please select a user.");
-      return;
-    }
-    if (!addForm.specialization.trim()) {
-      setAddError("Specialization is required.");
-      return;
-    }
-    setAddLoading(true);
-    setAddError("");
-    const body = {
-      userId: addForm.userId,
-      branchId: addForm.branchId || undefined,
-      specialization: addForm.specialization,
-      bio: addForm.bio || undefined,
-      rating: Number(addForm.rating) || 0,
-      attendanceRate: Number(addForm.attendanceRate) || 0,
-      totalClasses: Number(addForm.totalClasses) || 0,
-      totalMembers: Number(addForm.totalMembers) || 0,
-      totalPtSessions: Number(addForm.totalPtSessions) || 0,
-      payrollType: addForm.payrollType || undefined,
-      payrollRate: Number(addForm.payrollRate) || 0,
-      certification: addForm.certification || undefined,
-      emergencyContact: addForm.emergencyContact || undefined,
-      isActive: addForm.isActive,
-    };
-    const res = await authFetch(`${API_BASE_URL}/api/v1/coaches`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json().catch(() => ({})) as { message?: string };
-    setAddLoading(false);
-    if (!res.ok) {
-      setAddError(data.message ?? "Failed to create coach");
-      return;
-    }
-    setAddModalOpen(false);
-    setAddForm(defaultAddForm);
-    void loadCoaches(page);
   }
 
   const loadCoaches = useCallback(async (targetPage: number) => {
@@ -396,39 +255,50 @@ export function CoachesView() {
         <div className="text-gray-400">No coaches found.</div>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <button
-              type="button"
-              onClick={() => openAddModal()}
-              className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-sweat/80 transition"
-            >
-              <i className="fas fa-plus mr-2" aria-hidden /> Add New Coach
-            </button>
-            <span className="text-xs text-gray-500 uppercase font-bold mr-1 ml-2">Sort by:</span>
-            {(
-              [
-                { label: "Name", key: "fullName" },
-                { label: "Specialization", key: "specialization" },
-                { label: "Rating", key: "rating" },
-                { label: "Classes", key: "totalClasses" },
-                { label: "Members", key: "totalMembers" },
-              ] as { label: string; key: CoachSortKey }[]
-            ).map(({ label, key }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => toggleSort(key)}
-                className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-medium border transition ${sortKey === key
-                  ? "bg-sweat/10 border-sweat text-sweat"
-                  : "bg-sidebar border-border text-gray-400 hover:text-white hover:border-gray-500"
-                  }`}
-              >
-                {label}
-                {sortKey === key && (
-                  <i className={`fas fa-caret-${sortDir === "asc" ? "up" : "down"} text-[10px]`} aria-hidden />
-                )}
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-500 uppercase font-bold">Sort by:</span>
+              {(
+                [
+                  { label: "Name", key: "fullName" },
+                  { label: "Specialization", key: "specialization" },
+                  { label: "Rating", key: "rating" },
+                  { label: "Classes", key: "totalClasses" },
+                  { label: "Members", key: "totalMembers" },
+                ] as { label: string; key: CoachSortKey }[]
+              ).map(({ label, key }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => toggleSort(key)}
+                  className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-medium border transition ${sortKey === key
+                    ? "bg-sweat/10 border-sweat text-sweat"
+                    : "bg-sidebar border-border text-gray-400 hover:text-white hover:border-gray-500"
+                    }`}
+                >
+                  {label}
+                  {sortKey === key && (
+                    <i className={`fas fa-caret-${sortDir === "asc" ? "up" : "down"} text-[10px]`} aria-hidden />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Legend: explain power toggle button */}
+          <div className="bg-card/50 border border-border/50 rounded-lg px-4 py-3 mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-gray-400">
+            <span className="font-bold uppercase tracking-wide text-gray-400">Status Coach</span>
+            <span className="text-gray-500">
+              Tombol power digunakan untuk mengaktifkan (on) atau menonaktifkan (off) status coach.
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <i className="fas fa-power-off text-green-400" aria-hidden />
+              <span className="text-green-400">Active (On)</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <i className="fas fa-power-off text-yellow-400" aria-hidden />
+              <span className="text-yellow-400">Inactive (Off)</span>
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
@@ -486,7 +356,7 @@ export function CoachesView() {
                       : "text-green-400 border-green-500/20 hover:bg-green-500/10"
                       }`}
                   >
-                    <i className={`fas ${coach.isActive ? "fa-pause" : "fa-play"}`} aria-hidden />
+                    <i className="fas fa-power-off" aria-hidden />
                   </button>
                   <button
                     type="button"
@@ -525,13 +395,6 @@ export function CoachesView() {
             </div>
           </div>
         </>
-      )}
-
-      {addModalOpen && (
-        <CreateCoachModal
-          onClose={() => setAddModalOpen(false)}
-          onSuccess={() => { void loadCoaches(page); setAddModalOpen(false); }}
-        />
       )}
 
       {selected && (

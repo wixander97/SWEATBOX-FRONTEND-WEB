@@ -141,6 +141,71 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
     }
   }
 
+  const PAYMENT_METHOD_LABELS: Record<number, string> = {
+    0: "Cash",
+    1: "Bank Transfer",
+    2: "QRIS",
+    3: "Credit Card",
+    4: "Debit Card",
+    5: "E-Wallet",
+    6: "Virtual Account",
+  };
+
+  function exportCsv() {
+    const statusLabel = (s: number) =>
+      s === 1 ? "Paid" : s === 0 ? "Pending" : "Failed";
+    const methodLabel = (m: number) => PAYMENT_METHOD_LABELS[m] ?? String(m);
+    const providerLabel = (p: number) => (p === 0 ? "Offline" : "Midtrans");
+    const val = (s?: string | null) => s || "—";
+    const num = (n?: number | null) =>
+      n != null ? n.toLocaleString("id-ID") : "—";
+    const fmtDateTime = (iso?: string | null) =>
+      iso ? new Date(iso).toLocaleString("id-ID") : "—";
+
+    const header = [
+      "Invoice No",
+      "Membership Plan",
+      "Amount",
+      "Discount",
+      "Tax",
+      "Final Amount",
+      "Payment Method",
+      "Payment Status",
+      "Payment Provider",
+      "Expiry At",
+      "Paid At",
+      "Notes",
+      "Created",
+      "Last Modified",
+    ];
+    const rows = sorted.map((p) => [
+      val(p.invoiceNo),
+      val(p.membershipPlanName),
+      num(p.amount),
+      num(p.discount),
+      num(p.tax),
+      num(p.finalAmount),
+      methodLabel(p.paymentMethod),
+      statusLabel(p.paymentStatus),
+      providerLabel(p.paymentProvider),
+      fmtDateTime(p.expiryAt),
+      fmtDateTime(p.paidAt),
+      val(p.notes),
+      fmtDateTime(p.created),
+      fmtDateTime(p.lastModified),
+    ]);
+    const csv = [header, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "payments.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const tabs: { key: StatusTab; label: string }[] = [
     { key: "all", label: "All" },
     { key: "paid", label: "Paid" },
@@ -198,6 +263,14 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={exportCsv}
+            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center gap-2"
+          >
+            <i className="fas fa-file-export" aria-hidden />
+            Export CSV
+          </button>
           {/* TODO: Re-enable create payment feature
           <button
             type="button"
@@ -279,17 +352,21 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
                           <button
                             type="button"
                             onClick={() => setSelected(p)}
-                            className="text-xs text-gray-400 hover:text-white border border-border px-2 py-1 rounded transition"
+                            className="text-gray-400 hover:text-white mx-1"
+                            aria-label="Detail"
+                            title="Detail"
                           >
-                            Detail
+                            <i className="fas fa-eye" aria-hidden />
                           </button>
                           {currentRole === "superadmin" && (
                             <button
                               type="button"
                               onClick={() => setDeleteId(p.id)}
-                              className="text-xs text-red-400 hover:text-red-300 border border-red-500/20 px-2 py-1 rounded transition"
+                              className="text-red-500 hover:text-red-400 mx-1"
+                              aria-label="Delete"
+                              title="Delete"
                             >
-                              Delete
+                              <i className="fas fa-trash" aria-hidden />
                             </button>
                           )}
                         </div>
