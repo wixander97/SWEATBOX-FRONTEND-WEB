@@ -3,23 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SelectOption } from "@/components/admin/pt/pt-types";
-
-/** Format a number as IDR with dot thousand separators (e.g. 1500000 → "1.500.000"). */
-function formatIdr(n: number): string {
-  if (n === 0) return "0";
-  const abs = Math.abs(n);
-  const formatted = abs
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return n < 0 ? `-${formatted}` : formatted;
-}
-
-/** Parse an IDR-formatted string back to a number (strips dots, non-digits). */
-function parseIdr(s: string): number {
-  const digits = s.replace(/[^0-9]/g, "");
-  if (!digits) return 0;
-  return parseInt(digits, 10);
-}
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency";
 
 export type PtPackageFormValues = {
   memberId: string;
@@ -239,10 +223,10 @@ export function PtPackageFormModal({
                 </span>
                 <input
                   type="text"
-                  inputMode="numeric"
-                  value={formatIdr(form.price)}
+                  inputMode="decimal"
+                  value={formatCurrencyInput(form.price)}
                   onChange={(e) => {
-                    const num = parseIdr(e.target.value);
+                    const num = parseCurrencyInput(e.target.value);
                     setForm((f) => ({ ...f, price: num }));
                   }}
                   className="w-full bg-sidebar border border-border text-white pl-12 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"

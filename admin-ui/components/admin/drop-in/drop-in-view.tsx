@@ -97,10 +97,68 @@ export function DropInView() {
     void loadPasses(page);
   }, [loadPasses, page]);
 
+  function exportCsv() {
+    const val = (s?: string | null) => s || "—";
+    const fmtDate = (iso?: string | null) => (iso ? formatDate(iso) : "—");
+
+    const header = [
+      "Member Name",
+      "Member Code",
+      "Email",
+      "Phone",
+      "Membership Status",
+      "Remaining Credits",
+      "Remaining PT Sessions",
+      "Member Join Date",
+      "Member Expiry Date",
+      "Branch",
+      "Total Visits",
+      "Remaining Visits",
+      "Purchased",
+      "Expires",
+      "Status",
+    ];
+    const rows = passes.map((p) => [
+      val(p.member?.fullName),
+      val(p.member?.memberCode),
+      val(p.member?.email),
+      val(p.member?.phoneNumber),
+      val(p.member?.membershipStatus),
+      String(p.member?.remainingCredits ?? 0),
+      String(p.member?.remainingPtSessions ?? 0),
+      fmtDate(p.member?.joinDate),
+      fmtDate(p.member?.expiryDate),
+      val(p.branch?.branchName),
+      String(p.totalVisits),
+      String(p.remainingVisits),
+      fmtDate(p.purchasedAt),
+      fmtDate(p.expiredAt),
+      p.isActive ? "Active" : "Expired",
+    ]);
+    const csv = [header, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "drop-in-passes.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-display font-bold text-white">Drop In</h2>
+        <button
+          type="button"
+          onClick={exportCsv}
+          className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center gap-2"
+        >
+          <i className="fas fa-file-export" aria-hidden />
+          Export CSV
+        </button>
       </div>
 
       {loading ? (
@@ -152,11 +210,10 @@ export function DropInView() {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${
-                          p.isActive
-                            ? "bg-green-500/10 text-green-400 border-green-500/30"
-                            : "bg-red-500/10 text-red-400 border-red-500/30"
-                        }`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${p.isActive
+                          ? "bg-green-500/10 text-green-400 border-green-500/30"
+                          : "bg-red-500/10 text-red-400 border-red-500/30"
+                          }`}
                       >
                         {p.isActive ? "Active" : "Expired"}
                       </span>

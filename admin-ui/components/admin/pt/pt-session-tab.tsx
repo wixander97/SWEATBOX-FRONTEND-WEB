@@ -11,6 +11,7 @@ import {
 } from "@/components/admin/pt/create-pt-session-modal";
 import { AddPtSessionParticipantModal } from "@/components/admin/pt/add-pt-session-participant-modal";
 import { CancelPtSessionModal } from "@/components/admin/pt/cancel-pt-session-modal";
+import { PtSessionDetailModal } from "@/components/admin/pt/pt-session-detail-modal";
 import {
   type Coach,
   type Branch,
@@ -42,6 +43,7 @@ export function PtSessionTab() {
   const [saving, setSaving] = useState(false);
   const [addMemberTarget, setAddMemberTarget] = useState<PtSession | null>(null);
   const [cancelTarget, setCancelTarget] = useState<PtSession | null>(null);
+  const [detailTarget, setDetailTarget] = useState<PtSession | null>(null);
 
   const loadSessions = useCallback(
     async (targetPage: number) => {
@@ -151,12 +153,6 @@ export function PtSessionTab() {
     const found = branches.find((b) => b.id === id);
     return found ? branchLabel(found) : id;
   }
-  function packageName(id?: string | null): string {
-    if (!id) return "-";
-    const found = packages.find((p) => p.id === id);
-    return found ? found.name : id;
-  }
-
   function participantCount(s: PtSession): number {
     if (typeof s.participantCount === "number") return s.participantCount;
     return Array.isArray(s.participants) ? s.participants.length : 0;
@@ -167,6 +163,7 @@ export function PtSessionTab() {
   }
 
   function isCancelled(s: PtSession): boolean {
+    if (s.isCancelled === true) return true;
     const status = String(s.status ?? "").toLowerCase();
     return status === "cancelled" || status === "canceled";
   }
@@ -231,38 +228,115 @@ export function PtSessionTab() {
   }
 
   async function handleCancel(session: PtSession, reason: string) {
-    setError("");
-    try {
-      const url = new URL(`${API_BASE_URL}/api/v1/pt-sessions/${session.id}/cancel`);
-      if (reason.trim()) url.searchParams.set("reason", reason.trim());
-      const res = await authFetch(url.toString(), {
-        method: "POST",
-        cache: "no-store",
-      });
-      if (redirectToLoginIfUnauthorized(res.status)) return;
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { message?: string };
-        setError(data?.message ?? "Gagal membatalkan PT session");
-        return;
-      }
-      setCancelTarget(null);
-      void loadSessions(page);
-    } catch {
-      setError("Gagal membatalkan PT session");
+    const url = new URL(`${API_BASE_URL}/api/v1/pt-sessions/${session.id}/cancel`);
+    if (reason.trim()) url.searchParams.set("reason", reason.trim());
+    const res = await authFetch(url.toString(), {
+      method: "POST",
+      cache: "no-store",
+    });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      throw new Error(data?.message ?? "Gagal membatalkan PT session");
     }
+    setCancelTarget(null);
+    void loadSessions(page);
+  }
+
+  async function exportCsv() {
+    const res = await authFetch(`${API_BASE_URL}/api/v1/pt-sessions`, {
+      cache: "no-store",
+    });
+    if (redirectToLoginIfUnauthorized(res.status)) return;
+    const payload = (await res.json().catch(() => [])) as
+      | PtSession[]
+      | PagedResponse<PtSession>;
+    const all = Array.isArray(payload)
+      ? payload
+      : (payload.items ?? payload.data ?? parseList(payload));
+
+    const val = (s?: string | null) => s || "—";
+    const yesNo = (v?: boolean | null) => (v ? "Yes" : "No");
+    const fmtDateTime = (iso?: string | null) =>
+      iso ? new Date(iso).toLocaleString("id-ID") : "—";
+    const fmtTime = (t?: string | null) => (t ? t.slice(0, 5) : "—");
+
+    const header = [
+      "Package",
+      "Coach",
+      "Branch",
+      "Session Date",
+      "Start Time",
+      "End Time",
+      "Training Type",
+      "Max Participants",
+      "Participant Count",
+      "Participants",
+      "Status",
+      "Cancelled",
+      "Completed",
+      "Notes",
+    ];
+    const rows = all.map((s) => {
+      const count =
+        typeof s.participantCount === "number"
+          ? s.participantCount
+          : Array.isArray(s.participants)
+            ? s.participants.length
+            : 0;
+      const participantNames = Array.isArray(s.participants) && s.participants.length > 0
+        ? s.participants.map((p) => p.memberName ?? p.memberId ?? "").join("; ")
+        : "—";
+      return [
+        val(s.packageName),
+        val(s.coachName || coachName(s.coachId)),
+        val(s.branchName || branchName(s.branchId)),
+        fmtDateTime(s.sessionDate),
+        fmtTime(s.startTime),
+        fmtTime(s.endTime),
+        val(s.trainingType),
+        String(s.maxParticipants ?? 0),
+        String(count),
+        participantNames,
+        val(s.status),
+        yesNo(s.isCancelled),
+        yesNo(s.isCompleted),
+        val(s.notes),
+      ];
+    });
+    const csv = [header, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "pt-sessions.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
     <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-lg font-display font-bold text-white">PT Sessions</h2>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 w-full sm:w-auto"
-        >
-          <i className="fas fa-plus" aria-hidden /> Create Session
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <button
+            type="button"
+            onClick={() => void exportCsv()}
+            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center justify-center gap-2 w-full sm:w-auto"
+          >
+            <i className="fas fa-file-export" aria-hidden />
+            Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 w-full sm:w-auto"
+          >
+            <i className="fas fa-plus" aria-hidden /> Create Session
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -275,7 +349,6 @@ export function PtSessionTab() {
         <table className="w-full min-w-[960px] text-left text-sm">
           <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
             <tr>
-              <th className="px-4 py-3">Package</th>
               <th className="px-4 py-3">Coach</th>
               <th className="px-4 py-3">Branch</th>
               <th className="px-4 py-3">Date</th>
@@ -290,22 +363,19 @@ export function PtSessionTab() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                   Memuat...
                 </td>
               </tr>
             ) : sessions.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                   Tidak ada PT session.
                 </td>
               </tr>
             ) : (
               sessions.map((s) => (
                 <tr key={s.id} className="hover:bg-white/5 transition">
-                  <td className="px-4 py-3 font-semibold text-white">
-                    {s.packageName || packageName(s.ptPackageId)}
-                  </td>
                   <td className="px-4 py-3 text-gray-300">
                     {s.coachName || coachName(s.coachId)}
                   </td>
@@ -341,10 +411,18 @@ export function PtSessionTab() {
                           : "bg-green-500/15 text-green-400"
                       }`}
                     >
-                      {s.status || "Active"}
+                      {isCancelled(s) ? "Cancelled" : "Active"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <button
+                      type="button"
+                      title="View Detail"
+                      onClick={() => setDetailTarget(s)}
+                      className="text-gray-400 hover:text-white mx-1"
+                    >
+                      <i className="fas fa-eye" aria-hidden />
+                    </button>
                     {isGroup(s) && !isCancelled(s) && (
                       <button
                         type="button"
@@ -428,6 +506,13 @@ export function PtSessionTab() {
           onSubmit={async (reason) => {
             await handleCancel(cancelTarget, reason);
           }}
+        />
+      )}
+
+      {detailTarget && (
+        <PtSessionDetailModal
+          session={detailTarget}
+          onClose={() => setDetailTarget(null)}
         />
       )}
     </div>

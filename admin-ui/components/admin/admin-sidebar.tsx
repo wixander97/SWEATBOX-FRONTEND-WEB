@@ -23,6 +23,7 @@ const mainNav: { href: string; label: string; icon: string; id: string }[] = [
   { href: adminPaths.members, label: "Memberships", icon: "fa-users", id: "members" },
   { href: adminPaths.reports, label: "Attendance Reports", icon: "fa-clipboard-check", id: "reports" },
   { href: adminPaths.coaches, label: "Coach Management", icon: "fa-dumbbell", id: "coaches" },
+  { href: adminPaths.staffs, label: "Staff Management", icon: "fa-user-tie", id: "staffs" },
   { href: adminPaths.pt, label: "Personal Training", icon: "fa-id-badge", id: "pt" },
   { href: adminPaths.dropIn, label: "Drop In", icon: "fa-door-open", id: "drop-in" },
 ];

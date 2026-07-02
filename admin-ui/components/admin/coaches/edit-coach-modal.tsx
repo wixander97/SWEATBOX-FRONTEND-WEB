@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency";
 
 export type CoachDetail = {
   id: string;
@@ -99,11 +100,15 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
   }, []);
 
   async function handleSubmit() {
-    setLoading(true);
     setError("");
+    if (!form.branchId.trim()) {
+      setError("Branch wajib diisi");
+      return;
+    }
+    setLoading(true);
 
     const body = {
-      branchId: form.branchId || undefined,
+      branchId: form.branchId,
       specialization: form.specialization || undefined,
       bio: form.bio || undefined,
       rating: Number(form.rating) || 0,
@@ -158,10 +163,16 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
         <div className="space-y-3">
           {/* Branch Selection */}
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Branch</label>
+            <label className="block text-xs text-gray-400 mb-1">
+              Branch <span className="text-red-400">*</span>
+            </label>
             <select
+              required
               value={form.branchId}
-              onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, branchId: e.target.value }));
+                if (error) setError("");
+              }}
               disabled={branchesLoading}
               className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat disabled:opacity-50"
             >
@@ -187,8 +198,16 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
               </label>
               <input
                 type="text"
+                inputMode={field === "emergencyContact" ? "numeric" : undefined}
+                maxLength={field === "emergencyContact" ? 13 : undefined}
                 value={String(form[field])}
-                onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
+                onChange={(e) => {
+                  const v =
+                    field === "emergencyContact"
+                      ? e.target.value.replace(/[^0-9]/g, "").slice(0, 13)
+                      : e.target.value;
+                  setForm((f) => ({ ...f, [field]: v }));
+                }}
                 required={field === "specialization"}
                 className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
               />
@@ -210,17 +229,22 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
           {/* Payroll Rate */}
           <label className="block">
             <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={form.payrollRate}
-              onChange={(e) => {
-                const raw = e.target.value.replace(/[^0-9]/g, "");
-                setForm((f) => ({ ...f, payrollRate: raw }));
-              }}
-              placeholder="0"
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-            />
+            <div className="relative mt-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
+                Rp
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={formatCurrencyInput(Number(form.payrollRate) || 0)}
+                onChange={(e) => {
+                  const num = parseCurrencyInput(e.target.value);
+                  setForm((f) => ({ ...f, payrollRate: String(num) }));
+                }}
+                placeholder="0"
+                className="w-full bg-sidebar border border-border rounded-lg pl-10 pr-3 py-2 text-white focus:outline-none focus:border-sweat"
+              />
+            </div>
           </label>
 
           {/* Stats Grid */}

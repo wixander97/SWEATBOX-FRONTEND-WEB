@@ -18,7 +18,12 @@ export function CancelPtSessionModal({ onClose, onSubmit }: Props) {
       setError("");
       setSaving(true);
       try {
-        await onSubmit(reason);
+        if (!reason.trim()) {
+          setError("Reason wajib diisi");
+          setSaving(false);
+          return;
+        }
+        await onSubmit(reason.trim());
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to cancel session");
       } finally {
@@ -52,11 +57,15 @@ export function CancelPtSessionModal({ onClose, onSubmit }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-              Reason (optional)
+              Reason <span className="text-red-400">*</span>
             </label>
             <textarea
+              required
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e) => {
+                setReason(e.target.value);
+                if (error) setError("");
+              }}
               className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat resize-none"
               rows={3}
               placeholder="Alasan pembatalan..."

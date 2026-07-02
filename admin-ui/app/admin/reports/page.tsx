@@ -137,14 +137,22 @@ export default function ReportsPage() {
     const header = [
       "Date",
       "Staff Name",
-      "Role",
       "Location",
       "Clock In",
       "Clock Out",
+      "Working Hours",
       "Status",
+      "Is Late",
+      "Late Minutes",
+      "Is Manual Entry",
       "Notes",
       "Latitude",
       "Longitude",
+      "Photo URL",
+      "Device Name",
+      "IP Address",
+      "Created At",
+      "Updated At",
     ];
     const dataRows = rows.map((s) => [
       formatDate(s.attendanceDate ?? s.clockInTime),
@@ -152,10 +160,19 @@ export default function ReportsPage() {
       s.branchName || "",
       formatTime(s.clockInTime),
       formatTime(s.clockOutTime),
+      s.totalWorkingHours != null ? String(s.totalWorkingHours) : "",
       s.status || "",
+      s.isLate ? "Yes" : "No",
+      s.lateMinutes != null ? String(s.lateMinutes) : "",
+      s.isManualEntry ? "Yes" : "No",
       s.notes || "",
       s.latitude != null ? String(s.latitude) : "",
       s.longitude != null ? String(s.longitude) : "",
+      s.selfieImageUrl || "",
+      s.deviceName || "",
+      s.ipAddress || "",
+      formatDate(s.createdAt),
+      s.updatedAt ? formatDate(s.updatedAt) : "",
     ]);
     const csv = [header, ...dataRows]
       .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
@@ -293,7 +310,7 @@ export default function ReportsPage() {
                     </button>
                   </th>
                 ))}
-                <th className="px-6 py-4">Selfie</th>
+                <th className="px-6 py-4">Photo</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">

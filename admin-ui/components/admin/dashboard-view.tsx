@@ -496,7 +496,7 @@ export function DashboardView() {
             accent={(pendingCount ?? 0) > 0 ? "text-yellow-400" : "text-white"}
             icon="fa-hourglass-half"
             loading={loading}
-            href={adminPaths.payments}
+            href={`${adminPaths.payments}?status=pending`}
           />
         ) : (
           <div className="bg-card/50 p-3 rounded-lg border border-dashed border-gray-700/50 flex items-center justify-center opacity-40">
@@ -509,7 +509,7 @@ export function DashboardView() {
           value={cancelledClasses ?? "—"}
           icon="fa-play-circle"
           loading={loading}
-          href={adminPaths.classes}
+          href={`${adminPaths.classes}?status=cancelled`}
         />
       </div>
 

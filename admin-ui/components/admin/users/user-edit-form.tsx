@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { API_BASE_URL } from "@/lib/auth/constants";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency";
 import type { Branch, Role, UserCrudForm } from "./users.types";
 
 type Props = {
@@ -182,31 +183,41 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
           </label>
           <label className="block">
             <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={form.payrollRate}
-              onChange={(e) => {
-                const raw = e.target.value.replace(/[^0-9]/g, "");
-                setForm((f) => ({ ...f, payrollRate: raw }));
-              }}
-              placeholder="0"
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-            />
+            <div className="relative mt-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
+                Rp
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={form.payrollRate === "" ? "" : formatCurrencyInput(Number(form.payrollRate))}
+                onChange={(e) => {
+                  const num = parseCurrencyInput(e.target.value);
+                  setForm((f) => ({ ...f, payrollRate: /[0-9]/.test(e.target.value) ? String(num) : "" }));
+                }}
+                placeholder="0"
+                className="w-full bg-sidebar border border-border rounded-lg pl-10 pr-3 py-2 text-white focus:outline-none focus:border-sweat"
+              />
+            </div>
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Salary (Rp)</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={form.salary}
-              onChange={(e) => {
-                const raw = e.target.value.replace(/[^0-9]/g, "");
-                setForm((f) => ({ ...f, salary: raw }));
-              }}
-              placeholder="0"
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-            />
+            <span className="text-gray-500 text-xs uppercase font-bold">Salary</span>
+            <div className="relative mt-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
+                Rp
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={form.salary === "" ? "" : formatCurrencyInput(Number(form.salary))}
+                onChange={(e) => {
+                  const num = parseCurrencyInput(e.target.value);
+                  setForm((f) => ({ ...f, salary: /[0-9]/.test(e.target.value) ? String(num) : "" }));
+                }}
+                placeholder="0"
+                className="w-full bg-sidebar border border-border rounded-lg pl-10 pr-3 py-2 text-white focus:outline-none focus:border-sweat"
+              />
+            </div>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
