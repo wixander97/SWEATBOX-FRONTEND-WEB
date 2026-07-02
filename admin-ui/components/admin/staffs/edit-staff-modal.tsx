@@ -194,25 +194,20 @@ export function EditStaffModal({
                 </div>
                 <div>
                   <label className={labelCls}>Salary</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
-                      Rp
-                    </span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      className={`${inputCls} pl-10`}
-                      value={form.salary === "" ? "" : formatCurrencyInput(Number(form.salary))}
-                      onChange={(e) => {
-                        const num = parseCurrencyInput(e.target.value);
-                        setForm((f) => ({
-                          ...f,
-                          salary: /[0-9]/.test(e.target.value) ? String(num) : "",
-                        }));
-                      }}
-                      placeholder="0"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    className={inputCls}
+                    value={form.salary === "" ? "" : formatCurrencyInput(Number(form.salary))}
+                    onChange={(e) => {
+                      const num = parseCurrencyInput(e.target.value);
+                      setForm((f) => ({
+                        ...f,
+                        salary: /[0-9]/.test(e.target.value) ? String(num) : "",
+                      }));
+                    }}
+                    placeholder="0"
+                  />
                 </div>
               </div>
 

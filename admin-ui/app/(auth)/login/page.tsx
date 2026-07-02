@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { setAuthTokenLocal } from "@/lib/auth/client-fetch";
@@ -104,13 +103,6 @@ export default function LoginPage() {
             {loading ? "Memproses..." : "Login"}
           </button>
         </form>
-
-        <p className="text-sm text-gray-400 mt-6 text-center">
-          Belum punya akun?{" "}
-          <Link href="/register" className="text-sweat hover:underline">
-            Register
-          </Link>
-        </p>
       </section>
     </main>
   );

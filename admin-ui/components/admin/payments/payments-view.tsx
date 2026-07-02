@@ -46,7 +46,7 @@ type SortKey = "invoiceNo" | "finalAmount" | "paymentStatus" | "created";
 type SortDir = "asc" | "desc";
 
 function formatRupiah(amount: number): string {
-  return `Rp ${amount.toLocaleString("id-ID")}`;
+  return amount.toLocaleString("id-ID");
 }
 
 function statusBadge(status: number) {

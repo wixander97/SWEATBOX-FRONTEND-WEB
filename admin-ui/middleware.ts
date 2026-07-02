@@ -29,7 +29,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const isAdminPath = pathname.startsWith("/admin");
-  const isAuthPath = pathname === "/login" || pathname === "/register";
+  const isAuthPath = pathname === "/login";
 
   // Primary check: cookie token
   const hasToken = Boolean(token);
@@ -63,5 +63,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/login", "/register"],
+  matcher: ["/admin/:path*", "/login"],
 };

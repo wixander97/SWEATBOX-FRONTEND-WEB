@@ -465,7 +465,7 @@ export function CoachesView() {
                   ["Attendance Rate", selected.attendanceRate != null ? `${selected.attendanceRate}%` : null],
                   ["PT Sessions", selected.totalPtSessions],
                   ["Payroll Type", selected.payrollType],
-                  ["Payroll Rate", selected.payrollRate != null ? `Rp ${selected.payrollRate.toLocaleString("id-ID")}` : null],
+                  ["Payroll Rate", selected.payrollRate != null ? selected.payrollRate.toLocaleString("id-ID") : null],
                   ["Emergency Contact", selected.emergencyContact],
                   ["Bio", selected.bio],
                   ["Status", selected.isActive ? "Active" : "Inactive"],

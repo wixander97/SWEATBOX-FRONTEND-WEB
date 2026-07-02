@@ -150,7 +150,7 @@ export function MembershipPlansView() {
     const mappedRows = useMemo(() => {
         const rows = filteredPlans.map((p) => ({
             ...p,
-            priceDisplay: p.price ? `Rp ${p.price.toLocaleString("id-ID")}` : "-",
+            priceDisplay: p.price ? p.price.toLocaleString("id-ID") : "-",
             validityDisplay: `${p.validityDays} hari`,
             statusBadge: p.isActive
                 ? "bg-green-500/15 text-green-200 border border-green-500/35"

@@ -229,22 +229,17 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
           {/* Payroll Rate */}
           <label className="block">
             <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
-            <div className="relative mt-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
-                Rp
-              </span>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={formatCurrencyInput(Number(form.payrollRate) || 0)}
-                onChange={(e) => {
-                  const num = parseCurrencyInput(e.target.value);
-                  setForm((f) => ({ ...f, payrollRate: String(num) }));
-                }}
-                placeholder="0"
-                className="w-full bg-sidebar border border-border rounded-lg pl-10 pr-3 py-2 text-white focus:outline-none focus:border-sweat"
-              />
-            </div>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={formatCurrencyInput(Number(form.payrollRate) || 0)}
+              onChange={(e) => {
+                const num = parseCurrencyInput(e.target.value);
+                setForm((f) => ({ ...f, payrollRate: String(num) }));
+              }}
+              placeholder="0"
+              className="w-full bg-sidebar border border-border rounded-lg pl-3 pr-3 py-2 text-white focus:outline-none focus:border-sweat"
+            />
           </label>
 
           {/* Stats Grid */}

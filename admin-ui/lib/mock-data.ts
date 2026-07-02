@@ -154,7 +154,7 @@ export const staffLogs: StaffLog[] = [
   },
 ];
 
-export const recentTransactionAmount = "Rp 1.200.000";
+export const recentTransactionAmount = "1.200.000";
 
 export function getExpiringMembersCount(list: Member[]): number {
   return list.filter((m) => m.status === "Expiring Soon").length;
