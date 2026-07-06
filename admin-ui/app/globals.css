@@ -69,6 +69,27 @@ select {
   color-scheme: dark;
 }
 
+/*
+ * Normalize native <select> height across browsers (esp. Safari).
+ * Safari does not add Chrome's internal select padding, so py-2/py-3 alone
+ * renders a shorter control. appearance:none + min-height + line-height
+ * equalize the box; the SVG chevron replaces the now-hidden native arrow.
+ * Use background-image (not the `background:` shorthand) so Tailwind
+ * bg-sidebar background-color is preserved.
+ */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  min-height: 2.5rem;
+  line-height: 1.25;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 1rem;
+  padding-right: 2rem;
+}
+
 /* Native date/time pickers: render icons light in dark theme */
 input[type="date"],
 input[type="datetime-local"],
