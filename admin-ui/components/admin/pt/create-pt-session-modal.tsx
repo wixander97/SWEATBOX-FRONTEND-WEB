@@ -7,6 +7,7 @@ import {
   normalizeTime,
   toIsoDateTime,
 } from "@/components/admin/pt/pt-types";
+import { formatCountInput, parseCountInput } from "@/lib/number-input";
 
 export type PtSessionFormValues = {
   ptPackageId: string;
@@ -326,11 +327,11 @@ export function CreatePtSessionModal({
                 Max Participants <span className="text-red-400">*</span>
               </label>
               <input
-                type="number"
-                min={1}
-                value={form.maxParticipants}
+                type="text"
+                inputMode="numeric"
+                value={formatCountInput(form.maxParticipants)}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, maxParticipants: Number(e.target.value) || 0 }))
+                  setForm((f) => ({ ...f, maxParticipants: parseCountInput(e.target.value) }))
                 }
                 className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required

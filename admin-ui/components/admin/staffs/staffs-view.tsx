@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
@@ -14,7 +14,9 @@ import {
 
 type IsActiveFilter = "all" | "true" | "false";
 
-export function StaffsView() {
+export type StaffsViewHandle = { reload: () => void };
+
+export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_props, ref) {
   const [staffs, setStaffs] = useState<Staff[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
@@ -123,6 +125,10 @@ export function StaffsView() {
   useEffect(() => {
     void loadStaffs(page);
   }, [loadStaffs, page]);
+
+  useImperativeHandle(ref, () => ({
+    reload: () => void loadStaffs(page),
+  }), [loadStaffs, page]);
 
   function resetFilters() {
     setSearchInput("");
@@ -354,7 +360,7 @@ export function StaffsView() {
             className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition sm:ml-auto"
           >
             <i className="fas fa-undo mr-2" aria-hidden />
-            Reset
+            Clear Filters
           </button>
         </div>
       </div>
@@ -530,4 +536,4 @@ export function StaffsView() {
       )}
     </div>
   );
-}
+});

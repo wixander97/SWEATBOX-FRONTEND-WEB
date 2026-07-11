@@ -34,6 +34,7 @@ export function PtPackageTab() {
   const [error, setError] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<PtPackage | null>(null);
   const [saving, setSaving] = useState(false);
@@ -58,6 +59,7 @@ export function PtPackageTab() {
       try {
         const res = await authFetch(`${API_BASE_URL}/api/PTPackages?${params.toString()}`, {
           cache: "no-store",
+
         });
         if (redirectToLoginIfUnauthorized(res.status)) return;
         const payload = (await res.json().catch(() => [])) as
@@ -147,6 +149,23 @@ export function PtPackageTab() {
       return sortDir === "asc" ? cmp : -cmp;
     });
   }, [packages, sortKey, sortDir]);
+
+  const visiblePackages = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return sortedPackages;
+    return sortedPackages.filter((p) =>
+      [
+        p.name,
+        p.memberName || memberName(p.memberId),
+        p.coachName || coachName(p.coachId),
+        p.description,
+        p.sessionCount != null ? String(p.sessionCount) : "",
+        p.price != null ? Number(p.price).toLocaleString("id-ID") : "",
+      ]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [sortedPackages, search, members, coaches]);
 
   function coachName(id?: string | null): string {
     if (!id) return "-";
@@ -292,6 +311,16 @@ export function PtPackageTab() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-lg font-display font-bold text-white">PT Packages</h2>
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div className="relative sm:w-56">
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+            <input
+              type="text"
+              placeholder="Cari package..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm pl-9 focus:outline-none focus:border-sweat"
+            />
+          </div>
           <button
             type="button"
             onClick={() => void exportCsv()}
@@ -361,14 +390,14 @@ export function PtPackageTab() {
                   Memuat...
                 </td>
               </tr>
-            ) : sortedPackages.length === 0 ? (
+            ) : visiblePackages.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
-                  Tidak ada PT package.
+                  {search.trim() ? "Tidak ditemukan." : "Tidak ada PT package."}
                 </td>
               </tr>
             ) : (
-              sortedPackages.map((pkg) => (
+              visiblePackages.map((pkg) => (
                 <tr key={pkg.id} className="hover:bg-white/5 transition">
                   <td className="px-4 py-3 font-semibold text-white">{pkg.name}</td>
                   <td className="px-4 py-3 text-gray-300">
@@ -383,11 +412,10 @@ export function PtPackageTab() {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        pkg.isActive
-                          ? "bg-green-500/15 text-green-400"
-                          : "bg-gray-500/15 text-gray-400"
-                      }`}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${pkg.isActive
+                        ? "bg-green-500/15 text-green-400"
+                        : "bg-gray-500/15 text-gray-400"
+                        }`}
                     >
                       {pkg.isActive ? "Active" : "Inactive"}
                     </span>
@@ -428,7 +456,7 @@ export function PtPackageTab() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => { setSearch(""); setPage((p) => Math.max(1, p - 1)); }}
               disabled={page <= 1}
               className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
@@ -439,7 +467,7 @@ export function PtPackageTab() {
             </span>
             <button
               type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => { setSearch(""); setPage((p) => Math.min(totalPages, p + 1)); }}
               disabled={page >= totalPages}
               className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
             >

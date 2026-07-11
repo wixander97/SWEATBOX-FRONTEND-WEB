@@ -215,14 +215,7 @@ export default function ReportsPage() {
 
   return (
     <>
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="tab-btn active cursor-pointer bg-card px-6 py-4 rounded-xl border border-sweat text-sweat font-bold sm:w-1/4 text-center hover:bg-white/5">
-          <i className="fas fa-id-card-alt mb-2 block text-2xl" aria-hidden />
-          Staff Attendance
-        </div>
-      </div>
-
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="bg-card rounded-xl border border-border overflow-hidden mb-6">
         <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
             <h4 className="font-bold text-lg text-white">Staff Attendance Log</h4>

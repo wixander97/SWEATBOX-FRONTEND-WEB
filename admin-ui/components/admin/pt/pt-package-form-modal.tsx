@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { SelectOption } from "@/components/admin/pt/pt-types";
 import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency";
+import { formatCountInput, parseCountInput } from "@/lib/number-input";
 
 export type PtPackageFormValues = {
   memberId: string;
@@ -203,13 +204,13 @@ export function PtPackageFormModal({
                 Session Count <span className="text-red-400">*</span>
               </label>
               <input
-                type="number"
-                min={0}
-                value={form.sessionCount}
+                type="text"
+                inputMode="numeric"
+                value={formatCountInput(form.sessionCount)}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, sessionCount: Number(e.target.value) || 0 }))
+                  setForm((f) => ({ ...f, sessionCount: parseCountInput(e.target.value) }))
                 }
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-white pl-4 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               />
             </div>

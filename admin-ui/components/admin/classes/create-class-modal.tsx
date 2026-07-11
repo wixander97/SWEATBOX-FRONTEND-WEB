@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { formatCountInput, parseCountInput } from "@/lib/number-input";
 
 export type ClassFormValues = {
   className: string;
@@ -141,6 +142,10 @@ export function CreateClassModal({
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       setError("");
+      if (!(form.capacity >= 1)) {
+        setError("Capacity must be at least 1");
+        return;
+      }
       setSubmitting(true);
 
       const payload: ClassFormValues = {
@@ -245,17 +250,17 @@ export function CreateClassModal({
                     Capacity <span className="text-red-400">*</span>
                   </label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                     name="capacity"
-                    value={form.capacity}
+                    value={formatCountInput(form.capacity)}
                     onChange={(e) =>
                       setForm((f) => ({
                         ...f,
-                        capacity: Number(e.target.value),
+                        capacity: parseCountInput(e.target.value),
                       }))
                     }
-                    min={1}
                     required
                   />
                 </div>

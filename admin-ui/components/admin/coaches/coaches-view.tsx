@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import Image from "next/image";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { EditCoachModal } from "./edit-coach-modal";
+
+export type CoachesViewHandle = { reload: () => void };
 
 type SortDir = "asc" | "desc";
 type CoachSortKey = "fullName" | "specialization" | "rating" | "totalClasses" | "totalMembers";
@@ -64,7 +66,7 @@ type CoachAttendanceRecord = {
   status: string;
 };
 
-export function CoachesView() {
+export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_props, ref) {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(9);
@@ -88,17 +90,85 @@ export function CoachesView() {
   const [attendanceHistory, setAttendanceHistory] = useState<CoachAttendanceRecord[]>([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [attendanceError, setAttendanceError] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
 
   function toggleSort(key: CoachSortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
   }
 
-  const loadCoaches = useCallback(async (targetPage: number) => {
+  async function exportCsv() {
+    setExporting(true);
+    setExportError("");
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/coaches?page=1&pageSize=1000`, { cache: "no-store" });
+      if (redirectToLoginIfUnauthorized(res.status)) {
+        setExporting(false);
+        return;
+      }
+      const payload = (await res.json().catch(() => [])) as Coach[] | PagedResponse<Coach>;
+      if (!res.ok) {
+        const msg = typeof payload === "object" && !Array.isArray(payload) ? payload.message : undefined;
+        setExportError(msg ?? "Gagal mengambil data coach untuk export.");
+        setExporting(false);
+        return;
+      }
+      const list = Array.isArray(payload) ? payload : (payload.data ?? payload.items ?? []);
+      const val = (s?: string | null) => s || "-";
+      const num = (n?: number | null) => (n != null ? Number(n).toLocaleString("id-ID") : "-");
+      const yesNo = (v?: boolean | null) => (v ? "Yes" : "No");
+      const header = [
+        "Full Name",
+        "Specialization",
+        "Branch",
+        "Rating",
+        "Total Classes",
+        "Total Members",
+        "Payroll Type",
+        "Payroll Rate",
+        "Status",
+      ];
+      const rows = list.map((c) => [
+        val(c.fullName),
+        val(c.specialization),
+        val(c.branchName),
+        num(c.rating),
+        num(c.totalClasses),
+        num(c.totalMembers),
+        val(c.payrollType),
+        num(c.payrollRate),
+        yesNo(c.isActive),
+      ]);
+      const csv = [header, ...rows]
+        .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
+        .join("\\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "coaches.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportError("Gagal mengambil data coach untuk export.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const loadCoaches = useCallback(async (targetPage: number, kw: string) => {
     setLoading(true);
     setError("");
+    const trimmed = kw.trim();
     const params = new URLSearchParams({ page: String(targetPage), pageSize: String(pageSize) });
-    const res = await authFetch(`${API_BASE_URL}/api/v1/coaches?${params.toString()}`, { cache: "no-store" });
+    const endpoint = trimmed
+      ? `${API_BASE_URL}/api/v1/coaches/search`
+      : `${API_BASE_URL}/api/v1/coaches`;
+    if (trimmed) params.set("keyword", trimmed);
+    const res = await authFetch(`${endpoint}?${params.toString()}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const payload = (await res.json().catch(() => [])) as Coach[] | PagedResponse<Coach>;
     if (!res.ok) {
@@ -126,8 +196,12 @@ export function CoachesView() {
   }, [pageSize]);
 
   useEffect(() => {
-    void loadCoaches(page);
-  }, [loadCoaches, page]);
+    void loadCoaches(page, keyword);
+  }, [loadCoaches, page, keyword]);
+
+  useImperativeHandle(ref, () => ({
+    reload: () => void loadCoaches(page, keyword),
+  }), [loadCoaches, page, keyword]);
 
   const sortedCoaches = useMemo(() => {
     return [...coaches].sort((a, b) => {
@@ -223,7 +297,7 @@ export function CoachesView() {
       return;
     }
     setEditMode(false);
-    void loadCoaches(page);
+    void loadCoaches(page, keyword);
     void openDetail(coachId);
   }
 
@@ -234,7 +308,7 @@ export function CoachesView() {
     setDeleteId(null);
     if (res.ok) {
       setSelected(null);
-      void loadCoaches(page);
+      void loadCoaches(page, keyword);
     }
   }
 
@@ -242,11 +316,64 @@ export function CoachesView() {
     setStatusLoading(coach.id);
     await authFetch(`${API_BASE_URL}/api/v1/coaches/${coach.id}/status?isActive=${!coach.isActive}`, { method: "PATCH" });
     setStatusLoading(null);
-    void loadCoaches(page);
+    void loadCoaches(page, keyword);
   }
 
   return (
     <>
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="relative w-full sm:w-72">
+        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+        <input
+          type="text"
+          placeholder="Cari coach..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              const trimmed = searchInput.trim();
+              setKeyword(trimmed);
+              setSearchInput(trimmed);
+              setPage(1);
+            }
+          }}
+          className="w-full bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+        />
+        {searchInput && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchInput("");
+              setKeyword("");
+              setPage(1);
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+            aria-label="Clear search"
+          >
+            <i className="fas fa-times" aria-hidden />
+          </button>
+        )}
+        </div>
+        <div className="flex flex-col sm:items-end gap-1">
+          <button
+            type="button"
+            onClick={() => void exportCsv()}
+            disabled={exporting}
+            title="Export semua data coach (tanpa filter)"
+            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50"
+          >
+            {exporting ? (
+              <i className="fas fa-spinner fa-spin mr-2" aria-hidden />
+            ) : (
+              <i className="fas fa-file-export mr-2" aria-hidden />
+            )}
+            Export CSV
+          </button>
+          {exportError && (
+            <p className="text-red-400 text-sm">{exportError}</p>
+          )}
+        </div>
+      </div>
       {loading ? (
         <div className="text-gray-400">Loading coaches...</div>
       ) : error ? (
@@ -552,7 +679,7 @@ export function CoachesView() {
         <EditCoachModal
           coach={selected}
           onClose={() => setSelected(null)}
-          onSuccess={() => { void loadCoaches(page); setSelected(null); }}
+          onSuccess={() => { void loadCoaches(page, keyword); setSelected(null); }}
         />
       )}
 
@@ -583,4 +710,4 @@ export function CoachesView() {
       )}
     </>
   );
-}
+});

@@ -44,6 +44,7 @@ export function PtSessionTab() {
   const [addMemberTarget, setAddMemberTarget] = useState<PtSession | null>(null);
   const [cancelTarget, setCancelTarget] = useState<PtSession | null>(null);
   const [detailTarget, setDetailTarget] = useState<PtSession | null>(null);
+  const [search, setSearch] = useState("");
 
   const loadSessions = useCallback(
     async (targetPage: number) => {
@@ -126,6 +127,23 @@ export function PtSessionTab() {
   useEffect(() => {
     void loadSessions(page);
   }, [loadSessions, page]);
+
+  const visibleSessions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return sessions;
+    return sessions.filter((s) =>
+      [
+        s.coachName || coachName(s.coachId),
+        s.branchName || branchName(s.branchId),
+        formatDateTime(s.sessionDate),
+        s.trainingType,
+        isCancelled(s) ? "Cancelled" : s.status,
+        s.packageName,
+      ]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [sessions, search, coaches, branches, packages]);
   useEffect(() => {
     void loadReferenceData();
   }, [loadReferenceData]);
@@ -321,6 +339,16 @@ export function PtSessionTab() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-lg font-display font-bold text-white">PT Sessions</h2>
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div className="relative sm:w-56">
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+            <input
+              type="text"
+              placeholder="Cari session..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm pl-9 focus:outline-none focus:border-sweat"
+            />
+          </div>
           <button
             type="button"
             onClick={() => void exportCsv()}
@@ -367,14 +395,14 @@ export function PtSessionTab() {
                   Memuat...
                 </td>
               </tr>
-            ) : sessions.length === 0 ? (
+            ) : visibleSessions.length === 0 ? (
               <tr>
                 <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
-                  Tidak ada PT session.
+                  {search.trim() ? "Tidak ditemukan." : "Tidak ada PT session."}
                 </td>
               </tr>
             ) : (
-              sessions.map((s) => (
+              visibleSessions.map((s) => (
                 <tr key={s.id} className="hover:bg-white/5 transition">
                   <td className="px-4 py-3 text-gray-300">
                     {s.coachName || coachName(s.coachId)}
@@ -457,7 +485,7 @@ export function PtSessionTab() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => { setSearch(""); setPage((p) => Math.max(1, p - 1)); }}
               disabled={page <= 1}
               className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
@@ -468,7 +496,7 @@ export function PtSessionTab() {
             </span>
             <button
               type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => { setSearch(""); setPage((p) => Math.min(totalPages, p + 1)); }}
               disabled={page >= totalPages}
               className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
             >

@@ -131,7 +131,10 @@ export function UserCreateForm({ roles, branches, currentUserId, onSuccess, onCa
             <span className="text-gray-500 text-xs uppercase font-bold">Phone <span className="text-red-400"> *</span></span>
             <input
               value={form.phoneNumber}
-              onChange={(e) => setForm((f) => ({ ...f, phoneNumber: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, phoneNumber: e.target.value.replace(/\D/g, "").slice(0, 13) }))}
+              maxLength={13}
+              inputMode="numeric"
+              pattern="\d{1,13}"
               required
               className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
             />
