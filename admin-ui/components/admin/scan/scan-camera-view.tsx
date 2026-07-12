@@ -7,7 +7,6 @@ import {
 } from "html5-qrcode";
 import { parseScan } from "@/lib/scan/parse-scan";
 import { dispatchScan } from "@/lib/scan/dispatch";
-import { BranchSelect } from "./branch-select";
 import { ScanResultPanel, type ScanResultState } from "./scan-result-panel";
 
 const CAMERA_ELEMENT_ID = "scan-camera-region";
@@ -23,7 +22,6 @@ const IDLE: ScanResultState = {
 type CamState = "stopped" | "starting" | "running" | "error";
 
 export function ScanCameraView() {
-  const [branchId, setBranchId] = useState("");
   const [camState, setCamState] = useState<CamState>("stopped");
   const [camError, setCamError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,8 +29,6 @@ export function ScanCameraView() {
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const lastScanRef = useRef<{ value: string; at: number }>({ value: "", at: 0 });
-  const branchIdRef = useRef(branchId);
-  branchIdRef.current = branchId;
 
   const isSecureContext =
     typeof window !== "undefined" && window.isSecureContext;
@@ -147,7 +143,7 @@ export function ScanCameraView() {
 
       setLoading(true);
       try {
-        const outcome = await dispatchScan(intent, branchIdRef.current);
+        const outcome = await dispatchScan(intent, "");
         setResult({
           type: intent.type === "coach" ? "Coach session" : "Member check-in",
           status: outcome.ok ? "success" : "failed",
@@ -209,17 +205,6 @@ export function ScanCameraView() {
               </button>
             )}
           </div>
-
-          <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Branch</span>
-            <div className="mt-1">
-              <BranchSelect
-                value={branchId}
-                onChange={setBranchId}
-                disabled={loading}
-              />
-            </div>
-          </label>
 
           <p className="text-xs text-gray-500 leading-relaxed">
             Camera needs a secure context: serve over <code className="font-mono">https://</code> or

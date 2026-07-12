@@ -76,6 +76,12 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
   const [statusTab, setStatusTab] = useState<StatusTab>(
     initialStatus && ALLOWED_TABS.includes(initialStatus) ? initialStatus : "all"
   );
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [cancelTarget, setCancelTarget] = useState<ApiClass | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState("");
 
   function toggleSort(key: string) {
     if (sortKey === key) {
@@ -261,15 +267,42 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
   }
 
   async function deleteClass(id: string) {
-    const yes = window.confirm("Delete this class schedule?");
-    if (!yes) return;
+    setDeleteLoading(true);
+    setDeleteError("");
     const res = await authFetch(`${API_BASE_URL}/api/v1/class-schedules/${id}`, { method: "DELETE" });
-    if (redirectToLoginIfUnauthorized(res.status)) return;
-    const payload = (await res.json().catch(() => ({}))) as { message?: string };
-    if (!res.ok) {
-      window.alert(payload.message || "Delete class gagal");
+    if (redirectToLoginIfUnauthorized(res.status)) {
+      setDeleteLoading(false);
       return;
     }
+    const payload = (await res.json().catch(() => ({}))) as { message?: string };
+    setDeleteLoading(false);
+    if (!res.ok) {
+      setDeleteError(payload.message || "Delete class gagal");
+      return;
+    }
+    setDeleteId(null);
+    await loadClasses(page);
+  }
+
+  async function cancelClass(cls: ApiClass) {
+    setCancelLoading(true);
+    setCancelError("");
+    const res = await authFetch(`${API_BASE_URL}/api/v1/class-schedules/${cls.id}/cancel`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify("string"),
+    });
+    if (redirectToLoginIfUnauthorized(res.status)) {
+      setCancelLoading(false);
+      return;
+    }
+    const payload = (await res.json().catch(() => ({}))) as { message?: string };
+    setCancelLoading(false);
+    if (!res.ok) {
+      setCancelError(payload.message || "Cancel class gagal");
+      return;
+    }
+    setCancelTarget(null);
     await loadClasses(page);
   }
 
@@ -590,11 +623,28 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         >
                           <i className="fas fa-edit" aria-hidden />
                         </button>
+                        {statusTab !== "cancelled" && !c.isCancelled && (
+                          <button
+                            type="button"
+                            className="text-yellow-500 hover:text-yellow-400 mx-1"
+                            aria-label="Cancel Class"
+                            title="Cancel Class"
+                            onClick={() => {
+                              setCancelTarget(c);
+                              setCancelError("");
+                            }}
+                          >
+                            <i className="fas fa-ban" aria-hidden />
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="text-red-500 hover:text-red-400 mx-1"
                           aria-label="Delete"
-                          onClick={() => void deleteClass(c.id)}
+                          onClick={() => {
+                            setDeleteId(c.id);
+                            setDeleteError("");
+                          }}
                         >
                           <i className="fas fa-trash" aria-hidden />
                         </button>
@@ -652,6 +702,67 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
           cls={detailTarget}
           onClose={() => setDetailTarget(null)}
         />
+      )}
+
+      {deleteId && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-card w-full max-w-sm rounded-2xl border border-red-500/30 shadow-2xl p-6">
+            <h3 className="text-lg font-bold mb-2">Delete Class?</h3>
+            <p className="text-gray-400 text-sm mb-4">This action cannot be undone.</p>
+            {deleteError && (
+              <p className="text-red-400 text-sm mb-3">{deleteError}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => void deleteClass(deleteId)}
+                disabled={deleteLoading}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg text-sm font-bold transition disabled:opacity-50"
+              >
+                {deleteLoading ? "Deleting..." : "Delete"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteId(null)}
+                className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cancelTarget && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-card w-full max-w-sm rounded-2xl border border-yellow-500/30 shadow-2xl p-6">
+            <h3 className="text-lg font-bold mb-2">Cancel Class?</h3>
+            <p className="text-gray-400 text-sm mb-4">This will cancel the class schedule.</p>
+            {cancelError && (
+              <p className="text-red-400 text-sm mb-3">{cancelError}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => void cancelClass(cancelTarget)}
+                disabled={cancelLoading}
+                className="flex-1 bg-yellow-500 hover:bg-yellow-400 text-black py-2 rounded-lg text-sm font-bold transition disabled:opacity-50"
+              >
+                {cancelLoading ? "Cancelling..." : "Yes, cancel class"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCancelTarget(null);
+                  setCancelError("");
+                }}
+                className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

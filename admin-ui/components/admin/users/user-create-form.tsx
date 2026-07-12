@@ -6,15 +6,18 @@ import { API_BASE_URL } from "@/lib/auth/constants";
 import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency";
 import { type Branch, type Role, type UserCrudForm, emptyUserCrudForm } from "./users.types";
 
+type Tab = "staff" | "coach";
+
 type Props = {
   roles: Role[];
   branches: Branch[];
   currentUserId: string;
+  tab: Tab;
   onSuccess: () => void;
   onCancel: () => void;
 };
 
-export function UserCreateForm({ roles, branches, currentUserId, onSuccess, onCancel }: Props) {
+export function UserCreateForm({ roles, branches, currentUserId, tab, onSuccess, onCancel }: Props) {
   const [form, setForm] = useState<UserCrudForm>(emptyUserCrudForm());
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
@@ -139,22 +142,26 @@ export function UserCreateForm({ roles, branches, currentUserId, onSuccess, onCa
               className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
             />
           </label>
-          <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Position</span>
-            <input
-              value={form.position}
-              onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-            />
-          </label>
-          <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Department</span>
-            <input
-              value={form.department}
-              onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-            />
-          </label>
+          {tab === "staff" && (
+            <label className="block">
+              <span className="text-gray-500 text-xs uppercase font-bold">Position</span>
+              <input
+                value={form.position}
+                onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
+                className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              />
+            </label>
+          )}
+          {tab === "staff" && (
+            <label className="block">
+              <span className="text-gray-500 text-xs uppercase font-bold">Department</span>
+              <input
+                value={form.department}
+                onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+                className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              />
+            </label>
+          )}
           <label className="block">
             <span className="text-gray-500 text-xs uppercase font-bold">Branch</span>
             <select
@@ -168,14 +175,16 @@ export function UserCreateForm({ roles, branches, currentUserId, onSuccess, onCa
               ))}
             </select>
           </label>
-          <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Specialization</span>
-            <input
-              value={form.specialization}
-              onChange={(e) => setForm((f) => ({ ...f, specialization: e.target.value }))}
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-            />
-          </label>
+          {tab === "coach" && (
+            <label className="block">
+              <span className="text-gray-500 text-xs uppercase font-bold">Specialization</span>
+              <input
+                value={form.specialization}
+                onChange={(e) => setForm((f) => ({ ...f, specialization: e.target.value }))}
+                className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              />
+            </label>
+          )}
           <label className="block">
             <span className="text-gray-500 text-xs uppercase font-bold">Notes</span>
             <textarea
@@ -185,41 +194,48 @@ export function UserCreateForm({ roles, branches, currentUserId, onSuccess, onCa
               className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-none"
             />
           </label>
-          <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Bio</span>
-            <textarea
-              value={form.bio}
-              onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
-              rows={2}
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-none"
-            />
-          </label>
-          <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Payroll Type</span>
-            <input
-              type="text"
-              value={form.payrollType}
-              onChange={(e) => setForm((f) => ({ ...f, payrollType: e.target.value }))}
-              placeholder="e.g. Hourly, Daily, Monthly"
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
-            />
-          </label>
-          <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={form.payrollRate === "" ? "" : formatCurrencyInput(Number(form.payrollRate))}
-              onChange={(e) => {
-                const num = parseCurrencyInput(e.target.value);
-                setForm((f) => ({ ...f, payrollRate: /[0-9]/.test(e.target.value) ? String(num) : "" }));
-              }}
-              placeholder="0"
-              className="w-full bg-sidebar border border-border rounded-lg pl-3 pr-3 py-2 text-white focus:outline-none focus:border-sweat"
-            />
-          </label>
-          <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Salary</span>
+          {tab === "coach" && (
+            <label className="block">
+              <span className="text-gray-500 text-xs uppercase font-bold">Bio</span>
+              <textarea
+                value={form.bio}
+                onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
+                rows={2}
+                className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-none"
+              />
+            </label>
+          )}
+          {tab === "coach" && (
+            <label className="block">
+              <span className="text-gray-500 text-xs uppercase font-bold">Payroll Type</span>
+              <input
+                type="text"
+                value={form.payrollType}
+                onChange={(e) => setForm((f) => ({ ...f, payrollType: e.target.value }))}
+                placeholder="e.g. Hourly, Daily, Monthly"
+                className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              />
+            </label>
+          )}
+          {tab === "coach" && (
+            <label className="block">
+              <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={form.payrollRate === "" ? "" : formatCurrencyInput(Number(form.payrollRate))}
+                onChange={(e) => {
+                  const num = parseCurrencyInput(e.target.value);
+                  setForm((f) => ({ ...f, payrollRate: /[0-9]/.test(e.target.value) ? String(num) : "" }));
+                }}
+                placeholder="0"
+                className="w-full bg-sidebar border border-border rounded-lg pl-3 pr-3 py-2 text-white focus:outline-none focus:border-sweat"
+              />
+            </label>
+          )}
+          {tab === "staff" && (
+            <label className="block">
+              <span className="text-gray-500 text-xs uppercase font-bold">Salary</span>
             <input
               type="text"
               inputMode="decimal"
@@ -231,7 +247,8 @@ export function UserCreateForm({ roles, branches, currentUserId, onSuccess, onCa
               placeholder="0"
               className="w-full bg-sidebar border border-border rounded-lg pl-3 pr-3 py-2 text-white focus:outline-none focus:border-sweat"
             />
-          </label>
+            </label>
+          )}
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
