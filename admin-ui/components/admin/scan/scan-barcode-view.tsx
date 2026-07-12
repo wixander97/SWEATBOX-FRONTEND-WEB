@@ -54,7 +54,7 @@ export function ScanBarcodeView() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold font-display uppercase">Scan Barcode</h1>
+        <h1 className="text-2xl font-bold font-display uppercase">Manual Scan</h1>
         <p className="text-sm text-gray-400 mt-1">
           Manual override — choose Coach or Member, then trigger an attendance
           check-in on behalf of a coach or member.
@@ -71,22 +71,20 @@ export function ScanBarcodeView() {
                 <button
                   type="button"
                   onClick={() => setMode("coach")}
-                  className={`px-4 py-2 text-sm font-bold transition ${
-                    mode === "coach"
+                  className={`px-4 py-2 text-sm font-bold transition ${mode === "coach"
                       ? "bg-sweat text-black"
                       : "bg-sidebar text-gray-400 hover:text-white"
-                  }`}
+                    }`}
                 >
                   Coach
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode("member")}
-                  className={`px-4 py-2 text-sm font-bold transition ${
-                    mode === "member"
+                  className={`px-4 py-2 text-sm font-bold transition ${mode === "member"
                       ? "bg-sweat text-black"
                       : "bg-sidebar text-gray-400 hover:text-white"
-                  }`}
+                    }`}
                 >
                   Member
                 </button>

@@ -38,8 +38,8 @@ export async function dispatchScan(
       if (!scanBranchId) {
         return {
           ok: false,
-          message: "No branch is selected for this device.",
-          raw: "No branch selected.",
+          message: "Branch QR tidak ditemukan. Pastikan QR member menyertakan branchId.",
+          raw: "No branch in QR.",
         };
       }
       const body: Record<string, unknown> = {
@@ -104,7 +104,7 @@ export type ManualScanFields = {
 
 /**
  * Dispatch an explicit manual scan to the attendance endpoints. Used by the
- * Scan Barcode page where the admin chooses the mode and fills the fields by
+ * Manual Scan page where the admin chooses the mode and fills the fields by
  * hand. Builds the exact request body per mode. Does not touch `dispatchScan`
  * (used by the camera page).
  */

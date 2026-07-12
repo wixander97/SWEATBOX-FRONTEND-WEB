@@ -111,6 +111,7 @@ export function UsersView() {
             roles={tabRoles}
             branches={branches}
             currentUserId={currentUserId}
+            tab={tab}
             onSuccess={handleCreateSuccess}
             onCancel={() => setShowCreate(false)}
           />

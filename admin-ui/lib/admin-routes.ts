@@ -30,7 +30,7 @@ export const pageTitleByPath: Record<string, string> = {
   [adminPaths.membershipPlans]: "Membership Plans",
   [adminPaths.history]: "History",
   [adminPaths.pt]: "Personal Training",
-  [adminPaths.scan]: "Scan Barcode",
+  [adminPaths.scan]: "Manual Scan",
   [adminPaths.scanCamera]: "Webcam Scanner",
   [adminPaths.systemSettings]: "System Settings",
   [adminPaths.dropIn]: "Drop In",

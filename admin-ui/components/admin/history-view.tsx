@@ -303,6 +303,51 @@ export function HistoryView() {
     }
   }
 
+  function downloadCsv(rows: string[][], filename: string) {
+    const csv = rows
+      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportCoachAttendanceCsv() {
+    if (!selectedCoachId || attendanceHistory.length === 0) return;
+    const header = ["Date", "Class Name", "Branch", "Present", "Status"];
+    const rows = attendanceHistory.map((r) => [
+      formatDate(r.classDate),
+      r.className,
+      r.branchName || "-",
+      r.isPresent ? "Yes" : "No",
+      r.status,
+    ]);
+    downloadCsv([header, ...rows], "coach-attendance.csv");
+  }
+
+  function exportMemberBookingCsv() {
+    if (!selectedMemberId || bookingHistory.length === 0) return;
+    const header = ["Class Name", "Coach", "Date", "Time", "Booked On", "Status"];
+    const rows = bookingHistory.map((r) => [
+      r.className,
+      r.coachName || "-",
+      formatClassDate(r.classDate),
+      formatTimeRange(r.startTime, r.endTime),
+      formatDate(r.bookingDate),
+      r.isCancelled ? "Cancelled" : r.bookingStatus,
+    ]);
+    downloadCsv([header, ...rows], "member-booking.csv");
+  }
+
+  const coachExportDisabled =
+    !selectedCoachId || attendanceLoading || !!attendanceError || attendanceHistory.length === 0;
+  const memberExportDisabled =
+    !selectedMemberId || bookingLoading || !!bookingError || bookingHistory.length === 0;
+
   return (
     <div className="space-y-6">
       {/* Tab Buttons */}
@@ -334,7 +379,19 @@ export function HistoryView() {
       {/* Coach Attendance Tab */}
       {activeTab === "coaches" && (
         <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
-          <h4 className="text-lg font-bold mb-4">Coach Attendance History</h4>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <h4 className="text-lg font-bold">Coach Attendance History</h4>
+            <button
+              type="button"
+              onClick={exportCoachAttendanceCsv}
+              disabled={coachExportDisabled}
+              title="Export attendance history to CSV"
+              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i className="fas fa-file-export mr-2" aria-hidden />
+              Export CSV
+            </button>
+          </div>
 
           {/* Coach Selector */}
           <div className="mb-6">
@@ -424,7 +481,19 @@ export function HistoryView() {
       {/* Member Booking Tab */}
       {activeTab === "members" && (
         <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
-          <h4 className="text-lg font-bold mb-4">Member Booking History</h4>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <h4 className="text-lg font-bold">Member Booking History</h4>
+            <button
+              type="button"
+              onClick={exportMemberBookingCsv}
+              disabled={memberExportDisabled}
+              title="Export booking history to CSV"
+              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i className="fas fa-file-export mr-2" aria-hidden />
+              Export CSV
+            </button>
+          </div>
 
           {/* Member Selector */}
           <div className="mb-6">
