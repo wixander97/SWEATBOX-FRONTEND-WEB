@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { downloadXlsx } from "@/lib/export";
 import { EditMemberModal } from "@/components/admin/members/edit-member-modal";
 import {
   type ApiMember,
@@ -223,7 +224,7 @@ export function MembersView() {
     });
   }, [members, sortKey, sortDir]);
 
-  function exportCsv() {
+  async function exportXlsx() {
     const fmtDate = (iso?: string | null) =>
       iso ? new Date(iso).toLocaleDateString("id-ID") : "-";
     const yesNo = (v?: boolean | null) => (v ? "Yes" : "No");
@@ -291,16 +292,7 @@ export function MembersView() {
       yesNo(m.isExpired),
       yesNo(m.isActive),
     ]);
-    const csv = [header, ...rows]
-      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "members.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    await downloadXlsx([header, ...rows], "members.xlsx");
   }
 
   return (
@@ -412,11 +404,11 @@ export function MembersView() {
 
           <button
             type="button"
-            onClick={exportCsv}
+            onClick={() => void exportXlsx()}
             className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
           >
             <i className="fas fa-file-export mr-2" aria-hidden />
-            Export CSV
+            Export
           </button>
         </div>
       </div>

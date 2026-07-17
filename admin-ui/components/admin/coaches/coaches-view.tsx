@@ -5,6 +5,7 @@ import Image from "next/image";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { downloadXlsx } from "@/lib/export";
 import { EditCoachModal } from "./edit-coach-modal";
 
 export type CoachesViewHandle = { reload: () => void };
@@ -100,7 +101,7 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
     else { setSortKey(key); setSortDir("asc"); }
   }
 
-  async function exportCsv() {
+  async function exportXlsx() {
     setExporting(true);
     setExportError("");
     try {
@@ -142,16 +143,7 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
         num(c.payrollRate),
         yesNo(c.isActive),
       ]);
-      const csv = [header, ...rows]
-        .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
-        .join("\\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "coaches.csv";
-      a.click();
-      URL.revokeObjectURL(url);
+      await downloadXlsx([header, ...rows], "coaches.xlsx");
     } catch {
       setExportError("Gagal mengambil data coach untuk export.");
     } finally {
@@ -323,41 +315,41 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
     <>
       <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="relative w-full sm:w-72">
-        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
-        <input
-          type="text"
-          placeholder="Cari coach..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              const trimmed = searchInput.trim();
-              setKeyword(trimmed);
-              setSearchInput(trimmed);
-              setPage(1);
-            }
-          }}
-          className="w-full bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
-        />
-        {searchInput && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchInput("");
-              setKeyword("");
-              setPage(1);
+          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+          <input
+            type="text"
+            placeholder="Cari coach..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const trimmed = searchInput.trim();
+                setKeyword(trimmed);
+                setSearchInput(trimmed);
+                setPage(1);
+              }
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
-            aria-label="Clear search"
-          >
-            <i className="fas fa-times" aria-hidden />
-          </button>
-        )}
+            className="w-full bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchInput("");
+                setKeyword("");
+                setPage(1);
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+              aria-label="Clear search"
+            >
+              <i className="fas fa-times" aria-hidden />
+            </button>
+          )}
         </div>
         <div className="flex flex-col sm:items-end gap-1">
           <button
             type="button"
-            onClick={() => void exportCsv()}
+            onClick={() => void exportXlsx()}
             disabled={exporting}
             title="Export semua data coach (tanpa filter)"
             className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50"
@@ -367,7 +359,7 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
             ) : (
               <i className="fas fa-file-export mr-2" aria-hidden />
             )}
-            Export CSV
+            Export
           </button>
           {exportError && (
             <p className="text-red-400 text-sm">{exportError}</p>
@@ -548,11 +540,10 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
               <button
                 type="button"
                 onClick={() => setDetailTab("info")}
-                className={`px-4 py-2 text-sm font-bold transition border-b-2 ${
-                  detailTab === "info"
+                className={`px-4 py-2 text-sm font-bold transition border-b-2 ${detailTab === "info"
                     ? "border-sweat text-sweat"
                     : "border-transparent text-gray-500 hover:text-white"
-                }`}
+                  }`}
               >
                 Info
               </button>
@@ -564,11 +555,10 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
                     void loadAttendanceHistory(selected.id);
                   }
                 }}
-                className={`px-4 py-2 text-sm font-bold transition border-b-2 ${
-                  detailTab === "history"
+                className={`px-4 py-2 text-sm font-bold transition border-b-2 ${detailTab === "history"
                     ? "border-sweat text-sweat"
                     : "border-transparent text-gray-500 hover:text-white"
-                }`}
+                  }`}
               >
                 History
               </button>

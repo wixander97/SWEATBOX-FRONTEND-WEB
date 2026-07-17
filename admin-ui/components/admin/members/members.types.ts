@@ -71,11 +71,16 @@ export type MemberFormState = {
   homeClubBranchId: string;
   membershipPlanId: string;
   membershipStatus: string;
+  paymentStatus: string;
+  // Freeze
+  freezeStartDate: string;
+  freezeEndDate: string;
   // Account Status
   profileImageUrl: string;
   notes: string;
   isWaiverSigned: boolean;
   isPtMember: boolean;
+  isActive: boolean;
 };
 
 export type PagedResponse<T> = {
@@ -115,11 +120,16 @@ export function emptyMemberForm(): MemberFormState {
     homeClubBranchId: "",
     membershipPlanId: "",
     membershipStatus: "",
+    paymentStatus: "",
+    // Freeze
+    freezeStartDate: "",
+    freezeEndDate: "",
     // Account Status
     profileImageUrl: "",
     notes: "",
     isWaiverSigned: false,
     isPtMember: false,
+    isActive: true,
   };
 }
 
@@ -132,6 +142,18 @@ export function parseDate(isoString: string | null | undefined): string {
   const d = new Date(normalized);
   if (isNaN(d.getTime())) return "";
   return d.toISOString().slice(0, 10);
+}
+
+/** Convert an ISO datetime string into the `YYYY-MM-DDTHH:mm` value a datetime-local input expects (UTC). */
+export function parseDateTime(isoString: string | null | undefined): string {
+  if (!isoString) return "";
+  const hasTime = /T\d{2}:\d{2}/.test(isoString);
+  const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(isoString);
+  const normalized = hasTime && !hasTz ? isoString + "Z" : isoString;
+  const d = new Date(normalized);
+  if (isNaN(d.getTime())) return "";
+  // datetime-local value format: YYYY-MM-DDTHH:mm (no seconds, no timezone suffix)
+  return d.toISOString().slice(0, 16);
 }
 
 export function memberToForm(m: ApiMember): MemberFormState {
@@ -156,11 +178,16 @@ export function memberToForm(m: ApiMember): MemberFormState {
     homeClubBranchId: m.homeClubBranchId ?? "",
     membershipPlanId: m.membershipPlanId ?? "",
     membershipStatus: m.membershipStatus ?? "",
+    paymentStatus: m.paymentStatus ?? "",
+    // Freeze
+    freezeStartDate: parseDateTime(m.freezeStartDate),
+    freezeEndDate: parseDateTime(m.freezeEndDate),
     // Account Status
     profileImageUrl: m.profileImageUrl ?? "",
     notes: m.notes ?? "",
     isWaiverSigned: m.isWaiverSigned ?? false,
     isPtMember: m.isPtMember ?? false,
+    isActive: m.isActive ?? true,
   };
 }
 
@@ -195,6 +222,14 @@ export function dateToIso(dateStr: string): string | null {
 export function parseIntSafe(val: string): number {
   const n = Number.parseInt(val, 10);
   return Number.isNaN(n) ? 0 : n;
+}
+
+/** Convert a datetime-local value (`YYYY-MM-DDTHH:mm`) into an ISO string, or `null` when empty/invalid. */
+export function dateTimeToIso(value: string): string | null {
+  if (!value) return null;
+  const d = new Date(value + ":00.000Z");
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
 }
 
 export function calculateExpiryDate(validityDays: number): string {

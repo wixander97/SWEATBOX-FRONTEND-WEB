@@ -5,6 +5,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } fro
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { downloadXlsx } from "@/lib/export";
 import { EditStaffModal } from "@/components/admin/staffs/edit-staff-modal";
 import {
   type Branch,
@@ -178,7 +179,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
     void loadStaffs(page);
   }
 
-  async function exportCsv() {
+  async function exportXlsx() {
     setExporting(true);
     setExportError("");
     try {
@@ -245,18 +246,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
         fmtDate(s.hireDate),
         yesNo(s.isActive),
       ]);
-      const csv = [header, ...rows]
-        .map((r) =>
-          r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(",")
-        )
-        .join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "staffs.csv";
-      a.click();
-      URL.revokeObjectURL(url);
+      await downloadXlsx([header, ...rows], "staffs.xlsx");
     } catch {
       setExportError("Gagal mengambil data staff untuk export.");
     } finally {
@@ -277,7 +267,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => void exportCsv()}
+              onClick={() => void exportXlsx()}
               disabled={exporting}
               title="Export semua data staff (tanpa filter)"
               className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50"
@@ -287,7 +277,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
               ) : (
                 <i className="fas fa-file-export mr-2" aria-hidden />
               )}
-              Export CSV
+              Export
             </button>
           </div>
         </div>
@@ -429,11 +419,10 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
                   <td className="px-6 py-4">{s.branchName || "—"}</td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-bold border ${
-                        s.isActive
+                      className={`px-2 py-1 rounded text-xs font-bold border ${s.isActive
                           ? "bg-green-500/10 text-green-400 border-green-500/20"
                           : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-                      }`}
+                        }`}
                     >
                       {s.isActive ? "Active" : "Inactive"}
                     </span>

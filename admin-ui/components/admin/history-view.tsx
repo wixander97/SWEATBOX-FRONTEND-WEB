@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { downloadXlsx } from "@/lib/export";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 
 type HistoryTab = "coaches" | "members";
@@ -303,20 +304,7 @@ export function HistoryView() {
     }
   }
 
-  function downloadCsv(rows: string[][], filename: string) {
-    const csv = rows
-      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function exportCoachAttendanceCsv() {
+  async function exportCoachAttendanceXlsx() {
     if (!selectedCoachId || attendanceHistory.length === 0) return;
     const header = ["Date", "Class Name", "Branch", "Present", "Status"];
     const rows = attendanceHistory.map((r) => [
@@ -326,10 +314,10 @@ export function HistoryView() {
       r.isPresent ? "Yes" : "No",
       r.status,
     ]);
-    downloadCsv([header, ...rows], "coach-attendance.csv");
+    await downloadXlsx([header, ...rows], "coach-attendance.xlsx");
   }
 
-  function exportMemberBookingCsv() {
+  async function exportMemberBookingXlsx() {
     if (!selectedMemberId || bookingHistory.length === 0) return;
     const header = ["Class Name", "Coach", "Date", "Time", "Booked On", "Status"];
     const rows = bookingHistory.map((r) => [
@@ -340,7 +328,7 @@ export function HistoryView() {
       formatDate(r.bookingDate),
       r.isCancelled ? "Cancelled" : r.bookingStatus,
     ]);
-    downloadCsv([header, ...rows], "member-booking.csv");
+    await downloadXlsx([header, ...rows], "member-booking.xlsx");
   }
 
   const coachExportDisabled =
@@ -355,22 +343,20 @@ export function HistoryView() {
         <button
           type="button"
           onClick={() => setActiveTab("coaches")}
-          className={`px-4 py-3 text-sm font-bold transition border-b-2 ${
-            activeTab === "coaches"
+          className={`px-4 py-3 text-sm font-bold transition border-b-2 ${activeTab === "coaches"
               ? "border-sweat text-sweat"
               : "border-transparent text-gray-500 hover:text-white"
-          }`}
+            }`}
         >
           Coach Attendance
         </button>
         <button
           type="button"
           onClick={() => setActiveTab("members")}
-          className={`px-4 py-3 text-sm font-bold transition border-b-2 ${
-            activeTab === "members"
+          className={`px-4 py-3 text-sm font-bold transition border-b-2 ${activeTab === "members"
               ? "border-sweat text-sweat"
               : "border-transparent text-gray-500 hover:text-white"
-          }`}
+            }`}
         >
           Member Booking
         </button>
@@ -383,13 +369,13 @@ export function HistoryView() {
             <h4 className="text-lg font-bold">Coach Attendance History</h4>
             <button
               type="button"
-              onClick={exportCoachAttendanceCsv}
+              onClick={() => void exportCoachAttendanceXlsx()}
               disabled={coachExportDisabled}
-              title="Export attendance history to CSV"
+              title="Export attendance history to XLSX"
               className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <i className="fas fa-file-export mr-2" aria-hidden />
-              Export CSV
+              Export
             </button>
           </div>
 
@@ -485,13 +471,13 @@ export function HistoryView() {
             <h4 className="text-lg font-bold">Member Booking History</h4>
             <button
               type="button"
-              onClick={exportMemberBookingCsv}
+              onClick={() => void exportMemberBookingXlsx()}
               disabled={memberExportDisabled}
-              title="Export booking history to CSV"
+              title="Export booking history to XLSX"
               className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <i className="fas fa-file-export mr-2" aria-hidden />
-              Export CSV
+              Export
             </button>
           </div>
 

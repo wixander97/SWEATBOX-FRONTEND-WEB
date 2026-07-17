@@ -24,7 +24,7 @@ const mainNav: { href: string; label: string; icon: string; id: string }[] = [
   { href: adminPaths.reports, label: "Attendance Reports", icon: "fa-clipboard-check", id: "reports" },
   { href: adminPaths.users, label: "User Management", icon: "fa-user-shield", id: "users" },
   { href: adminPaths.pt, label: "Personal Training", icon: "fa-id-badge", id: "pt" },
-  { href: adminPaths.scan, label: "Manual Scan", icon: "fa-qrcode", id: "scan" },
+  { href: adminPaths.scan, label: "Barcode Scanner", icon: "fa-qrcode", id: "scan" },
   { href: adminPaths.scanCamera, label: "Webcam Scanner", icon: "fa-camera", id: "scan-camera" },
   { href: adminPaths.dropIn, label: "Drop In", icon: "fa-door-open", id: "drop-in" },
 ];

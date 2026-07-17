@@ -8,9 +8,13 @@
  *   1. Explicit prefix:
  *        COACH|<coachId>|<classScheduleId>
  *        MEMBER|<memberCode>
+ *        PT|<ptSessionId>|<memberId>
  *   2. JSON payload:
  *        {"coachId":"…","classScheduleId":"…"}  → coach
  *        {"memberCode":"…"}                       → member
+ *        {"ptSessionId":"…","memberId":"…"}      → pt (dispatched to
+ *                                               /api/v1/pt-sessions/checkin
+ *                                               with body {ptSessionId, memberId})
  *   3. Any other non-empty string → member code
  */
 
@@ -28,6 +32,12 @@ export type MemberScanIntent = {
   classScheduleId?: string;
 };
 
+export type PtScanIntent = {
+  type: "pt";
+  ptSessionId: string;
+  memberId: string;
+};
+
 export type InvalidScanIntent = {
   type: "invalid";
   reason: string;
@@ -36,6 +46,7 @@ export type InvalidScanIntent = {
 export type ScanIntent =
   | CoachScanIntent
   | MemberScanIntent
+  | PtScanIntent
   | InvalidScanIntent;
 
 export function parseScan(raw: string): ScanIntent {
@@ -64,6 +75,20 @@ export function parseScan(raw: string): ScanIntent {
       ? { type: "member", memberCode: code }
       : { type: "invalid", reason: "Member QR is malformed (expected MEMBER|code)." };
   }
+  if (upper.startsWith("PT|")) {
+    const parts = value.split("|");
+    if (parts.length >= 3 && parts[1] && parts[2]) {
+      return {
+        type: "pt",
+        ptSessionId: parts[1].trim(),
+        memberId: parts[2].trim(),
+      };
+    }
+    return {
+      type: "invalid",
+      reason: "PT QR is malformed (expected PT|ptSessionId|memberId).",
+    };
+  }
 
   // 2. JSON payload.
   if (value.charAt(0) === "{") {
@@ -78,6 +103,13 @@ export function parseScan(raw: string): ScanIntent {
         type: "coach",
         coachId: String(obj.coachId),
         classScheduleId: String(obj.classScheduleId),
+      };
+    }
+    if (obj && obj.ptSessionId && obj.memberId) {
+      return {
+        type: "pt",
+        ptSessionId: String(obj.ptSessionId).trim(),
+        memberId: String(obj.memberId).trim(),
       };
     }
     if (obj && obj.memberCode) {

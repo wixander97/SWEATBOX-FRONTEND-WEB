@@ -125,6 +125,16 @@ export function CreateMemberModal({
                     className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                   />
                 </label>
+                <label className="block sm:col-span-2">
+                  <span className="text-gray-500 text-xs uppercase font-bold">Profile Image URL</span>
+                  <input
+                    type="text"
+                    value={form.profileImageUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, profileImageUrl: e.target.value }))}
+                    placeholder="https://..."
+                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                  />
+                </label>
               </div>
             </div>
 
@@ -313,6 +323,75 @@ export function CreateMemberModal({
                     required
                   />
                 </label>
+                <label className="block">
+                  <span className="text-gray-500 text-xs uppercase font-bold">Remaining PT Sessions</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.remainingPtSessions}
+                    onChange={(e) => setForm((f) => ({ ...f, remainingPtSessions: e.target.value }))}
+                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-gray-500 text-xs uppercase font-bold">Expiry Date</span>
+                  <input
+                    type="date"
+                    value={form.expiryDate}
+                    onChange={(e) => setForm((f) => ({ ...f, expiryDate: e.target.value }))}
+                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                    style={{ colorScheme: "dark" }}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-gray-500 text-xs uppercase font-bold">Membership Status</span>
+                  <select
+                    value={form.membershipStatus}
+                    onChange={(e) => setForm((f) => ({ ...f, membershipStatus: e.target.value }))}
+                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="text-gray-500 text-xs uppercase font-bold">Payment Status</span>
+                  <select
+                    value={form.paymentStatus}
+                    onChange={(e) => setForm((f) => ({ ...f, paymentStatus: e.target.value }))}
+                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Failed">Failed</option>
+                    <option value="Expired">Expired</option>
+                    <option value="Refunded">Refunded</option>
+                    <option value="Cancelled">Cancelled</option>
+
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="text-gray-500 text-xs uppercase font-bold">Freeze Start</span>
+                  <input
+                    type="datetime-local"
+                    value={form.freezeStartDate}
+                    onChange={(e) => setForm((f) => ({ ...f, freezeStartDate: e.target.value }))}
+                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                    style={{ colorScheme: "dark" }}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-gray-500 text-xs uppercase font-bold">Freeze End</span>
+                  <input
+                    type="datetime-local"
+                    value={form.freezeEndDate}
+                    onChange={(e) => setForm((f) => ({ ...f, freezeEndDate: e.target.value }))}
+                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+                    style={{ colorScheme: "dark" }}
+                  />
+                </label>
               </div>
             </div>
 
@@ -337,6 +416,15 @@ export function CreateMemberModal({
                     className="rounded border-border"
                   />
                   <span className="text-gray-300">PT Member</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.isActive}
+                    onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+                    className="rounded border-border"
+                  />
+                  <span className="text-gray-300">Active</span>
                 </label>
                 <label className="block">
                   <span className="text-gray-500 text-xs uppercase font-bold">Notes</span>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
+import { downloadXlsx } from "@/lib/export";
 
 type StaffAttendance = {
   id: string;
@@ -133,7 +134,7 @@ export default function ReportsPage() {
 
   const presentCount = attendances.filter((a) => a.clockInTime).length;
 
-  function exportAttendanceCsv(rows: StaffAttendance[], filename: string) {
+  async function exportAttendanceXlsx(rows: StaffAttendance[], filename: string) {
     const header = [
       "Date",
       "Staff Name",
@@ -174,16 +175,7 @@ export default function ReportsPage() {
       formatDate(s.createdAt),
       s.updatedAt ? formatDate(s.updatedAt) : "",
     ]);
-    const csv = [header, ...dataRows]
-      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    await downloadXlsx([header, ...dataRows], filename);
   }
 
   async function exportAllReport() {
@@ -194,7 +186,7 @@ export default function ReportsPage() {
     const list: StaffAttendance[] = Array.isArray(data)
       ? data
       : (data.items ?? data.data ?? []);
-    exportAttendanceCsv(list, "staff-attendance-all.csv");
+    exportAttendanceXlsx(list, "staff-attendance-all.xlsx");
   }
 
   async function exportCurrentStaffReport() {
@@ -210,7 +202,7 @@ export default function ReportsPage() {
     const namePart = (staff?.fullName ?? staff?.name ?? selectedStaffId)
       .replace(/\s+/g, "-")
       .replace(/[^a-zA-Z0-9-_]/g, "");
-    exportAttendanceCsv(list, `staff-attendance-${namePart || "staff"}.csv`);
+    exportAttendanceXlsx(list, `staff-attendance-${namePart || "staff"}.xlsx`);
   }
 
   return (

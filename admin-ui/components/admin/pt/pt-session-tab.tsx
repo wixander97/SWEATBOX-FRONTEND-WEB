@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
+import { downloadXlsx } from "@/lib/export";
 import {
   CreatePtSessionModal,
   type PtSessionFormValues,
@@ -18,6 +19,7 @@ import {
   type Member,
   type PtPackage,
   type PtSession,
+  type PtSessionParticipant,
   branchLabel,
   coachLabel,
   formatDateTime,
@@ -26,6 +28,11 @@ import {
   parseTotal,
   type PagedResponse,
 } from "@/components/admin/pt/pt-types";
+import { fetchParticipants } from "@/components/admin/pt/pt-sessions-api";
+import {
+  ParticipantList,
+  type ParticipantsStatus,
+} from "@/components/admin/pt/participant-list";
 
 export function PtSessionTab() {
   const [sessions, setSessions] = useState<PtSession[]>([]);
@@ -45,6 +52,19 @@ export function PtSessionTab() {
   const [cancelTarget, setCancelTarget] = useState<PtSession | null>(null);
   const [detailTarget, setDetailTarget] = useState<PtSession | null>(null);
   const [search, setSearch] = useState("");
+
+  // Lifted participants cache — shared by expandable rows and the detail modal.
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [participantsCache, setParticipantsCache] = useState<Record<string, PtSessionParticipant[]>>({});
+  const [participantsStatus, setParticipantsStatus] = useState<Record<string, ParticipantsStatus>>({});
+  const detailTargetRef = useRef<PtSession | null>(null);
+  useEffect(() => {
+    detailTargetRef.current = detailTarget;
+  }, [detailTarget]);
+  const expandedIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    expandedIdRef.current = expandedId;
+  }, [expandedId]);
 
   const loadSessions = useCallback(
     async (targetPage: number) => {
@@ -90,6 +110,67 @@ export function PtSessionTab() {
     },
     [pageSize]
   );
+
+  // Load+cache participants for a session id. `force` re-fetches by clearing the
+  // cached entry first. Idempotent on concurrent calls for the same id.
+  const loadParticipants = useCallback(
+    async (id: string, opts?: { force?: boolean }) => {
+      if (opts?.force) {
+        setParticipantsStatus((m) => ({ ...m, [id]: "loading" }));
+      } else if (participantsStatus[id] === "loading" || participantsStatus[id] === "loaded") {
+        return;
+      }
+      setParticipantsStatus((m) => ({ ...m, [id]: "loading" }));
+      try {
+        const list = await fetchParticipants(id);
+        setParticipantsCache((m) => ({ ...m, [id]: list }));
+        setParticipantsStatus((m) => ({ ...m, [id]: "loaded" }));
+      } catch {
+        setParticipantsStatus((m) => ({ ...m, [id]: "error" }));
+      }
+    },
+    [participantsStatus]
+  );
+
+  // Drop the cached participants for an id so the next load fetches fresh data.
+  const invalidateParticipants = useCallback((id: string) => {
+    setParticipantsCache((m) => {
+      if (!(id in m)) return m;
+      const next = { ...m };
+      delete next[id];
+      return next;
+    });
+    setParticipantsStatus((m) => {
+      if (!(id in m)) return m;
+      const next = { ...m };
+      delete next[id];
+      return next;
+    });
+  }, []);
+
+  // Toggle an expandable row, lazy-fetching on first open. Single-open.
+  const toggleExpand = useCallback(
+    (s: PtSession) => {
+      setExpandedId((cur) => {
+        if (cur === s.id) return null;
+        void loadParticipants(s.id);
+        return s.id;
+      });
+    },
+    [loadParticipants]
+  );
+
+  // When the detail modal opens for a session, ensure its participants are
+  // fetched into the lifted cache (lazy when no cache entry yet).
+  useEffect(() => {
+    if (!detailTarget) return;
+    const id = detailTarget.id;
+    setExpandedId(null);
+    if (!(id in participantsCache) && participantsStatus[id] !== "loading") {
+      void loadParticipants(id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailTarget]);
 
   const loadReferenceData = useCallback(async () => {
     const settle = async <T,>(
@@ -137,8 +218,9 @@ export function PtSessionTab() {
         s.branchName || branchName(s.branchId),
         formatDateTime(s.sessionDate),
         s.trainingType,
-        isCancelled(s) ? "Cancelled" : s.status,
+        statusLabel(s),
         s.packageName,
+        s.notes,
       ]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q))
@@ -184,6 +266,14 @@ export function PtSessionTab() {
     if (s.isCancelled === true) return true;
     const status = String(s.status ?? "").toLowerCase();
     return status === "cancelled" || status === "canceled";
+  }
+
+  /** Derive status label from flags, tolerating a legacy `status` string. */
+  function statusLabel(s: PtSession): "Cancelled" | "Completed" | "Active" {
+    if (isCancelled(s)) return "Cancelled";
+    if (s.isCompleted === true || String(s.status ?? "").toLowerCase() === "completed")
+      return "Completed";
+    return "Active";
   }
 
   async function handleCreate(values: PtSessionFormValues) {
@@ -238,6 +328,15 @@ export function PtSessionTab() {
         return;
       }
       setAddMemberTarget(null);
+      invalidateParticipants(session.id);
+      // Refresh the open surface if this session is currently expanded or open
+      // in the detail modal; otherwise defer to next expand/open.
+      if (
+        expandedIdRef.current === session.id ||
+        detailTargetRef.current?.id === session.id
+      ) {
+        void loadParticipants(session.id, { force: true });
+      }
       void loadSessions(page);
     } catch {
       setError("Gagal menambahkan member");
@@ -261,7 +360,7 @@ export function PtSessionTab() {
     void loadSessions(page);
   }
 
-  async function exportCsv() {
+  async function exportXlsx() {
     const res = await authFetch(`${API_BASE_URL}/api/v1/pt-sessions`, {
       cache: "no-store",
     });
@@ -316,22 +415,13 @@ export function PtSessionTab() {
         String(s.maxParticipants ?? 0),
         String(count),
         participantNames,
-        val(s.status),
+        statusLabel(s),
         yesNo(s.isCancelled),
         yesNo(s.isCompleted),
         val(s.notes),
       ];
     });
-    const csv = [header, ...rows]
-      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "pt-sessions.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    await downloadXlsx([header, ...rows], "pt-sessions.xlsx");
   }
 
   return (
@@ -351,11 +441,11 @@ export function PtSessionTab() {
           </div>
           <button
             type="button"
-            onClick={() => void exportCsv()}
+            onClick={() => void exportXlsx()}
             className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center justify-center gap-2 w-full sm:w-auto"
           >
             <i className="fas fa-file-export" aria-hidden />
-            Export CSV
+            Export
           </button>
           <button
             type="button"
@@ -374,7 +464,7 @@ export function PtSessionTab() {
       )}
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[960px] text-left text-sm">
+        <table className="w-full min-w-[1040px] text-left text-sm">
           <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
             <tr>
               <th className="px-4 py-3">Coach</th>
@@ -383,8 +473,8 @@ export function PtSessionTab() {
               <th className="px-4 py-3">Time</th>
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3 text-center">Max</th>
-              <th className="px-4 py-3 text-center">Participants</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Notes</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -403,76 +493,125 @@ export function PtSessionTab() {
               </tr>
             ) : (
               visibleSessions.map((s) => (
-                <tr key={s.id} className="hover:bg-white/5 transition">
-                  <td className="px-4 py-3 text-gray-300">
-                    {s.coachName || coachName(s.coachId)}
-                  </td>
-                  <td className="px-4 py-3 text-gray-300">
-                    {s.branchName || branchName(s.branchId)}
-                  </td>
-                  <td className="px-4 py-3 text-gray-300">{formatDateTime(s.sessionDate)}</td>
-                  <td className="px-4 py-3 text-gray-300">
-                    {formatTime(s.startTime)} - {formatTime(s.endTime)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        isGroup(s)
+                <Fragment key={s.id}>
+                  <tr className={expandedId === s.id ? "bg-white/5" : "hover:bg-white/5 transition"}>
+                    <td className="px-4 py-3 text-gray-300">
+                      {s.coachName || coachName(s.coachId)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-300">
+                      {s.branchName || branchName(s.branchId)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-300">{formatDateTime(s.sessionDate)}</td>
+                    <td className="px-4 py-3 text-gray-300">
+                      {formatTime(s.startTime)} - {formatTime(s.endTime)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isGroup(s)
                           ? "bg-blue-500/15 text-blue-400"
                           : "bg-purple-500/15 text-purple-400"
-                      }`}
-                    >
-                      {s.trainingType || "-"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-300">
-                    {s.maxParticipants ?? 0}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-300">
-                    {participantCount(s)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        isCancelled(s)
-                          ? "bg-red-500/15 text-red-400"
-                          : "bg-green-500/15 text-green-400"
-                      }`}
-                    >
-                      {isCancelled(s) ? "Cancelled" : "Active"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
-                    <button
-                      type="button"
-                      title="View Detail"
-                      onClick={() => setDetailTarget(s)}
-                      className="text-gray-400 hover:text-white mx-1"
-                    >
-                      <i className="fas fa-eye" aria-hidden />
-                    </button>
-                    {isGroup(s) && !isCancelled(s) && (
+                          }`}
+                      >
+                        {s.trainingType || "-"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-300">
+                      {s.maxParticipants ?? 0}
+                    </td>
+                    <td className="px-4 py-3">
+                      {(() => {
+                        const label = statusLabel(s);
+                        const cls =
+                          label === "Cancelled"
+                            ? "bg-red-500/15 text-red-400"
+                            : label === "Completed"
+                              ? "bg-gray-500/15 text-gray-300"
+                              : "bg-green-500/15 text-green-400";
+                        return (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cls}`}
+                          >
+                            {label}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-4 py-3 text-gray-300">
+                      <span className="block max-w-[14rem] truncate" title={s.notes || ""}>
+                        {s.notes || "-"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
                       <button
                         type="button"
-                        title="Add Member"
-                        onClick={() => setAddMemberTarget(s)}
+                        title={expandedId === s.id ? "Tutup peserta" : "Lihat peserta"}
+                        aria-label="Lihat peserta"
+                        onClick={() => toggleExpand(s)}
                         className="text-gray-400 hover:text-white mx-1"
                       >
-                        <i className="fas fa-user-plus" aria-hidden />
+                        <i
+                          className={`fas fa-chevron-${expandedId === s.id ? "up" : "down"}`}
+                          aria-hidden
+                        />
                       </button>
-                    )}
-                    {!isCancelled(s) && (
                       <button
                         type="button"
-                        title="Cancel Session"
-                        onClick={() => setCancelTarget(s)}
-                        className="text-red-500 hover:text-red-400 mx-1"
+                        title="View Detail"
+                        onClick={() => setDetailTarget(s)}
+                        className="text-gray-400 hover:text-white mx-1"
                       >
-                        <i className="fas fa-ban" aria-hidden />
+                        <i className="fas fa-eye" aria-hidden />
                       </button>
-                    )}
-                  </td>
-                </tr>
+                      {isGroup(s) && !isCancelled(s) && (
+                        <button
+                          type="button"
+                          title="Add Member"
+                          onClick={() => setAddMemberTarget(s)}
+                          className="text-gray-400 hover:text-white mx-1"
+                        >
+                          <i className="fas fa-user-plus" aria-hidden />
+                        </button>
+                      )}
+                      {!isCancelled(s) && (
+                        <button
+                          type="button"
+                          title="Cancel Session"
+                          onClick={() => setCancelTarget(s)}
+                          className="text-red-500 hover:text-red-400 mx-1"
+                        >
+                          <i className="fas fa-ban" aria-hidden />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                  {expandedId === s.id && (
+                    <tr className="bg-sidebar/30">
+                      <td colSpan={9} className="px-4 py-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                            Participants
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => loadParticipants(s.id, { force: true })}
+                            disabled={participantsStatus[s.id] === "loading"}
+                            className="text-gray-400 hover:text-white text-xs disabled:opacity-50"
+                            aria-label="Refresh peserta"
+                            title="Refresh peserta"
+                          >
+                            <i className="fas fa-sync-alt" aria-hidden />
+                          </button>
+                        </div>
+                        <div className="max-h-[12rem] overflow-auto rounded-lg border border-border bg-sidebar px-3 py-2">
+                          <ParticipantList
+                            participants={participantsCache[s.id] ?? []}
+                            status={participantsStatus[s.id] ?? "loading"}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))
             )}
           </tbody>
@@ -540,6 +679,9 @@ export function PtSessionTab() {
       {detailTarget && (
         <PtSessionDetailModal
           session={detailTarget}
+          participants={participantsCache[detailTarget.id] ?? []}
+          participantsStatus={participantsStatus[detailTarget.id] ?? "loading"}
+          onRefreshParticipants={() => loadParticipants(detailTarget.id, { force: true })}
           onClose={() => setDetailTarget(null)}
         />
       )}
