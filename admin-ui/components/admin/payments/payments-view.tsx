@@ -9,7 +9,6 @@ import { useRole } from "@/contexts/role-context";
 // TODO: Re-enable create payment feature
 // import { CreatePaymentModal } from "./create-payment-modal";
 import { PaymentDetailModal } from "./payment-detail-modal";
-import { paymentStatusMeta } from "./payment-status";
 
 export type Payment = {
   id: string;
@@ -52,7 +51,9 @@ function formatRupiah(amount: number): string {
 }
 
 function statusBadge(status: number) {
-  return paymentStatusMeta(status);
+  if (status === 1) return { label: "Paid", class: "bg-green-500/10 text-green-500 border-green-500/20" };
+  if (status === 0) return { label: "Pending", class: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" };
+  return { label: "Failed", class: "bg-red-500/10 text-red-500 border-red-500/20" };
 }
 
 const ALLOWED_TABS: StatusTab[] = ["all", "paid", "pending", "failed"];
@@ -77,11 +78,13 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
   const loadPayments = useCallback(async (tab: StatusTab) => {
     setLoading(true);
     setError("");
+    // The backend `/failed` endpoint returns empty; for the failed tab, fetch the
+    // base (All) endpoint and filter client-side using the same criterion as `statusBadge`.
     const statusMap: Record<StatusTab, string> = {
       all: "",
       paid: "/paid",
       pending: "/pending",
-      failed: "/failed",
+      failed: " ",
     };
     const params = statusMap[tab];
     const res = await authFetch(`${API_BASE_URL}/api/v1/payments${params}`, { cache: "no-store" });
@@ -93,7 +96,10 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
       setLoading(false);
       return;
     }
-    const list: Payment[] = Array.isArray(data) ? data : (data.items ?? data.data ?? []);
+    const rawList: Payment[] = Array.isArray(data) ? data : (data.items ?? data.data ?? []);
+    const list = tab === "failed"
+      ? rawList.filter((p) => p.paymentStatus !== 1 && p.paymentStatus !== 0)
+      : rawList;
     setPayments(list);
     setLoading(false);
   }, []);
@@ -152,7 +158,8 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
   };
 
   async function exportXlsx() {
-    const statusLabel = (s: number) => paymentStatusMeta(s).label;
+    const statusLabel = (s: number) =>
+      s === 1 ? "Paid" : s === 0 ? "Pending" : "Failed";
     const methodLabel = (m: number) => PAYMENT_METHOD_LABELS[m] ?? String(m);
     const providerLabel = (p: number) => (p === 0 ? "Offline" : "Midtrans");
     const val = (s?: string | null) => s || "—";
