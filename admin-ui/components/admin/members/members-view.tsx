@@ -420,6 +420,7 @@ export function MembersView() {
                 [
                   { label: "ID", key: "memberCode" },
                   { label: "Member Name", key: "fullName" },
+                  { label: "Email", key: "email" },
                   { label: "Home Club", key: "homeClubBranchName" },
                   { label: "Membership Plan", key: "membershipPlanName" },
                   { label: "Credits", key: "remainingCredits" },
@@ -459,19 +460,19 @@ export function MembersView() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={8}>
+                <td className="px-6 py-6 text-gray-400" colSpan={9}>
                   Loading...
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td className="px-6 py-6 text-red-400" colSpan={8}>
+                <td className="px-6 py-6 text-red-400" colSpan={9}>
                   {error}
                 </td>
               </tr>
             ) : displayMembers.length === 0 ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={8}>
+                <td className="px-6 py-6 text-gray-400" colSpan={9}>
                   Tidak ada data member.
                 </td>
               </tr>
@@ -496,6 +497,7 @@ export function MembersView() {
                       {m.fullName || "-"}
                     </span>
                   </td>
+                  <td className="px-6 py-4">{m.email || "—"}</td>
                   <td className="px-6 py-4">{m.homeClubBranchName || "—"}</td>
                   <td className="px-6 py-4">{m.membershipPlanName || "—"}</td>
                   <td className="px-6 py-4">{String(m.remainingCredits) || "-"}</td>

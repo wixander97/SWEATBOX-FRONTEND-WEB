@@ -487,7 +487,7 @@ export function DashboardView() {
           value={activeCoaches ?? totalCoaches ?? "—"}
           icon="fa-dumbbell"
           loading={loading}
-          href={adminPaths.users}
+          href={`${adminPaths.users}?tab=coach&active=true`}
         />
         {currentRole === "superadmin" ? (
           <CompactStatCard

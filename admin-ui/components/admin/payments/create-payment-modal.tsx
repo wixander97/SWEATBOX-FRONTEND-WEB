@@ -130,12 +130,12 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
       pollingIntervalRef.current = null;
     }
 
-    // Close Midtrans tab
+    // Close Xendit tab
     if (midtransWindowRef.current && !midtransWindowRef.current.closed) {
       try {
         midtransWindowRef.current.close();
       } catch (err) {
-        console.warn('Could not close Midtrans tab:', err);
+        console.warn('Could not close Xendit tab:', err);
       }
     }
 
@@ -214,7 +214,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
         return;
       }
 
-      // Cash payment — no Midtrans, immediate success
+      // Cash payment — no Xendit, immediate success
       if (paymentMethodNum === 0) {
         setPolling(true);
         setPollingStatus('success');
@@ -225,7 +225,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
         return;
       }
 
-      // Open Midtrans in new tab and store reference
+      // Open Xendit in new tab and store reference
       if (data.redirectUrl) {
         midtransWindowRef.current = window.open(data.redirectUrl, '_blank');
       }
@@ -272,7 +272,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
                   <div>
                     <p className="text-blue-500 font-semibold text-sm">Waiting for payment...</p>
-                    <p className="text-gray-400 text-xs mt-1">Please complete payment in the Midtrans tab</p>
+                    <p className="text-gray-400 text-xs mt-1">Please complete payment in the Xendit tab</p>
                   </div>
                 </div>
               </div>

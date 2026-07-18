@@ -27,6 +27,7 @@ const mainNav: { href: string; label: string; icon: string; id: string }[] = [
   { href: adminPaths.scan, label: "Barcode Scanner", icon: "fa-qrcode", id: "scan" },
   { href: adminPaths.scanCamera, label: "Webcam Scanner", icon: "fa-camera", id: "scan-camera" },
   { href: adminPaths.dropIn, label: "Drop In", icon: "fa-door-open", id: "drop-in" },
+  { href: adminPaths.promoBanners, label: "Promo Banners", icon: "fa-bullhorn", id: "promo-banners" },
 ];
 
 const dataNav: { href: string; label: string; icon: string; id: string }[] = [
@@ -36,6 +37,7 @@ const dataNav: { href: string; label: string; icon: string; id: string }[] = [
   // { href: adminPaths.payroll, label: "Coaches Payroll", icon: "fa-file-invoice-dollar", id: "payroll" },
   { href: adminPaths.history, label: "History", icon: "fa-history", id: "history" },
   { href: adminPaths.systemSettings, label: "System Settings", icon: "fa-cog", id: "system-settings" },
+
 ];
 
 function navButtonClasses(active: boolean) {
