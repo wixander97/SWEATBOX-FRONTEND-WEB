@@ -5,9 +5,16 @@ import Image from "next/image";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { downloadXlsx } from "@/lib/export";
 import { EditCoachModal } from "./edit-coach-modal";
 
 export type CoachesViewHandle = { reload: () => void };
+
+type CoachesViewProps = {
+  initialActiveFilter?: boolean;
+};
+
+type ActiveFilter = "all" | "true";
 
 type SortDir = "asc" | "desc";
 type CoachSortKey = "fullName" | "specialization" | "rating" | "totalClasses" | "totalMembers";
@@ -66,7 +73,7 @@ type CoachAttendanceRecord = {
   status: string;
 };
 
-export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_props, ref) {
+export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(function CoachesView({ initialActiveFilter }: CoachesViewProps = {}, ref) {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(9);
@@ -94,13 +101,16 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
   const [searchInput, setSearchInput] = useState("");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
+  const [isActiveFilter, setIsActiveFilter] = useState<ActiveFilter>(
+    initialActiveFilter ? "true" : "all",
+  );
 
   function toggleSort(key: CoachSortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
   }
 
-  async function exportCsv() {
+  async function exportXlsx() {
     setExporting(true);
     setExportError("");
     try {
@@ -142,16 +152,7 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
         num(c.payrollRate),
         yesNo(c.isActive),
       ]);
-      const csv = [header, ...rows]
-        .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
-        .join("\\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "coaches.csv";
-      a.click();
-      URL.revokeObjectURL(url);
+      await downloadXlsx([header, ...rows], "coaches.xlsx");
     } catch {
       setExportError("Gagal mengambil data coach untuk export.");
     } finally {
@@ -164,9 +165,11 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
     setError("");
     const trimmed = kw.trim();
     const params = new URLSearchParams({ page: String(targetPage), pageSize: String(pageSize) });
-    const endpoint = trimmed
-      ? `${API_BASE_URL}/api/v1/coaches/search`
-      : `${API_BASE_URL}/api/v1/coaches`;
+    const endpoint = isActiveFilter === "true"
+      ? `${API_BASE_URL}/api/v1/coaches/active`
+      : trimmed
+        ? `${API_BASE_URL}/api/v1/coaches/search`
+        : `${API_BASE_URL}/api/v1/coaches`;
     if (trimmed) params.set("keyword", trimmed);
     const res = await authFetch(`${endpoint}?${params.toString()}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
@@ -193,7 +196,7 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
       setTotalPages(pages);
     }
     setLoading(false);
-  }, [pageSize]);
+  }, [pageSize, isActiveFilter]);
 
   useEffect(() => {
     void loadCoaches(page, keyword);
@@ -322,42 +325,55 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
   return (
     <>
       <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="relative w-full sm:w-72">
-        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
-        <input
-          type="text"
-          placeholder="Cari coach..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              const trimmed = searchInput.trim();
-              setKeyword(trimmed);
-              setSearchInput(trimmed);
-              setPage(1);
-            }
-          }}
-          className="w-full bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
-        />
-        {searchInput && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchInput("");
-              setKeyword("");
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
+          <div className="relative w-full sm:w-72">
+          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+          <input
+            type="text"
+            placeholder="Cari coach..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const trimmed = searchInput.trim();
+                setKeyword(trimmed);
+                setSearchInput(trimmed);
+                setPage(1);
+              }
+            }}
+            className="w-full bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchInput("");
+                setKeyword("");
+                setPage(1);
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+              aria-label="Clear search"
+            >
+              <i className="fas fa-times" aria-hidden />
+            </button>
+          )}
+          </div>
+          <select
+            value={isActiveFilter}
+            onChange={(e) => {
+              setIsActiveFilter(e.target.value as ActiveFilter);
               setPage(1);
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
-            aria-label="Clear search"
+            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat w-full sm:w-36"
           >
-            <i className="fas fa-times" aria-hidden />
-          </button>
-        )}
+            <option value="all">All Status</option>
+            <option value="true">Active</option>
+          </select>
         </div>
         <div className="flex flex-col sm:items-end gap-1">
           <button
             type="button"
-            onClick={() => void exportCsv()}
+            onClick={() => void exportXlsx()}
             disabled={exporting}
             title="Export semua data coach (tanpa filter)"
             className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50"
@@ -367,7 +383,7 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
             ) : (
               <i className="fas fa-file-export mr-2" aria-hidden />
             )}
-            Export CSV
+            Export
           </button>
           {exportError && (
             <p className="text-red-400 text-sm">{exportError}</p>
@@ -427,6 +443,7 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
               <span className="text-yellow-400">Inactive (Off)</span>
             </span>
           </div>
+          {/* Legend end: keep in sync with the card badge + power button colors (state-based). */}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
             {sortedCoaches.map((coach) => (
@@ -445,7 +462,16 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
                   />
                 </div>
                 <h3 className="font-bold text-xl text-white">{coach.fullName ?? "—"}</h3>
-                <p className="text-gray-400 text-sm mb-1">{coach.specialization ?? "No specialization"}</p>
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${coach.isActive
+                    ? "bg-green-500/10 text-green-400 border-green-500/20"
+                    : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                  }`}
+                >
+                  <i className={coach.isActive ? "fas fa-check-circle" : "fas fa-pause-circle"} aria-hidden />
+                  {coach.isActive ? "Active" : "Inactive"}
+                </span>
+                <p className="text-gray-400 text-sm mb-1 mt-2">{coach.specialization ?? "No specialization"}</p>
                 {coach.branchName && (
                   <p className="text-xs text-gray-500 mb-3">
                     <i className="fas fa-map-marker-alt mr-1" aria-hidden /> {coach.branchName}
@@ -479,8 +505,8 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
                     disabled={statusLoading === coach.id}
                     title={coach.isActive ? "Deactivate" : "Activate"}
                     className={`px-3 py-2 rounded-lg text-sm border transition disabled:opacity-50 ${coach.isActive
-                      ? "text-yellow-400 border-yellow-500/20 hover:bg-yellow-500/10"
-                      : "text-green-400 border-green-500/20 hover:bg-green-500/10"
+                      ? "text-green-400 border-green-500/20 hover:bg-green-500/10"
+                      : "text-yellow-400 border-yellow-500/20 hover:bg-yellow-500/10"
                       }`}
                   >
                     <i className="fas fa-power-off" aria-hidden />
@@ -548,11 +574,10 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
               <button
                 type="button"
                 onClick={() => setDetailTab("info")}
-                className={`px-4 py-2 text-sm font-bold transition border-b-2 ${
-                  detailTab === "info"
+                className={`px-4 py-2 text-sm font-bold transition border-b-2 ${detailTab === "info"
                     ? "border-sweat text-sweat"
                     : "border-transparent text-gray-500 hover:text-white"
-                }`}
+                  }`}
               >
                 Info
               </button>
@@ -564,11 +589,10 @@ export const CoachesView = forwardRef<CoachesViewHandle>(function CoachesView(_p
                     void loadAttendanceHistory(selected.id);
                   }
                 }}
-                className={`px-4 py-2 text-sm font-bold transition border-b-2 ${
-                  detailTab === "history"
+                className={`px-4 py-2 text-sm font-bold transition border-b-2 ${detailTab === "history"
                     ? "border-sweat text-sweat"
                     : "border-transparent text-gray-500 hover:text-white"
-                }`}
+                  }`}
               >
                 History
               </button>

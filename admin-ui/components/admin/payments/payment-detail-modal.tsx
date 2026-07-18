@@ -1,6 +1,7 @@
 "use client";
 
 import type { Payment } from "./payments-view";
+import { paymentStatusMeta } from "./payment-status";
 
 type Props = {
   payment: Payment;
@@ -12,20 +13,7 @@ function formatRupiah(amount: number): string {
 }
 
 function statusBadge(status: number) {
-  if (status === 1)
-    return {
-      label: "Paid",
-      class: "bg-green-500/10 text-green-400 border-green-500/30",
-    };
-  if (status === 0)
-    return {
-      label: "Pending",
-      class: "bg-yellow-500/10 text-yellow-400 border-yellow-500/30",
-    };
-  return {
-    label: "Failed",
-    class: "bg-red-500/10 text-red-400 border-red-500/30",
-  };
+  return paymentStatusMeta(status);
 }
 
 const METHOD_LABELS: Record<number, string> = {
@@ -43,7 +31,7 @@ function methodLabel(method: number): string {
 }
 
 function providerLabel(provider: number): string {
-  return provider === 0 ? "Offline" : "Midtrans";
+  return provider === 0 ? "Offline" : "Xendit";
 }
 
 function SectionHeader({
@@ -77,11 +65,10 @@ function Row({
     <div className="flex justify-between items-center py-1.5 border-b border-border/40 last:border-b-0">
       <span className="text-xs text-gray-500">{label}</span>
       <span
-        className={`text-sm text-right ${
-          highlight
+        className={`text-sm text-right ${highlight
             ? "text-green-400 font-bold text-base"
             : "text-gray-200"
-        }`}
+          }`}
       >
         {value}
       </span>

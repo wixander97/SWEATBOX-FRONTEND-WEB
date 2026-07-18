@@ -32,8 +32,13 @@ export type PtPackage = {
 };
 
 export type PtSessionParticipant = {
-  memberId?: string | null;
+  memberId: string;
+  memberCode?: string | null;
+  fullName?: string | null;
+  /** Legacy alias kept for backward compatibility with older shapes. */
   memberName?: string | null;
+  isAttended?: boolean | null;
+  checkInTime?: string | null;
 };
 
 export type PtSession = {

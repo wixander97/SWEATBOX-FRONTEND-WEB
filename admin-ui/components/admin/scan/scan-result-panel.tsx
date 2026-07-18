@@ -1,7 +1,7 @@
 "use client";
 
 export type ScanResultState = {
-  type: string; // "Coach" | "Member" | "Invalid" | "—"
+  type: string; // "Coach" | "Member" | "PT" | "Invalid" | "—"
   status: "idle" | "loading" | "success" | "failed";
   message: string;
   raw: unknown;

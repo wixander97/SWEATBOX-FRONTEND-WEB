@@ -5,6 +5,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } fro
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { downloadXlsx } from "@/lib/export";
 import { EditStaffModal } from "@/components/admin/staffs/edit-staff-modal";
 import {
   type Branch,
@@ -71,7 +72,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
       const trimmedSearch = search.trim();
       if (trimmedSearch) params.set("search", trimmedSearch);
       if (isActiveFilter !== "all") params.set("isActive", isActiveFilter);
-      if (branchId) params.set("branchName", branchId);
+      if (branchId) params.set("branchId", branchId);
       const trimmedDept = department.trim();
       if (trimmedDept) params.set("department", trimmedDept);
 
@@ -178,7 +179,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
     void loadStaffs(page);
   }
 
-  async function exportCsv() {
+  async function exportXlsx() {
     setExporting(true);
     setExportError("");
     try {
@@ -245,18 +246,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
         fmtDate(s.hireDate),
         yesNo(s.isActive),
       ]);
-      const csv = [header, ...rows]
-        .map((r) =>
-          r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(",")
-        )
-        .join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "staffs.csv";
-      a.click();
-      URL.revokeObjectURL(url);
+      await downloadXlsx([header, ...rows], "staffs.xlsx");
     } catch {
       setExportError("Gagal mengambil data staff untuk export.");
     } finally {
@@ -277,7 +267,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => void exportCsv()}
+              onClick={() => void exportXlsx()}
               disabled={exporting}
               title="Export semua data staff (tanpa filter)"
               className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50"
@@ -287,15 +277,15 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
               ) : (
                 <i className="fas fa-file-export mr-2" aria-hidden />
               )}
-              Export CSV
+              Export
             </button>
           </div>
         </div>
         {exportError && (
           <p className="text-red-400 text-sm">{exportError}</p>
         )}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2 sm:flex-wrap">
-          <div className="relative sm:w-56">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 sm:flex-wrap">
+          <div className="relative w-full sm:w-56">
             <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
             <input
               type="text"
@@ -308,7 +298,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
                   setPage(1);
                 }
               }}
-              className={`${inputCls} pl-9`}
+              className={`${inputCls} pl-9 w-full`}
             />
           </div>
           <select
@@ -317,7 +307,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
               setIsActiveFilter(e.target.value as IsActiveFilter);
               setPage(1);
             }}
-            className={`${selectCls} sm:w-36`}
+            className={`${selectCls} w-full sm:w-36 min-w-0`}
           >
             <option value="all">All Status</option>
             <option value="true">Active</option>
@@ -330,7 +320,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
               setPage(1);
             }}
             disabled={branchesLoading}
-            className={`${selectCls} sm:w-44`}
+            className={`${selectCls} w-full sm:w-44 min-w-0`}
           >
             <option value="">
               {branchesLoading ? "Memuat Branch..." : "All Branches"}
@@ -352,7 +342,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
                 setPage(1);
               }
             }}
-            className={`${inputCls} sm:w-44`}
+            className={`${inputCls} w-full sm:w-44 min-w-0`}
           />
           <button
             type="button"
@@ -429,11 +419,10 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
                   <td className="px-6 py-4">{s.branchName || "—"}</td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-bold border ${
-                        s.isActive
-                          ? "bg-green-500/10 text-green-400 border-green-500/20"
-                          : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-                      }`}
+                      className={`px-2 py-1 rounded text-xs font-bold border ${s.isActive
+                        ? "bg-green-500/10 text-green-400 border-green-500/20"
+                        : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                        }`}
                     >
                       {s.isActive ? "Active" : "Inactive"}
                     </span>

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { downloadXlsx } from "@/lib/export";
 import { EditMemberModal } from "@/components/admin/members/edit-member-modal";
 import {
   type ApiMember,
@@ -223,7 +224,7 @@ export function MembersView() {
     });
   }, [members, sortKey, sortDir]);
 
-  function exportCsv() {
+  async function exportXlsx() {
     const fmtDate = (iso?: string | null) =>
       iso ? new Date(iso).toLocaleDateString("id-ID") : "-";
     const yesNo = (v?: boolean | null) => (v ? "Yes" : "No");
@@ -291,16 +292,7 @@ export function MembersView() {
       yesNo(m.isExpired),
       yesNo(m.isActive),
     ]);
-    const csv = [header, ...rows]
-      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "members.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    await downloadXlsx([header, ...rows], "members.xlsx");
   }
 
   return (
@@ -412,11 +404,11 @@ export function MembersView() {
 
           <button
             type="button"
-            onClick={exportCsv}
+            onClick={() => void exportXlsx()}
             className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
           >
             <i className="fas fa-file-export mr-2" aria-hidden />
-            Export CSV
+            Export
           </button>
         </div>
       </div>
@@ -428,6 +420,7 @@ export function MembersView() {
                 [
                   { label: "ID", key: "memberCode" },
                   { label: "Member Name", key: "fullName" },
+                  { label: "Email", key: "email" },
                   { label: "Home Club", key: "homeClubBranchName" },
                   { label: "Membership Plan", key: "membershipPlanName" },
                   { label: "Credits", key: "remainingCredits" },
@@ -467,19 +460,19 @@ export function MembersView() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={8}>
+                <td className="px-6 py-6 text-gray-400" colSpan={9}>
                   Loading...
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td className="px-6 py-6 text-red-400" colSpan={8}>
+                <td className="px-6 py-6 text-red-400" colSpan={9}>
                   {error}
                 </td>
               </tr>
             ) : displayMembers.length === 0 ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={8}>
+                <td className="px-6 py-6 text-gray-400" colSpan={9}>
                   Tidak ada data member.
                 </td>
               </tr>
@@ -504,6 +497,7 @@ export function MembersView() {
                       {m.fullName || "-"}
                     </span>
                   </td>
+                  <td className="px-6 py-4">{m.email || "—"}</td>
                   <td className="px-6 py-4">{m.homeClubBranchName || "—"}</td>
                   <td className="px-6 py-4">{m.membershipPlanName || "—"}</td>
                   <td className="px-6 py-4">{String(m.remainingCredits) || "-"}</td>

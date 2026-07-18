@@ -33,6 +33,17 @@ export async function dispatchScan(
           classScheduleId: intent.classScheduleId,
         }),
       });
+    } else if (intent.type === "pt") {
+      // PT session check-in: body {ptSessionId, memberId} sent to
+      // /api/v1/pt-sessions/checkin.
+      res = await authFetch(`${API_BASE_URL}/api/v1/pt-sessions/checkin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ptSessionId: intent.ptSessionId,
+          memberId: intent.memberId,
+        }),
+      });
     } else {
       const scanBranchId = intent.branchId || branchId;
       if (!scanBranchId) {
@@ -80,7 +91,11 @@ export async function dispatchScan(
     const dataObj = data as { message?: string; memberName?: string; fullName?: string; coachName?: string } | null;
     const who =
       (dataObj && (dataObj.memberName || dataObj.fullName || dataObj.coachName || dataObj.message)) ||
-      (intent.type === "coach" ? "Coach session activated." : intent.memberCode);
+      (intent.type === "coach"
+        ? "Coach session activated."
+        : intent.type === "pt"
+          ? "PT session check-in."
+          : intent.memberCode);
 
     return { ok: true, message: String(who), raw: data };
   } catch (err) {
@@ -92,14 +107,16 @@ export async function dispatchScan(
   }
 }
 
-/** Manual-page dispatch: admin explicitly selects Coach or Member mode. */
-export type ManualMode = "coach" | "member";
+/** Manual-page dispatch: admin explicitly selects Coach, Member, or PT mode. */
+export type ManualMode = "coach" | "member" | "pt";
 
 export type ManualScanFields = {
-  /** Coach mode: coachId; Member mode: memberCode. */
+  /** Coach mode: coachId; Member mode: memberCode; PT mode: memberId. */
   scanValue: string;
-  classScheduleId: string;
+  classScheduleId?: string;
   branchId?: string;
+  /** PT mode only. */
+  ptSessionId?: string;
 };
 
 /**
@@ -112,16 +129,19 @@ export async function dispatchManualScan(
   mode: ManualMode,
   fields: ManualScanFields,
 ): Promise<ScanOutcome> {
-  const { scanValue, classScheduleId, branchId } = fields;
+  const { scanValue, classScheduleId, branchId, ptSessionId } = fields;
 
   if (!scanValue.trim()) {
     return { ok: false, message: "Scan value is required.", raw: "Missing scan value." };
   }
-  if (!classScheduleId.trim()) {
+  if (mode !== "pt" && !classScheduleId?.trim()) {
     return { ok: false, message: "Class schedule ID is required.", raw: "Missing classScheduleId." };
   }
   if (mode === "member" && !branchId) {
     return { ok: false, message: "No branch is selected for this device.", raw: "No branch selected." };
+  }
+  if (mode === "pt" && !ptSessionId?.trim()) {
+    return { ok: false, message: "PT session ID is required.", raw: "Missing ptSessionId." };
   }
 
   try {
@@ -134,10 +154,20 @@ export async function dispatchManualScan(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           coachId: scanValue.trim(),
-          classScheduleId: classScheduleId.trim(),
+          classScheduleId: classScheduleId?.trim(),
         }),
       });
       successDefault = "Coach session activated.";
+    } else if (mode === "pt") {
+      res = await authFetch(`${API_BASE_URL}/api/v1/pt-sessions/checkin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ptSessionId: ptSessionId?.trim(),
+          memberId: scanValue.trim(),
+        }),
+      });
+      successDefault = "PT session check-in.";
     } else {
       res = await authFetch(`${API_BASE_URL}/api/v1/attendance/member-scan`, {
         method: "POST",
@@ -145,7 +175,7 @@ export async function dispatchManualScan(
         body: JSON.stringify({
           memberCode: scanValue.trim(),
           branchId,
-          classScheduleId: classScheduleId.trim(),
+          classScheduleId: classScheduleId?.trim(),
         }),
       });
       successDefault = scanValue.trim();

@@ -10,9 +10,21 @@ import { CoachesView, type CoachesViewHandle } from "@/components/admin/coaches/
 
 type Tab = "staff" | "coach";
 
-export function UsersView() {
-  const [tab, setTab] = useState<Tab>("staff");
+type UsersViewProps = {
+  initialTab?: Tab;
+  initialActive?: boolean;
+};
+
+export function UsersView({ initialTab, initialActive }: UsersViewProps = {}) {
+  const [tab, setTab] = useState<Tab>(initialTab ?? "staff");
   const [roles, setRoles] = useState<Role[]>([]);
+
+  // Sync tab from searchParams when the URL changes post-mount
+  // (Next.js App Router reuses the client component for query-string changes,
+  // so useState initializers don't re-run).
+  useEffect(() => {
+    if (initialTab) setTab(initialTab);
+  }, [initialTab]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [showCreate, setShowCreate] = useState(false);
@@ -100,7 +112,13 @@ export function UsersView() {
         </button>
       </div>
 
-      {tab === "staff" ? <StaffsView ref={staffRef} /> : <CoachesView ref={coachRef} />}
+      {tab === "staff" ? (
+        <StaffsView ref={staffRef} />
+      ) : (
+        // Key by initialActive so CoachesView remounts (and re-reads
+        // initialActiveFilter) when the URL's active param changes.
+        <CoachesView key={String(initialActive)} ref={coachRef} initialActiveFilter={initialActive} />
+      )}
 
       {showCreate && (
         <div

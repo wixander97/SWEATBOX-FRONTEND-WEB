@@ -7,12 +7,20 @@ import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import {
   type PtSession,
+  type PtSessionParticipant,
   formatDateTime,
   formatTime,
 } from "@/components/admin/pt/pt-types";
+import {
+  ParticipantList,
+  type ParticipantsStatus,
+} from "@/components/admin/pt/participant-list";
 
 type Props = {
   session: PtSession;
+  participants: PtSessionParticipant[];
+  participantsStatus: ParticipantsStatus;
+  onRefreshParticipants: () => void;
   onClose: () => void;
 };
 
@@ -62,7 +70,13 @@ function Row({
   );
 }
 
-export function PtSessionDetailModal({ session, onClose }: Props) {
+export function PtSessionDetailModal({
+  session,
+  participants,
+  participantsStatus,
+  onRefreshParticipants,
+  onClose,
+}: Props) {
   const [detail, setDetail] = useState<PtSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -99,12 +113,8 @@ export function PtSessionDetailModal({ session, onClose }: Props) {
   // Use fetched detail if available, otherwise fall back to the row summary.
   const s: PtSession = detail ?? session;
   const badge = statusBadge(s);
-  const participantCount =
-    typeof s.participantCount === "number"
-      ? s.participantCount
-      : Array.isArray(s.participants)
-        ? s.participants.length
-        : 0;
+  // Participants come from the lifted cache (GET /pt-sessions/{id}/participants).
+  const participantCount = participants.length;
 
   return (
     <div
@@ -171,23 +181,31 @@ export function PtSessionDetailModal({ session, onClose }: Props) {
                 <Row label="Participants" value={String(participantCount)} />
               </div>
 
-              {/* Participants list (if any) */}
-              {Array.isArray(s.participants) && s.participants.length > 0 && (
-                <>
-                  <SectionHeader icon="fas fa-user-friends" label="Participant List" />
-                  <div className="bg-sidebar rounded-lg border border-border px-3 py-2 space-y-1">
-                    {s.participants.map((p, i) => (
-                      <div
-                        key={p.memberId ?? i}
-                        className="text-sm text-gray-200 flex items-center gap-2"
-                      >
-                        <i className="fas fa-user text-gray-500 text-xs" aria-hidden />
-                        {p.memberName ?? p.memberId ?? "—"}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
+              {/* Participant list (lifted from GET /pt-sessions/{id}/participants) */}
+              <div className="flex items-center justify-between mt-4 first:mt-0">
+                <div className="flex items-center gap-2">
+                  <i className="fas fa-user-friends text-sweat w-4 text-sm" aria-hidden />
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                    Participant List
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={onRefreshParticipants}
+                  disabled={participantsStatus === "loading"}
+                  className="text-gray-400 hover:text-white text-xs disabled:opacity-50"
+                  aria-label="Refresh peserta"
+                  title="Refresh peserta"
+                >
+                  <i className="fas fa-sync-alt" aria-hidden />
+                </button>
+              </div>
+              <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
+                <ParticipantList
+                  participants={participants}
+                  status={participantsStatus}
+                />
+              </div>
 
               {/* Notes */}
               {s.notes && (

@@ -4,10 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
+import { downloadXlsx } from "@/lib/export";
 import { useRole } from "@/contexts/role-context";
 // TODO: Re-enable create payment feature
 // import { CreatePaymentModal } from "./create-payment-modal";
 import { PaymentDetailModal } from "./payment-detail-modal";
+import { paymentStatusMeta } from "./payment-status";
 
 export type Payment = {
   id: string;
@@ -50,9 +52,7 @@ function formatRupiah(amount: number): string {
 }
 
 function statusBadge(status: number) {
-  if (status === 1) return { label: "Paid", class: "bg-green-500/10 text-green-500 border-green-500/20" };
-  if (status === 0) return { label: "Pending", class: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" };
-  return { label: "Failed", class: "bg-red-500/10 text-red-500 border-red-500/20" };
+  return paymentStatusMeta(status);
 }
 
 const ALLOWED_TABS: StatusTab[] = ["all", "paid", "pending", "failed"];
@@ -77,6 +77,8 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
   const loadPayments = useCallback(async (tab: StatusTab) => {
     setLoading(true);
     setError("");
+    // The backend `/failed` endpoint returns empty; for the failed tab, fetch the
+    // base (All) endpoint and filter client-side using the same criterion as `statusBadge`.
     const statusMap: Record<StatusTab, string> = {
       all: "",
       paid: "/paid",
@@ -93,8 +95,8 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
       setLoading(false);
       return;
     }
-    const list: Payment[] = Array.isArray(data) ? data : (data.items ?? data.data ?? []);
-    setPayments(list);
+    const rawList: Payment[] = Array.isArray(data) ? data : (data.items ?? data.data ?? []);
+    setPayments(rawList);
     setLoading(false);
   }, []);
 
@@ -151,11 +153,10 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
     6: "Virtual Account",
   };
 
-  function exportCsv() {
-    const statusLabel = (s: number) =>
-      s === 1 ? "Paid" : s === 0 ? "Pending" : "Failed";
+  async function exportXlsx() {
+    const statusLabel = (s: number) => paymentStatusMeta(s).label;
     const methodLabel = (m: number) => PAYMENT_METHOD_LABELS[m] ?? String(m);
-    const providerLabel = (p: number) => (p === 0 ? "Offline" : "Midtrans");
+    const providerLabel = (p: number) => (p === 0 ? "Offline" : "Xendit");
     const val = (s?: string | null) => s || "—";
     const num = (n?: number | null) =>
       n != null ? n.toLocaleString("id-ID") : "—";
@@ -194,16 +195,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
       fmtDateTime(p.created),
       fmtDateTime(p.lastModified),
     ]);
-    const csv = [header, ...rows]
-      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "payments.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    await downloadXlsx([header, ...rows], "payments.xlsx");
   }
 
   const tabs: { key: StatusTab; label: string }[] = [
@@ -265,11 +257,11 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
           </div>
           <button
             type="button"
-            onClick={exportCsv}
+            onClick={() => void exportXlsx()}
             className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center gap-2"
           >
             <i className="fas fa-file-export" aria-hidden />
-            Export CSV
+            Export
           </button>
           {/* TODO: Re-enable create payment feature
           <button

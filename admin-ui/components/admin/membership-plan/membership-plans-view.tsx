@@ -8,6 +8,7 @@ import {
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
+import { downloadXlsx } from "@/lib/export";
 
 type SortDir = "asc" | "desc";
 
@@ -213,7 +214,7 @@ export function MembershipPlansView() {
         await loadPlans(page);
     }
 
-    async function exportCsv() {
+    async function exportXlsx() {
         const res = await authFetch(`${API_BASE_URL}/api/v1/membership-plans`, {
             cache: "no-store",
         });
@@ -261,16 +262,7 @@ export function MembershipPlansView() {
             num(p.registrationFee),
             yesNo(p.allowMultiBranchAccess),
         ]);
-        const csv = [header, ...rows]
-            .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
-            .join("\n");
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "membership-plans.csv";
-        a.click();
-        URL.revokeObjectURL(url);
+        await downloadXlsx([header, ...rows], "membership-plans.xlsx");
     }
 
     return (
@@ -308,11 +300,11 @@ export function MembershipPlansView() {
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
                         <button
                             type="button"
-                            onClick={() => void exportCsv()}
+                            onClick={() => void exportXlsx()}
                             className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
                             <i className="fas fa-file-export" aria-hidden />
-                            Export CSV
+                            Export
                         </button>
                         <button
                             type="button"

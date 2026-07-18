@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
+import { downloadXlsx } from "@/lib/export";
 import {
   DropInDetailModal,
   type MemberDropInPass,
@@ -97,7 +98,7 @@ export function DropInView() {
     void loadPasses(page);
   }, [loadPasses, page]);
 
-  function exportCsv() {
+  async function exportXlsx() {
     const val = (s?: string | null) => s || "—";
     const fmtDate = (iso?: string | null) => (iso ? formatDate(iso) : "—");
 
@@ -135,16 +136,7 @@ export function DropInView() {
       fmtDate(p.expiredAt),
       p.isActive ? "Active" : "Expired",
     ]);
-    const csv = [header, ...rows]
-      .map((r) => r.map((c) => `"${String(c).replaceAll("\"", "\"\"")}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "drop-in-passes.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    await downloadXlsx([header, ...rows], "drop-in-passes.xlsx");
   }
 
   return (
@@ -153,11 +145,11 @@ export function DropInView() {
         <h2 className="text-lg font-display font-bold text-white">Drop In</h2>
         <button
           type="button"
-          onClick={exportCsv}
+          onClick={() => void exportXlsx()}
           className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center gap-2"
         >
           <i className="fas fa-file-export" aria-hidden />
-          Export CSV
+          Export
         </button>
       </div>
 
