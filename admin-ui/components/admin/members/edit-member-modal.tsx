@@ -39,6 +39,7 @@ export function EditMemberModal({
   const [initialValues, setInitialValues] = useState<Partial<MemberFormState>>(
     memberToForm(member)
   );
+  const [email, setEmail] = useState<string | null>(member.email ?? null);
 
   // Prefetch full member detail to hydrate the form accurately.
   useEffect(() => {
@@ -52,6 +53,7 @@ export function EditMemberModal({
         const data = (await res.json().catch(() => null)) as ApiMember | null;
         if (data && !cancelled) {
           setInitialValues(memberToForm(data));
+          setEmail(data.email ?? null);
         }
       }
     }
@@ -114,6 +116,7 @@ export function EditMemberModal({
       branchesLoading={branchesLoading}
       membershipPlans={membershipPlans}
       membershipPlansLoading={membershipPlansLoading}
+      displayEmail={email}
       onClose={onClose}
       onSubmit={handleSubmit}
     />

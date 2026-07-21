@@ -18,6 +18,7 @@ type Props = {
   branchesLoading: boolean;
   membershipPlans: MembershipPlan[];
   membershipPlansLoading: boolean;
+  displayEmail?: string | null;
   onClose: () => void;
   onSubmit: (values: MemberFormState) => Promise<void>;
 };
@@ -30,6 +31,7 @@ export function CreateMemberModal({
   branchesLoading,
   membershipPlans,
   membershipPlansLoading,
+  displayEmail,
   onClose,
   onSubmit,
 }: Props) {
@@ -125,6 +127,18 @@ export function CreateMemberModal({
                     className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
                   />
                 </label>
+                {displayEmail && (
+                  <label className="block sm:col-span-2">
+                    <span className="text-gray-500 text-xs uppercase font-bold">Email</span>
+                    <input
+                      type="email"
+                      value={displayEmail}
+                      disabled
+                      readOnly
+                      className="mt-1 w-full bg-gray-800 border border-border rounded-lg px-3 py-2 text-gray-400 cursor-not-allowed focus:outline-none"
+                    />
+                  </label>
+                )}
                 <label className="block sm:col-span-2">
                   <span className="text-gray-500 text-xs uppercase font-bold">Profile Image URL</span>
                   <input

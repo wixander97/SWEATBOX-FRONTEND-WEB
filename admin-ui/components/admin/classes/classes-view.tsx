@@ -43,6 +43,26 @@ function toIsoDateValue(value: string) {
   return new Date(`${value}T00:00:00.000Z`).toISOString();
 }
 
+function classStatusLabel(c: ApiClass): "Completed" | "Cancelled" | "Active" | "Inactive" {
+  if (c.isCancelled === true) return "Cancelled";
+  if (c.isCompleted === true) return "Completed";
+  if (c.isActive === true) return "Active";
+  return "Inactive";
+}
+
+function statusBadgeClass(status: string) {
+  switch (status) {
+    case "Completed":
+      return "bg-emerald-500/15 text-emerald-200 border border-emerald-500/35";
+    case "Cancelled":
+      return "bg-red-500/15 text-red-200 border border-red-500/35";
+    case "Active":
+      return "bg-sweat/15 text-sweat border border-sweat/35";
+    default:
+      return "bg-gray-800 text-gray-300 border border-border";
+  }
+}
+
 function branchBadgeClass(branchName: string | null | undefined) {
   const n = (branchName ?? "").toLowerCase();
   if (n.includes("pik")) {
@@ -234,7 +254,8 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       const time = c.startTime?.slice(0, 5) || "-";
       const trainer = c.coachName || c.coachId;
       const location = c.branchName || "-";
-      return { ...c, enrolled, time, trainer, location };
+      const status = classStatusLabel(c);
+      return { ...c, enrolled, time, trainer, location, status };
     });
     if (!sortKey) {
       return [...rows].sort((a, b) =>
@@ -318,6 +339,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       c.branchName || "-",
       String(enrolled),
       String(c.capacity ?? 0),
+      classStatusLabel(c),
     ];
   }
 
@@ -330,6 +352,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       "Location",
       "Enrolled",
       "Capacity",
+      "Status",
     ];
 
     let source: ApiClass[];
@@ -516,6 +539,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                     { label: "Trainer", key: "trainer" },
                     { label: "Location", key: "location" },
                     { label: "Capacity", key: "enrolled" },
+                    { label: "Status", key: "status" },
                   ] as { label: string; key: string }[]
                 ).map(({ label, key }) => (
                   <th key={key} className="px-6 py-4">
@@ -544,20 +568,20 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td className="px-6 py-6 text-gray-400" colSpan={7}>
+                  <td className="px-6 py-6 text-gray-400" colSpan={8}>
                     Loading...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td className="px-6 py-6 text-red-400" colSpan={7}>
+                  <td className="px-6 py-6 text-red-400" colSpan={8}>
                     {error}
                   </td>
                 </tr>
               ) : mappedRows.length === 0 ? (
                 <tr>
-                  <td className="px-6 py-6 text-gray-400" colSpan={7}>
-                    Belum ada data class.
+                  <td className="px-6 py-6 text-gray-400" colSpan={8}>
+                    Belum ada data class.,
                   </td>
                 </tr>
               ) : (
@@ -592,6 +616,13 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         </div>
                         <span className="text-xs mt-1 block">
                           {c.enrolled} / {c.capacity}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${statusBadgeClass(c.status)}`}
+                        >
+                          {c.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">

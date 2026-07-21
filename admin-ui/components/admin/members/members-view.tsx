@@ -483,19 +483,7 @@ export function MembersView() {
                     {m.memberCode || m.id}
                   </td>
                   <td className="px-6 py-4 font-bold text-white">
-                    <span className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden inline-block shrink-0">
-                        <Image
-                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(m.fullName || "Member")}&background=random`}
-                          alt=""
-                          width={32}
-                          height={32}
-                          className="w-full h-full object-cover"
-                          unoptimized
-                        />
-                      </span>
-                      {m.fullName || "-"}
-                    </span>
+                    {m.fullName || "-"}
                   </td>
                   <td className="px-6 py-4">{m.email || "—"}</td>
                   <td className="px-6 py-4">{m.homeClubBranchName || "—"}</td>
