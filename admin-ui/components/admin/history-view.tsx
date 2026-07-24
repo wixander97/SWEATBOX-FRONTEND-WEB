@@ -306,8 +306,11 @@ export function HistoryView() {
 
   async function exportCoachAttendanceXlsx() {
     if (!selectedCoachId || attendanceHistory.length === 0) return;
-    const header = ["Date", "Class Name", "Branch", "Present", "Status"];
+    const coach = coaches.find((c) => c.id === selectedCoachId);
+    const coachName = coach?.fullName || "-";
+    const header = ["Coach Name", "Date", "Class Name", "Branch", "Present", "Status"];
     const rows = attendanceHistory.map((r) => [
+      coachName,
       formatDate(r.classDate),
       r.className,
       r.branchName || "-",
@@ -319,8 +322,11 @@ export function HistoryView() {
 
   async function exportMemberBookingXlsx() {
     if (!selectedMemberId || bookingHistory.length === 0) return;
-    const header = ["Class Name", "Coach", "Date", "Time", "Booked On", "Status"];
+    const member = members.find((m) => m.id === selectedMemberId);
+    const memberName = member?.fullName || bookingHistory[0]?.memberName || "-";
+    const header = ["Member Name", "Class Name", "Coach", "Date", "Time", "Booked On", "Status"];
     const rows = bookingHistory.map((r) => [
+      memberName,
       r.className,
       r.coachName || "-",
       formatClassDate(r.classDate),

@@ -30,6 +30,44 @@ function toIsoUtc(value: string): string {
   return d.toISOString();
 }
 
+const REQUIRED_BANNER_WIDTH = 2160;
+const REQUIRED_BANNER_HEIGHT = 720;
+
+type ImageValidationResult =
+  | { ok: true; width: number; height: number }
+  | { ok: false; reason: "not-image" | "wrong-dimensions"; width: number; height: number };
+
+// Reads a File's natural dimensions via an object URL. The object URL is always
+// revoked (both onload and onerror) before the promise settles.
+function validateBannerImage(file: File): Promise<ImageValidationResult> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    let settled = false;
+    const cleanup = () => {
+      if (!settled) {
+        settled = true;
+        URL.revokeObjectURL(url);
+      }
+    };
+    img.onload = () => {
+      const width = img.naturalWidth;
+      const height = img.naturalHeight;
+      cleanup();
+      if (width === REQUIRED_BANNER_WIDTH && height === REQUIRED_BANNER_HEIGHT) {
+        resolve({ ok: true, width, height });
+      } else {
+        resolve({ ok: false, reason: "wrong-dimensions", width, height });
+      }
+    };
+    img.onerror = () => {
+      cleanup();
+      resolve({ ok: false, reason: "not-image", width: 0, height: 0 });
+    };
+    img.src = url;
+  });
+}
+
 type Props = {
   isOpen: boolean;
   onClose: () => void;
@@ -47,8 +85,12 @@ export function PromoBannerFormModal({
 }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [imageError, setImageError] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Tracks the latest file selected for validation so stale callbacks from a
+  // superseded selection are ignored (race mitigation).
+  const latestFileRef = useRef<File | null>(null);
 
   const handleSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
@@ -93,7 +135,9 @@ export function PromoBannerFormModal({
         // Image is required on Create. On Edit it is optional; omitting it
         // preserves the existing imageUrl.
         if (!imageFile && !isEdit) {
-          setError("Image is required");
+          // Preserve the dimension validation error from onChange if present;
+          // only fall back to the generic message when no file was ever selected.
+          if (!imageError) setError("Image is required");
           setSubmitting(false);
           return;
         }
@@ -111,7 +155,7 @@ export function PromoBannerFormModal({
         setSubmitting(false);
       }
     },
-    [imageFile, isEdit, onClose, onSubmit]
+    [imageFile, imageError, isEdit, onClose, onSubmit]
   );
 
   if (!isOpen) return null;
@@ -148,9 +192,9 @@ export function PromoBannerFormModal({
           </button>
         </div>
 
-        {error && (
+        {(error || imageError) && (
           <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-200 text-sm rounded-lg">
-            {error}
+            {error || imageError}
           </div>
         )}
 
@@ -287,10 +331,40 @@ export function PromoBannerFormModal({
               type="file"
               name="image"
               accept="image/*"
-              required={!isEdit}
-              onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+              onChange={async (e) => {
+                const file = e.target.files?.[0] ?? null;
+                if (!file) {
+                  setImageFile(null);
+                  return;
+                }
+                // Mark this as the latest selection; revoke/ignore any prior
+                // in-flight validation by comparing against latestFileRef.
+                latestFileRef.current = file;
+                const result = await validateBannerImage(file);
+                if (latestFileRef.current !== file) return; // stale callback
+                if (result.ok) {
+                  setImageFile(file);
+                  setImageError("");
+                  setError("");
+                } else if (result.reason === "not-image") {
+                  setImageFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                  setImageError("File is not a valid image.");
+                  setError("");
+                } else {
+                  setImageFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                  setImageError(
+                    `Image must be ${REQUIRED_BANNER_WIDTH} × ${REQUIRED_BANNER_HEIGHT} px. Selected: ${result.width} × ${result.height}.`
+                  );
+                  setError("");
+                }
+              }}
               className="w-full bg-sidebar border border-border text-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:border-sweat file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-sweat file:text-black file:font-bold file:cursor-pointer"
             />
+            <p className="mt-1.5 text-xs text-gray-500">
+              Ukuran wajib {REQUIRED_BANNER_WIDTH} × {REQUIRED_BANNER_HEIGHT} px, rasio 3:1.
+            </p>
             {isEdit && initialValues?.imageUrl && !imageFile && (
               <p className="mt-1.5 text-xs text-gray-500">
                 Leave empty to keep the existing image.

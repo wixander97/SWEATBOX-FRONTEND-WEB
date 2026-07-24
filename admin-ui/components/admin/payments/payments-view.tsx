@@ -14,6 +14,8 @@ import { paymentStatusMeta } from "./payment-status";
 export type Payment = {
   id: string;
   userId: string;
+  memberName?: string | null;
+  branchName?: string | null;
   membershipPlanId: string;
   membershipPlanName: string | null;
   invoiceNo: string;
@@ -44,7 +46,7 @@ type PaymentSummary = {
 };
 
 type StatusTab = "all" | "paid" | "pending" | "failed";
-type SortKey = "invoiceNo" | "finalAmount" | "paymentStatus" | "created";
+type SortKey = "invoiceNo" | "memberName" | "branchName" | "finalAmount" | "paymentStatus" | "created";
 type SortDir = "asc" | "desc";
 
 function formatRupiah(amount: number): string {
@@ -71,10 +73,12 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
   const [selected, setSelected] = useState<Payment | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
   // TODO: Re-enable create payment feature
   // const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const loadPayments = useCallback(async (tab: StatusTab) => {
+  const loadPayments = useCallback(async (tab: StatusTab, keyword: string) => {
     setLoading(true);
     setError("");
     // The backend `/failed` endpoint returns empty; for the failed tab, fetch the
@@ -85,8 +89,10 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
       pending: "/pending",
       failed: "/failed",
     };
-    const params = statusMap[tab];
-    const res = await authFetch(`${API_BASE_URL}/api/v1/payments${params}`, { cache: "no-store" });
+    const path = statusMap[tab];
+    const trimmed = keyword.trim();
+    const query = trimmed ? `?search=${encodeURIComponent(trimmed)}` : "";
+    const res = await authFetch(`${API_BASE_URL}/api/v1/payments${path}${query}`, { cache: "no-store" });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     const data = (await res.json().catch(() => [])) as Payment[] | { items?: Payment[]; data?: Payment[] };
     if (!res.ok) {
@@ -108,9 +114,15 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
     }
   }, []);
 
+  // Debounce search input: only send to API after the user stops typing.
   useEffect(() => {
-    void loadPayments(activeTab);
-  }, [loadPayments, activeTab]);
+    const timer = setTimeout(() => setSearch(searchInput), 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  useEffect(() => {
+    void loadPayments(activeTab, search);
+  }, [loadPayments, activeTab, search]);
 
   useEffect(() => {
     void loadSummary();
@@ -138,7 +150,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
     setActionLoading(false);
     setDeleteId(null);
     if (res.ok) {
-      void loadPayments(activeTab);
+      void loadPayments(activeTab, search);
       void loadSummary();
     }
   }
@@ -165,6 +177,8 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
 
     const header = [
       "Invoice No",
+      "Member Name",
+      "Branch Name",
       "Membership Plan",
       "Amount",
       "Discount",
@@ -181,6 +195,8 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
     ];
     const rows = sorted.map((p) => [
       val(p.invoiceNo),
+      val(p.memberName),
+      val(p.branchName),
       val(p.membershipPlanName),
       num(p.amount),
       num(p.discount),
@@ -255,14 +271,40 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => void exportXlsx()}
-            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center gap-2"
-          >
-            <i className="fas fa-file-export" aria-hidden />
-            Export
-          </button>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="relative">
+              <i
+                className={`fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs ${searchInput ? "text-sweat" : "text-gray-500"}`}
+                aria-hidden
+              />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search invoice / plan..."
+                className="w-full sm:w-64 bg-sidebar border border-border text-white text-sm rounded-lg pl-9 pr-9 py-2 focus:outline-none focus:border-sweat transition placeholder:text-gray-500"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => { setSearchInput(""); setSearch(""); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+                  aria-label="Clear search"
+                  title="Clear search"
+                >
+                  <i className="fas fa-times text-xs" aria-hidden />
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => void exportXlsx()}
+              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center gap-2"
+            >
+              <i className="fas fa-file-export" aria-hidden />
+              Export
+            </button>
+          </div>
           {/* TODO: Re-enable create payment feature
           <button
             type="button"
@@ -279,7 +321,9 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
         ) : error ? (
           <div className="p-6 text-red-400">{error}</div>
         ) : sorted.length === 0 ? (
-          <div className="p-6 text-gray-400">No payments found.</div>
+          <div className="p-6 text-gray-400">
+            No payments found{search ? ` for \"${search}\"` : ""}.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[800px] text-left text-sm text-gray-400">
@@ -288,6 +332,8 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
                   {(
                     [
                       { label: "Invoice", key: "invoiceNo" },
+                      { label: "Member", key: "memberName" },
+                      { label: "Branch", key: "branchName" },
                       { label: "Plan", key: null },
                       { label: "Amount", key: null },
                       { label: "Final", key: "finalAmount" },
@@ -321,6 +367,12 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
                     <tr key={p.id} className="table-row transition">
                       <td className="px-6 py-4 font-mono text-xs text-sweat">
                         {p.invoiceNo}
+                      </td>
+                      <td className="px-6 py-4 font-medium text-white">
+                        {p.memberName || "—"}
+                      </td>
+                      <td className="px-6 py-4 font-medium text-white">
+                        {p.branchName || "—"}
                       </td>
                       <td className="px-6 py-4 font-medium text-white">
                         {p.membershipPlanName ?? "—"}
