@@ -103,6 +103,9 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
   const [cancelTarget, setCancelTarget] = useState<ApiClass | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const keywordActive = keyword.trim() !== "";
 
   function toggleSort(key: string) {
     if (sortKey === key) {
@@ -136,12 +139,20 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
   );
 
   const loadClasses = useCallback(
-    async (targetPage: number) => {
+    async (targetPage: number, kw: string) => {
       setLoading(true);
       setError("");
 
       let url: string;
-      if (statusTab !== "all") {
+      const trimmedKw = kw.trim();
+      if (trimmedKw) {
+        const params = new URLSearchParams({
+          page: String(targetPage),
+          pageSize: String(pageSize),
+        });
+        params.set("keyword", trimmedKw);
+        url = `${API_BASE_URL}/api/v1/class-schedules/search?${params.toString()}`;
+      } else if (statusTab !== "all") {
         // Status tab is the primary filter; ignore date/location filters.
         const params = new URLSearchParams({
           page: String(targetPage),
@@ -185,8 +196,13 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
         return;
       }
 
-      // Combined filters (tab "all" only): client-side date filter + local pagination.
-      if (statusTab === "all" && filterLocation.trim() !== "" && filterDate.trim() !== "") {
+      // Combined filters (tab "all" only, search inactive): client-side date filter + local pagination.
+      if (
+        !trimmedKw &&
+        statusTab === "all" &&
+        filterLocation.trim() !== "" &&
+        filterDate.trim() !== ""
+      ) {
         const raw = Array.isArray(payload)
           ? payload
           : payload.items ?? payload.data ?? [];
@@ -207,6 +223,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
     },
     [pageSize, statusTab, filterDate, filterLocation, applyPayload]
   );
+
 
   const loadCoaches = useCallback(async () => {
     const res = await authFetch(`${API_BASE_URL}/api/v1/coaches?page=1&pageSize=100`, { cache: "no-store" });
@@ -242,10 +259,10 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
   }, []);
 
   useEffect(() => {
-    void loadClasses(page);
+    void loadClasses(page, keyword);
     void loadCoaches();
     void loadBranches();
-  }, [loadClasses, loadCoaches, loadBranches, page]);
+  }, [loadClasses, loadCoaches, loadBranches, page, keyword]);
 
   const mappedRows = useMemo(() => {
     const rows = classes.map((c) => {
@@ -285,7 +302,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       throw new Error(payload.message || "Create class gagal");
     }
     setPage(1);
-    await loadClasses(1);
+    await loadClasses(1, keyword);
   }
 
   async function deleteClass(id: string) {
@@ -303,7 +320,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       return;
     }
     setDeleteId(null);
-    await loadClasses(page);
+    await loadClasses(page, keyword);
   }
 
   async function cancelClass(cls: ApiClass) {
@@ -325,7 +342,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       return;
     }
     setCancelTarget(null);
-    await loadClasses(page);
+    await loadClasses(page, keyword);
   }
 
   function classCsvRow(c: ApiClass): string[] {
@@ -400,18 +417,52 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                 <button
                   key={t.key}
                   type="button"
+                  disabled={keywordActive}
                   onClick={() => {
+                    if (keywordActive) return;
                     setStatusTab(t.key);
                     setPage(1);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${statusTab === t.key
                     ? "bg-sweat text-black border-sweat"
                     : "bg-sidebar border-border text-gray-400 hover:text-white"
-                    }`}
+                    } ${keywordActive ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {t.label}
                 </button>
               ))}
+            </div>
+            <div className="relative w-full sm:w-72">
+              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+              <input
+                type="text"
+                placeholder="Cari class schedule..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const trimmed = searchInput.trim();
+                    setKeyword(trimmed);
+                    setSearchInput(trimmed);
+                    setPage(1);
+                  }
+                }}
+                className="w-full bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchInput("");
+                    setKeyword("");
+                    setPage(1);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                  aria-label="Clear search"
+                >
+                  <i className="fas fa-times" aria-hidden />
+                </button>
+              )}
             </div>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               {/* Date filter */}
@@ -443,8 +494,8 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                     setFilterDate(e.target.value);
                     setPage(1);
                   }}
-                  disabled={statusTab !== "all"}
-                  className={`[color-scheme:dark] bg-sidebar border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat disabled:opacity-50 ${filterDate && statusTab === "all" ? "border-sweat" : "border-border"
+                  disabled={statusTab !== "all" || keywordActive}
+                  className={`[color-scheme:dark] bg-sidebar border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat disabled:opacity-50 ${filterDate && statusTab === "all" && !keywordActive ? "border-sweat" : "border-border"
                     }`}
                 />
               </div>
@@ -477,10 +528,10 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                     setFilterLocation(e.target.value);
                     setPage(1);
                   }}
-                  disabled={statusTab !== "all"}
+                  disabled={statusTab !== "all" || keywordActive}
                   className={`bg-sidebar border text-white px-4 py-2      
                   rounded-lg text-sm focus:outline-none focus:border-sweat disabled:opacity-50   
-                  ${filterLocation && statusTab === "all" ? "border-sweat" : "border-border"
+                  ${filterLocation && statusTab === "all" && !keywordActive ? "border-sweat" : "border-border"
                     }`}
                 >
                   <option value="">All Locations</option>
@@ -717,7 +768,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
           setEditClass(null);
         }}
         trainerOptions={trainers}
-        onSuccess={() => void loadClasses(page)}
+        onSuccess={() => void loadClasses(page, keyword)}
       />
 
       {detailTarget && (

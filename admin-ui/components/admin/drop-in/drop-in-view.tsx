@@ -39,15 +39,19 @@ export function DropInView() {
   const [totalPages, setTotalPages] = useState(1);
   const [detailMemberId, setDetailMemberId] = useState<string | null>(null);
   const [detailMemberName, setDetailMemberName] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
 
   const loadPasses = useCallback(
-    async (targetPage: number) => {
+    async (targetPage: number, keyword: string) => {
       setLoading(true);
       setError("");
       const params = new URLSearchParams({
         page: String(targetPage),
         pageSize: String(pageSize),
       });
+      const trimmed = keyword.trim();
+      if (trimmed) params.set("search", trimmed);
       try {
         const res = await authFetch(
           `${API_BASE_URL}/api/member-drop-in-passes?${params.toString()}`,
@@ -94,9 +98,19 @@ export function DropInView() {
     [pageSize]
   );
 
+  // Debounce search input: commit search + reset page to 1 together so React 18
+  // batches both into a single render (single load effect run, no double-fetch).
   useEffect(() => {
-    void loadPasses(page);
-  }, [loadPasses, page]);
+    const timer = setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  useEffect(() => {
+    void loadPasses(page, search);
+  }, [loadPasses, page, search]);
 
   async function exportXlsx() {
     const val = (s?: string | null) => s || "—";
@@ -141,16 +155,46 @@ export function DropInView() {
 
   return (
     <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-lg font-display font-bold text-white">Drop In</h2>
-        <button
-          type="button"
-          onClick={() => void exportXlsx()}
-          className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center gap-2"
-        >
-          <i className="fas fa-file-export" aria-hidden />
-          Export
-        </button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="relative">
+            <i
+              className={`fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs ${searchInput ? "text-sweat" : "text-gray-500"}`}
+              aria-hidden
+            />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search member / code / branch..."
+              className="w-full sm:w-64 bg-sidebar border border-border text-white text-sm rounded-lg pl-9 pr-9 py-2 focus:outline-none focus:border-sweat transition placeholder:text-gray-500"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput("");
+                  setSearch("");
+                  setPage(1);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+                aria-label="Clear search"
+                title="Clear search"
+              >
+                <i className="fas fa-times text-xs" aria-hidden />
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => void exportXlsx()}
+            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center gap-2"
+          >
+            <i className="fas fa-file-export" aria-hidden />
+            Export
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -158,7 +202,9 @@ export function DropInView() {
       ) : error ? (
         <div className="p-6 text-red-400">{error}</div>
       ) : passes.length === 0 ? (
-        <div className="p-6 text-gray-400">No drop-in passes found.</div>
+        <div className="p-6 text-gray-400">
+          No drop-in passes found{search ? ` for "${search}"` : ""}.
+        </div>
       ) : (
         <>
           <div className="overflow-x-auto">

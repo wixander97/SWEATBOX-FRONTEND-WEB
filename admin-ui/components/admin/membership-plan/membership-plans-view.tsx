@@ -64,6 +64,8 @@ export function MembershipPlansView() {
     const [sortKey, setSortKey] = useState<string | null>(null);
     const [sortDir, setSortDir] = useState<SortDir>("asc");
     const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
+    const [keyword, setKeyword] = useState("");
+    const [searchInput, setSearchInput] = useState("");
 
     function toggleSort(key: string) {
         if (sortKey === key) {
@@ -74,14 +76,19 @@ export function MembershipPlansView() {
         }
     }
 
-    const loadPlans = useCallback(async (targetPage: number) => {
+    const loadPlans = useCallback(async (targetPage: number, kw: string) => {
         setLoading(true);
         setError("");
+        const trimmed = kw.trim();
         const params = new URLSearchParams({
             page: String(targetPage),
             pageSize: String(pageSize),
         });
-        const res = await authFetch(`${API_BASE_URL}/api/v1/membership-plans?${params.toString()}`, {
+        if (trimmed) params.set("keyword", trimmed);
+        const endpoint = trimmed
+            ? `${API_BASE_URL}/api/v1/membership-plans/search`
+            : `${API_BASE_URL}/api/v1/membership-plans`;
+        const res = await authFetch(`${endpoint}?${params.toString()}`, {
             cache: "no-store",
         });
         if (redirectToLoginIfUnauthorized(res.status)) return;
@@ -138,9 +145,9 @@ export function MembershipPlansView() {
     }, []);
 
     useEffect(() => {
-        void loadPlans(page);
+        void loadPlans(page, keyword);
         void loadBranches();
-    }, [loadPlans, loadBranches, page]);
+    }, [loadPlans, loadBranches, page, keyword]);
 
     const filteredPlans = useMemo(() => {
         if (filterActive === "all") return plans;
@@ -181,7 +188,7 @@ export function MembershipPlansView() {
         if (!res.ok) {
             throw new Error(payload.message || "Create membership plan gagal");
         }
-        await loadPlans(page);
+        await loadPlans(page, keyword);
     }
 
     async function updatePlan(values: MembershipPlanFormValues) {
@@ -196,7 +203,7 @@ export function MembershipPlansView() {
         if (!res.ok) {
             throw new Error(payload.message || "Update membership plan gagal");
         }
-        await loadPlans(page);
+        await loadPlans(page, keyword);
     }
 
     async function deletePlan(id: string) {
@@ -211,7 +218,7 @@ export function MembershipPlansView() {
             window.alert(payload.message || "Delete membership plan gagal");
             return;
         }
-        await loadPlans(page);
+        await loadPlans(page, keyword);
     }
 
     async function exportXlsx() {
@@ -271,12 +278,44 @@ export function MembershipPlansView() {
                 <div className="p-4 sm:p-6 border-b border-border flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
                     <div className="flex flex-col gap-3">
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                            <div className="relative w-full sm:w-72">
+                                <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+                                <input
+                                    type="text"
+                                    placeholder="Cari membership plan..."
+                                    value={searchInput}
+                                    onChange={(e) => setSearchInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            const trimmed = searchInput.trim();
+                                            setKeyword(trimmed);
+                                            setSearchInput(trimmed);
+                                            setPage(1);
+                                        }
+                                    }}
+                                    className="w-full bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+                                />
+                                {searchInput && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSearchInput("");
+                                            setKeyword("");
+                                            setPage(1);
+                                        }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                                        aria-label="Clear search"
+                                    >
+                                        <i className="fas fa-times" aria-hidden />
+                                    </button>
+                                )}
+                            </div>
                             <select
                                 value={filterActive}
                                 onChange={(e) =>
                                     setFilterActive(e.target.value as "all" | "active" | "inactive")
                                 }
-                                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+                                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat w-full sm:w-40"
                             >
                                 <option value="all">All Plans</option>
                                 <option value="active">Active Plans</option>
