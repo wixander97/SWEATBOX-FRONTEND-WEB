@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { isNilBranchId } from "@/components/admin/pt/pt-types";
 import type { SelectOption } from "@/components/admin/pt/pt-types";
 import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency";
 import { formatCountInput, parseCountInput } from "@/lib/number-input";
@@ -10,6 +11,7 @@ export type PtPackageFormValues = {
   memberId: string;
   name: string;
   coachId: string;
+  branchId: string;
   sessionCount: number;
   price: number;
   isActive: boolean;
@@ -20,6 +22,7 @@ type FormState = {
   memberId: string;
   name: string;
   coachId: string;
+  branchId: string;
   sessionCount: number;
   price: number;
   isActive: boolean;
@@ -31,6 +34,7 @@ function emptyForm(): FormState {
     memberId: "",
     name: "",
     coachId: "",
+    branchId: "",
     sessionCount: 0,
     price: 0,
     isActive: true,
@@ -44,6 +48,7 @@ type Props = {
   isEdit?: boolean;
   coachOptions: SelectOption[];
   memberOptions: SelectOption[];
+  branchOptions: SelectOption[];
   initialValues?: Partial<PtPackageFormValues>;
   saving: boolean;
   onClose: () => void;
@@ -56,6 +61,7 @@ export function PtPackageFormModal({
   isEdit = false,
   coachOptions,
   memberOptions,
+  branchOptions,
   initialValues,
   saving,
   onClose,
@@ -67,6 +73,7 @@ export function PtPackageFormModal({
         memberId: initialValues.memberId ?? "",
         name: initialValues.name ?? "",
         coachId: initialValues.coachId ?? "",
+        branchId: isNilBranchId(initialValues.branchId) ? "" : initialValues.branchId!,
         sessionCount: initialValues.sessionCount ?? 0,
         price: initialValues.price ?? 0,
         isActive: initialValues.isActive ?? true,
@@ -82,6 +89,7 @@ export function PtPackageFormModal({
         memberId: initialValues.memberId ?? "",
         name: initialValues.name ?? "",
         coachId: initialValues.coachId ?? "",
+        branchId: isNilBranchId(initialValues.branchId) ? "" : initialValues.branchId!,
         sessionCount: initialValues.sessionCount ?? 0,
         price: initialValues.price ?? 0,
         isActive: initialValues.isActive ?? true,
@@ -106,6 +114,10 @@ export function PtPackageFormModal({
       }
       if (!form.coachId.trim()) {
         setError("Coach is required");
+        return;
+      }
+      if (!form.branchId.trim()) {
+        setError("Branch is required");
         return;
       }
       if (form.sessionCount === undefined || form.sessionCount === null || Number.isNaN(form.sessionCount)) {
@@ -193,6 +205,25 @@ export function PtPackageFormModal({
               {coachOptions.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
+              Branch <span className="text-red-400">*</span>
+            </label>
+            <select
+              value={form.branchId}
+              onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
+              className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+              required
+            >
+              <option value="">Pilih branch...</option>
+              {branchOptions.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.label}
                 </option>
               ))}
             </select>

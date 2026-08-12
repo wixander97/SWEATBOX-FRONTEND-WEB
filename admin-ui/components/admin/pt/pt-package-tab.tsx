@@ -11,9 +11,11 @@ import {
   type PtPackageFormValues,
 } from "@/components/admin/pt/pt-package-form-modal";
 import {
+  type Branch,
   type Coach,
   type Member,
   type PtPackage,
+  branchLabel,
   coachLabel,
   memberLabel,
   parseList,
@@ -27,6 +29,7 @@ export function PtPackageTab() {
   const [packages, setPackages] = useState<PtPackage[]>([]);
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -121,13 +124,27 @@ export function PtPackageTab() {
     }
   }, []);
 
+  const loadBranches = useCallback(async () => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/branches?page=1&pageSize=100`, {
+        cache: "no-store",
+      });
+      if (redirectToLoginIfUnauthorized(res.status)) return;
+      const payload = (await res.json().catch(() => [])) as Branch[] | PagedResponse<Branch>;
+      if (res.ok) setBranches(parseList(payload));
+    } catch {
+      // ignore — branches dropdown stays empty
+    }
+  }, []);
+
   useEffect(() => {
     void loadPackages(page);
   }, [loadPackages, page]);
   useEffect(() => {
     void loadCoaches();
     void loadMembers();
-  }, [loadCoaches, loadMembers]);
+    void loadBranches();
+  }, [loadCoaches, loadMembers, loadBranches]);
 
   const coachOptions = useMemo(
     () => coaches.map((c) => ({ id: c.id, label: coachLabel(c) })),
@@ -136,6 +153,10 @@ export function PtPackageTab() {
   const memberOptions = useMemo(
     () => members.map((m) => ({ id: m.id, label: memberLabel(m) })),
     [members]
+  );
+  const branchOptions = useMemo(
+    () => branches.map((b) => ({ id: b.id, label: branchLabel(b) })),
+    [branches]
   );
 
   const sortedPackages = useMemo(() => {
@@ -180,6 +201,12 @@ export function PtPackageTab() {
     return found ? memberLabel(found) : id;
   }
 
+  function branchName(id?: string | null): string {
+    if (!id) return "-";
+    const found = branches.find((b) => b.id === id);
+    return found ? branchLabel(found) : id;
+  }
+
   async function handleCreate(values: PtPackageFormValues) {
     setSaving(true);
     setError("");
@@ -188,6 +215,7 @@ export function PtPackageTab() {
         memberId: values.memberId,
         name: values.name,
         coachId: values.coachId,
+        branchId: values.branchId,
         sessionCount: values.sessionCount,
         price: values.price,
         description: values.description,
@@ -218,6 +246,7 @@ export function PtPackageTab() {
         memberId: values.memberId,
         name: values.name,
         coachId: values.coachId,
+        branchId: values.branchId,
         sessionCount: values.sessionCount,
         price: values.price,
         isActive: values.isActive,
@@ -281,6 +310,7 @@ export function PtPackageTab() {
       "Name",
       "Member",
       "Coach",
+      "Branch",
       "Session Count",
       "Price",
       "Active",
@@ -290,6 +320,7 @@ export function PtPackageTab() {
       val(p.name),
       val(p.memberName || memberName(p.memberId)),
       val(p.coachName || coachName(p.coachId)),
+      val(p.branchName || branchName(p.branchId)),
       num(p.sessionCount),
       num(p.price),
       yesNo(p.isActive),
@@ -352,6 +383,7 @@ export function PtPackageTab() {
               </th>
               <th className="px-4 py-3">Member</th>
               <th className="px-4 py-3">Coach</th>
+              <th className="px-4 py-3">Branch</th>
               <th className="px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort("sessionCount")}>
                 <span className="flex items-center gap-1.5 hover:text-white transition">
                   Sessions
@@ -378,13 +410,13 @@ export function PtPackageTab() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                   Memuat...
                 </td>
               </tr>
             ) : visiblePackages.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                   {search.trim() ? "Tidak ditemukan." : "Tidak ada PT package."}
                 </td>
               </tr>
@@ -397,6 +429,9 @@ export function PtPackageTab() {
                   </td>
                   <td className="px-4 py-3 text-gray-300">
                     {pkg.coachName || coachName(pkg.coachId)}
+                  </td>
+                  <td className="px-4 py-3 text-gray-300">
+                    {pkg.branchName || branchName(pkg.branchId)}
                   </td>
                   <td className="px-4 py-3 text-gray-300">{pkg.sessionCount ?? 0}</td>
                   <td className="px-4 py-3 text-gray-300">
@@ -475,6 +510,7 @@ export function PtPackageTab() {
           submitLabel="Create"
           coachOptions={coachOptions}
           memberOptions={memberOptions}
+          branchOptions={branchOptions}
           saving={saving}
           onClose={() => setCreateOpen(false)}
           onSubmit={handleCreate}
@@ -488,11 +524,13 @@ export function PtPackageTab() {
           isEdit
           coachOptions={coachOptions}
           memberOptions={memberOptions}
+          branchOptions={branchOptions}
           saving={saving}
           initialValues={{
             memberId: editTarget.memberId ?? "",
             name: editTarget.name,
             coachId: editTarget.coachId ?? "",
+            branchId: editTarget.branchId ?? "",
             sessionCount: editTarget.sessionCount ?? 0,
             price: editTarget.price ?? 0,
             isActive: editTarget.isActive ?? true,

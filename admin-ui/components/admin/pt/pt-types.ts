@@ -25,6 +25,8 @@ export type PtPackage = {
   memberName?: string | null;
   coachId?: string | null;
   coachName?: string | null;
+  branchId?: string | null;
+  branchName?: string | null;
   sessionCount?: number;
   price?: number;
   isActive?: boolean;
@@ -108,6 +110,19 @@ export function branchLabel(b: Branch): string {
 
 export function memberLabel(m: Member): string {
   return m.fullName || m.name || m.memberCode || m.id;
+}
+
+/** Sentinel used by the backend for "no specific branch" on PT package records. */
+const ZERO_BRANCH_GUID = "00000000-0000-0000-0000-000000000000";
+
+/**
+ * Treat `null`, `""`, and the zero GUID as "no branch selected".
+ * Used by PT Package form inputs to normalize backend-returned `branchId`
+ * sentinels so the native `<select>` falls back to its placeholder.
+ */
+export function isNilBranchId(id?: string | null): boolean {
+  if (id == null || id === "") return true;
+  return id.toLowerCase() === ZERO_BRANCH_GUID;
 }
 
 /** Normalize HH:mm to HH:mm:ss for backend compatibility. */
