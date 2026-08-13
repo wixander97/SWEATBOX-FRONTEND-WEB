@@ -14,6 +14,7 @@ export type ApiMember = {
   paymentStatus?: string | null;
   remainingCredits?: number;
   remainingPtSessions?: number;
+  remainingDropInVisits?: number;
   joinDate?: string | null;
   expiryDate?: string | null;
   freezeStartDate?: string | null;

@@ -168,7 +168,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
   async function exportXlsx() {
     const statusLabel = (s: number) => paymentStatusMeta(s).label;
     const methodLabel = (m: number) => PAYMENT_METHOD_LABELS[m] ?? String(m);
-    const providerLabel = (p: number) => (p === 0 ? "Offline" : "Xendit");
+    const providerLabel = (p: number) => (p === 0 ? "Offline" : "AsteriPay");
     const val = (s?: string | null) => s || "—";
     const num = (n?: number | null) =>
       n != null ? n.toLocaleString("id-ID") : "—";

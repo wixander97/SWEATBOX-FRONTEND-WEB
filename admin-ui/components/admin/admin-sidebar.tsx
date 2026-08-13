@@ -33,6 +33,7 @@ const mainNav: { href: string; label: string; icon: string; id: string }[] = [
 const dataNav: { href: string; label: string; icon: string; id: string }[] = [
   { href: adminPaths.membershipPlans, label: "Membership Plans", icon: "fa-ticket-alt", id: "membership-plans" },
   { href: adminPaths.payments, label: "Payments", icon: "fa-credit-card", id: "payments" },
+  { href: adminPaths.paymentMethods, label: "Payment Method", icon: "fa-wallet", id: "payment-methods" },
   // { href: adminPaths.workout, label: "Workout Master", icon: "fa-running", id: "workout" },
   // { href: adminPaths.payroll, label: "Coaches Payroll", icon: "fa-file-invoice-dollar", id: "payroll" },
   { href: adminPaths.history, label: "History", icon: "fa-history", id: "history" },
@@ -62,7 +63,7 @@ export function AdminSidebar({ open = false, onClose }: Props) {
   const isSuperadmin = currentRole === "superadmin";
 
   const filteredDataNav = dataNav.filter((item) => {
-    if (!isSuperadmin && item.id === "payments") {
+    if (!isSuperadmin && (item.id === "payments" || item.id === "payment-methods")) {
       return false;
     }
     return true;
