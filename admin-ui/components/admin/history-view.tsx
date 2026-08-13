@@ -269,7 +269,11 @@ export function HistoryView() {
   function formatDate(dateStr: string): string {
     try {
       const date = new Date(dateStr);
+      // Backend stores wall-clock local times with a `Z` suffix; render the
+      // UTC components to avoid converting to the viewer's local timezone
+      // (e.g. 23:00Z must show as 23.00, not 06.00 next day in WIB).
       return date.toLocaleDateString("id-ID", {
+        timeZone: "UTC",
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -285,6 +289,7 @@ export function HistoryView() {
     try {
       const date = new Date(dateStr);
       return date.toLocaleDateString("id-ID", {
+        timeZone: "UTC",
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -350,8 +355,8 @@ export function HistoryView() {
           type="button"
           onClick={() => setActiveTab("coaches")}
           className={`px-4 py-3 text-sm font-bold transition border-b-2 ${activeTab === "coaches"
-              ? "border-sweat text-sweat"
-              : "border-transparent text-gray-500 hover:text-white"
+            ? "border-sweat text-sweat"
+            : "border-transparent text-gray-500 hover:text-white"
             }`}
         >
           Coach Attendance
@@ -360,8 +365,8 @@ export function HistoryView() {
           type="button"
           onClick={() => setActiveTab("members")}
           className={`px-4 py-3 text-sm font-bold transition border-b-2 ${activeTab === "members"
-              ? "border-sweat text-sweat"
-              : "border-transparent text-gray-500 hover:text-white"
+            ? "border-sweat text-sweat"
+            : "border-transparent text-gray-500 hover:text-white"
             }`}
         >
           Member Booking

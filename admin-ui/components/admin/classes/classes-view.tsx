@@ -63,16 +63,23 @@ function statusBadgeClass(status: string) {
   }
 }
 
-function branchBadgeClass(branchName: string | null | undefined) {
-  const n = (branchName ?? "").toLowerCase();
-  if (n.includes("pik")) {
-    return "bg-sky-500/15 text-sky-200 border border-sky-500/35";
-  }
-  if (n.includes("puri")) {
-    return "bg-amber-500/15 text-amber-100 border border-amber-500/35";
-  }
-  return "bg-gray-800 text-gray-300 border border-border";
-}
+/**
+ * Fixed ordered palette for branch colors, shared by the Lokasi legend
+ * chips (solid dot) and the table badges (translucent badge). Indices
+ * beyond this list cycle modulo its length.
+ */
+const BRANCH_COLOR_PALETTE: Array<{ dot: string; badge: string }> = [
+  { dot: "bg-sky-400", badge: "bg-sky-500/15 text-sky-200 border border-sky-500/35" },
+  { dot: "bg-amber-400", badge: "bg-amber-500/15 text-amber-100 border border-amber-500/35" },
+  { dot: "bg-emerald-400", badge: "bg-emerald-500/15 text-emerald-200 border border-emerald-500/35" },
+  { dot: "bg-rose-400", badge: "bg-rose-500/15 text-rose-200 border border-rose-500/35" },
+  { dot: "bg-violet-400", badge: "bg-violet-500/15 text-violet-200 border border-violet-500/35" },
+];
+
+const BRANCH_COLOR_FALLBACK = {
+  dot: "bg-gray-500",
+  badge: "bg-gray-800 text-gray-300 border border-border",
+};
 
 export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -263,6 +270,47 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
     void loadCoaches();
     void loadBranches();
   }, [loadClasses, loadCoaches, loadBranches, page, keyword]);
+
+  // Branches sorted by name (case-insensitive) for stable, deterministic
+  // palette color assignment shared by the Lokasi legend and table badges.
+  const sortedBranches = useMemo(
+    () =>
+      [...branches]
+        .filter(
+          (b) => (b.branchName || "").trim().toLowerCase() !== "default branch"
+        )
+        .sort((a, b) =>
+          (a.branchName || "").toLowerCase().localeCompare(
+            (b.branchName || "").toLowerCase()
+          )
+        ),
+    [branches]
+  );
+
+  const branchColorIndex = useCallback(
+    (branchId?: string | null) => {
+      if (!branchId) return -1;
+      return sortedBranches.findIndex((b) => b.id === branchId);
+    },
+    [sortedBranches]
+  );
+
+  const branchDotClass = useCallback(
+    (index: number) => {
+      if (index < 0) return BRANCH_COLOR_FALLBACK.dot;
+      return BRANCH_COLOR_PALETTE[index % BRANCH_COLOR_PALETTE.length].dot;
+    },
+    []
+  );
+
+  const branchBadgeClassFor = useCallback(
+    (branchId?: string | null) => {
+      const index = branchColorIndex(branchId);
+      if (index < 0) return BRANCH_COLOR_FALLBACK.badge;
+      return BRANCH_COLOR_PALETTE[index % BRANCH_COLOR_PALETTE.length].badge;
+    },
+    [branchColorIndex]
+  );
 
   const mappedRows = useMemo(() => {
     const rows = classes.map((c) => {
@@ -545,18 +593,12 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
             </div>
             <p className="text-[11px] text-white flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="font-bold uppercase tracking-wide text-gray-400">Lokasi</span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-sky-400" aria-hidden />
-                PIK
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-400" aria-hidden />
-                Puri
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-gray-500" aria-hidden />
-                Lainnya
-              </span>
+              {sortedBranches.map((b, i) => (
+                <span key={b.id} className="inline-flex items-center gap-1.5">
+                  <span className={"w-2 h-2 rounded-full " + branchDotClass(i)} aria-hidden />
+                  {b.branchName || "-"}
+                </span>
+              ))}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
@@ -653,7 +695,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                       </td>
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${branchBadgeClass(c.branchName)}`}
+                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${branchBadgeClassFor(c.branchId)}`}
                         >
                           {c.location}
                         </span>

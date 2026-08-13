@@ -31,7 +31,7 @@ function methodLabel(method: number): string {
 }
 
 function providerLabel(provider: number): string {
-  return provider === 0 ? "Offline" : "Xendit";
+  return provider === 0 ? "Offline" : "AsteriPay";
 }
 
 function SectionHeader({
@@ -62,12 +62,12 @@ function Row({
 }) {
   if (value == null) return null;
   return (
-    <div className="flex justify-between items-center py-1.5 border-b border-border/40 last:border-b-0">
-      <span className="text-xs text-gray-500">{label}</span>
+    <div className="flex justify-between items-start gap-3 py-1.5 border-b border-border/40 last:border-b-0">
+      <span className="text-xs text-gray-500 shrink-0">{label}</span>
       <span
-        className={`text-sm text-right ${highlight
-            ? "text-green-400 font-bold text-base"
-            : "text-gray-200"
+        className={`text-sm text-right break-all min-w-0 flex-1 ${highlight
+          ? "text-green-400 font-bold text-base"
+          : "text-gray-200"
           }`}
       >
         {value}

@@ -243,6 +243,7 @@ export function MembersView() {
       "Membership Status",
       "Payment Status",
       "Remaining Credits",
+      "Remaining Drop-In Visits",
       "Remaining PT Sessions",
       "Join Date",
       "Expiry Date",
@@ -274,6 +275,7 @@ export function MembersView() {
       val(m.membershipStatus),
       val(m.paymentStatus),
       String(m.remainingCredits ?? 0),
+      String(m.remainingDropInVisits ?? 0),
       String(m.remainingPtSessions ?? 0),
       fmtDate(m.joinDate),
       fmtDate(m.expiryDate),
@@ -424,6 +426,7 @@ export function MembersView() {
                   { label: "Home Club", key: "homeClubBranchName" },
                   { label: "Membership Plan", key: "membershipPlanName" },
                   { label: "Credits", key: "remainingCredits" },
+                  { label: "Drop In Credit", key: "remainingDropInVisits" },
                   { label: "Status", key: "membershipStatus" },
                   { label: "Payment", key: "paymentStatus" },
                 ] as { label: string; key: SortKey }[]
@@ -460,19 +463,19 @@ export function MembersView() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={9}>
+                <td className="px-6 py-6 text-gray-400" colSpan={10}>
                   Loading...
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td className="px-6 py-6 text-red-400" colSpan={9}>
+                <td className="px-6 py-6 text-red-400" colSpan={10}>
                   {error}
                 </td>
               </tr>
             ) : displayMembers.length === 0 ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={9}>
+                <td className="px-6 py-6 text-gray-400" colSpan={10}>
                   Tidak ada data member.
                 </td>
               </tr>
@@ -489,6 +492,7 @@ export function MembersView() {
                   <td className="px-6 py-4">{m.homeClubBranchName || "—"}</td>
                   <td className="px-6 py-4">{m.membershipPlanName || "—"}</td>
                   <td className="px-6 py-4">{String(m.remainingCredits) || "-"}</td>
+                  <td className="px-6 py-4">{m.remainingDropInVisits ?? "-"}</td>
                   <td className="px-6 py-4 font-bold text-sweat">
                     {m.membershipStatus ?? 0}
                   </td>
