@@ -30,43 +30,8 @@ function toIsoUtc(value: string): string {
   return d.toISOString();
 }
 
-const REQUIRED_BANNER_WIDTH = 2160;
-const REQUIRED_BANNER_HEIGHT = 720;
-
-type ImageValidationResult =
-  | { ok: true; width: number; height: number }
-  | { ok: false; reason: "not-image" | "wrong-dimensions"; width: number; height: number };
-
-// Reads a File's natural dimensions via an object URL. The object URL is always
-// revoked (both onload and onerror) before the promise settles.
-function validateBannerImage(file: File): Promise<ImageValidationResult> {
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    let settled = false;
-    const cleanup = () => {
-      if (!settled) {
-        settled = true;
-        URL.revokeObjectURL(url);
-      }
-    };
-    img.onload = () => {
-      const width = img.naturalWidth;
-      const height = img.naturalHeight;
-      cleanup();
-      if (width === REQUIRED_BANNER_WIDTH && height === REQUIRED_BANNER_HEIGHT) {
-        resolve({ ok: true, width, height });
-      } else {
-        resolve({ ok: false, reason: "wrong-dimensions", width, height });
-      }
-    };
-    img.onerror = () => {
-      cleanup();
-      resolve({ ok: false, reason: "not-image", width: 0, height: 0 });
-    };
-    img.src = url;
-  });
-}
+const RECOMMENDED_BANNER_WIDTH = 2160;
+const RECOMMENDED_BANNER_HEIGHT = 720;
 
 type Props = {
   isOpen: boolean;
@@ -88,9 +53,6 @@ export function PromoBannerFormModal({
   const [imageError, setImageError] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // Tracks the latest file selected for validation so stale callbacks from a
-  // superseded selection are ignored (race mitigation).
-  const latestFileRef = useRef<File | null>(null);
 
   const handleSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
@@ -331,39 +293,28 @@ export function PromoBannerFormModal({
               type="file"
               name="image"
               accept="image/*"
-              onChange={async (e) => {
+              onChange={(e) => {
                 const file = e.target.files?.[0] ?? null;
                 if (!file) {
                   setImageFile(null);
                   return;
                 }
-                // Mark this as the latest selection; revoke/ignore any prior
-                // in-flight validation by comparing against latestFileRef.
-                latestFileRef.current = file;
-                const result = await validateBannerImage(file);
-                if (latestFileRef.current !== file) return; // stale callback
-                if (result.ok) {
-                  setImageFile(file);
-                  setImageError("");
-                  setError("");
-                } else if (result.reason === "not-image") {
+                // Any image dimension is accepted; only the file type is checked.
+                if (!file.type.startsWith("image/")) {
                   setImageFile(null);
                   if (fileInputRef.current) fileInputRef.current.value = "";
                   setImageError("File is not a valid image.");
                   setError("");
                 } else {
-                  setImageFile(null);
-                  if (fileInputRef.current) fileInputRef.current.value = "";
-                  setImageError(
-                    `Image must be ${REQUIRED_BANNER_WIDTH} × ${REQUIRED_BANNER_HEIGHT} px. Selected: ${result.width} × ${result.height}.`
-                  );
+                  setImageFile(file);
+                  setImageError("");
                   setError("");
                 }
               }}
               className="w-full bg-sidebar border border-border text-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:border-sweat file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-sweat file:text-black file:font-bold file:cursor-pointer"
             />
             <p className="mt-1.5 text-xs text-gray-500">
-              Ukuran wajib {REQUIRED_BANNER_WIDTH} × {REQUIRED_BANNER_HEIGHT} px, rasio 3:1.
+              Disarankan {RECOMMENDED_BANNER_WIDTH} × {RECOMMENDED_BANNER_HEIGHT} px (rasio 3:1) untuk tampilan terbaik. Ukuran lain tetap diperbolehkan.
             </p>
             {isEdit && initialValues?.imageUrl && !imageFile && (
               <p className="mt-1.5 text-xs text-gray-500">
