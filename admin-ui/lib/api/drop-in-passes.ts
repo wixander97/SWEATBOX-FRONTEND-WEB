@@ -45,7 +45,7 @@ export async function listMemberDropInPasses(
 ): Promise<MemberDropInPass[]> {
   const payload = await apiGet<MemberDropInPass[] | PagedResponse<MemberDropInPass>>(
     `/api/member-drop-in-passes/member/${encodeURIComponent(memberId)}`,
-    { errorMessage: "Gagal memuat drop-in pass member", ...options }
+    { errorMessage: "Failed to load member drop-in passes", ...options }
   );
   return toList(payload);
 }
@@ -94,7 +94,7 @@ export const DROP_IN_PASS_STATUS_META: Record<
     class: "bg-red-500/10 text-danger border-red-500/30",
   },
   inactive: {
-    label: "Nonaktif",
+    label: "Inactive",
     class: "bg-yellow-500/10 text-yellow-500 border-yellow-500/30",
   },
 };

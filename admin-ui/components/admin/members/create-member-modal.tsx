@@ -285,18 +285,18 @@ export function CreateMemberModal({
                     className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat disabled:opacity-50"
                     required
                   >
-                    <option value="">{branchesLoading ? "Memuat Home Club..." : "Pilih Home Club..."}</option>
+                    <option value="">{branchesLoading ? "Loading Home Clubs..." : "Select Home Club..."}</option>
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.branchName}
                       </option>
                     ))}
                     {!branchesLoading && branches.length === 0 && (
-                      <option value="" disabled>Tidak ada branch aktif</option>
+                      <option value="" disabled>No active branches</option>
                     )}
                     {!branchesLoading && form.homeClubBranchId && !branches.find((b) => b.id === form.homeClubBranchId) && (
                       <option value={form.homeClubBranchId} disabled>
-                        ⚠️ Branch tidak ditemukan (ID: {form.homeClubBranchId})
+                        ⚠️ Branch not found (ID: {form.homeClubBranchId})
                       </option>
                     )}
                   </select>
@@ -310,18 +310,18 @@ export function CreateMemberModal({
                     className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat disabled:opacity-50"
                     required
                   >
-                    <option value="">{membershipPlansLoading ? "Memuat plan..." : "Pilih Membership Plan..."}</option>
+                    <option value="">{membershipPlansLoading ? "Loading plans..." : "Select Membership Plan..."}</option>
                     {membershipPlans.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.planName} ({p.credits} credits)
                       </option>
                     ))}
                     {!membershipPlansLoading && membershipPlans.length === 0 && (
-                      <option value="" disabled>Tidak ada plan aktif</option>
+                      <option value="" disabled>No active plans</option>
                     )}
                     {!membershipPlansLoading && form.membershipPlanId && !membershipPlans.find((p) => p.id === form.membershipPlanId) && (
                       <option value={form.membershipPlanId} disabled>
-                        ⚠️ Plan tidak ditemukan (ID: {form.membershipPlanId})
+                        ⚠️ Plan not found (ID: {form.membershipPlanId})
                       </option>
                     )}
                   </select>
@@ -459,14 +459,14 @@ export function CreateMemberModal({
               disabled={submitting}
               className="flex-1 bg-sweat text-black py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
             >
-              {submitting ? "Menyimpan..." : submitLabel}
+              {submitting ? "Saving..." : submitLabel}
             </button>
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 rounded-lg text-sm border border-border text-fg-soft hover:text-fg"
             >
-              Batal
+              Cancel
             </button>
           </div>
         </form>

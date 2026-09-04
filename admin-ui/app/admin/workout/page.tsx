@@ -6,8 +6,8 @@ export default function WorkoutPage() {
       </div>
       <h3 className="text-2xl font-bold text-fg mb-2">Workout Database</h3>
       <p className="text-muted max-w-md mx-auto mb-6">
-        Modul untuk menambahkan referensi gerakan workout, link video YouTube,
-        dan program latihan untuk aplikasi member.
+        Module for adding workout movement references, YouTube video links,
+        and training programs for the member app.
       </p>
       <button
         type="button"

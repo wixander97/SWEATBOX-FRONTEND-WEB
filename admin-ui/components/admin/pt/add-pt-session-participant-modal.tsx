@@ -67,8 +67,8 @@ export function AddPtSessionParticipantModal({ memberOptions, onClose, onSubmit 
               onChange={setMemberId}
               getOptionValue={(o) => o.id}
               getOptionLabel={(o) => o.label}
-              placeholder="Pilih member..."
-              searchPlaceholder="Cari member..."
+              placeholder="Select member..."
+              searchPlaceholder="Search members..."
             />
           </div>
 

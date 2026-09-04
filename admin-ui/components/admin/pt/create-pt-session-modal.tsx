@@ -212,7 +212,7 @@ export function CreatePtSessionModal({
                 className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               >
-                <option value="">Pilih package...</option>
+                <option value="">Select package...</option>
                 {packageOptions.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.label}
@@ -254,7 +254,7 @@ export function CreatePtSessionModal({
                 className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               >
-                <option value="">Pilih coach...</option>
+                <option value="">Select coach...</option>
                 {coachOptions.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.label}
@@ -272,7 +272,7 @@ export function CreatePtSessionModal({
                 className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               >
-                <option value="">Pilih branch...</option>
+                <option value="">Select branch...</option>
                 {branchOptions.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.label}
@@ -387,8 +387,8 @@ export function CreatePtSessionModal({
                 >
                   <span className="text-muted">
                     {form.memberIds.length > 0
-                      ? `${form.memberIds.length} member dipilih`
-                      : "Tambah member..."}
+                      ? `${form.memberIds.length} members selected`
+                      : "Add members..."}
                   </span>
                   <i className="fas fa-chevron-down w-4 text-muted" aria-hidden />
                 </button>
@@ -398,7 +398,7 @@ export function CreatePtSessionModal({
                       type="text"
                       value={memberSearch}
                       onChange={(e) => setMemberSearch(e.target.value)}
-                      placeholder="Cari member..."
+                      placeholder="Search members..."
                       className="w-full bg-card border-b border-border px-3 py-2 text-sm text-fg placeholder-muted focus:outline-none"
                       autoFocus
                     />

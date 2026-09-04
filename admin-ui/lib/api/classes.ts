@@ -27,7 +27,7 @@ export type ClassSchedulePayload = {
 export async function listClassSchedules(options?: RequestOptions): Promise<ApiClass[]> {
   const payload = await apiGet<ApiClass[] | PagedResponse<ApiClass>>(
     "/api/v1/class-schedules",
-    { errorMessage: "Gagal memuat class schedule", ...options }
+    { errorMessage: "Failed to load class schedules", ...options }
   );
   return toList(payload);
 }
@@ -37,14 +37,14 @@ export async function listUpcomingClassSchedules(
 ): Promise<ApiClass[]> {
   const payload = await apiGet<ApiClass[] | PagedResponse<ApiClass>>(
     "/api/v1/class-schedules/upcoming?page=1&pageSize=200",
-    { errorMessage: "Gagal memuat class schedule", ...options }
+    { errorMessage: "Failed to load class schedules", ...options }
   );
   return toList(payload);
 }
 
 export function getClassSchedule(id: string, options?: RequestOptions): Promise<ApiClass> {
   return apiGet<ApiClass>(`/api/v1/class-schedules/${encodeURIComponent(id)}`, {
-    errorMessage: "Gagal memuat detail class",
+    errorMessage: "Failed to load class details",
     ...options,
   });
 }
@@ -54,7 +54,7 @@ export function createClassSchedule(
   options?: RequestOptions
 ): Promise<ApiClass> {
   return apiPost<ApiClass>("/api/v1/class-schedules", body, {
-    errorMessage: "Create class gagal",
+    errorMessage: "Failed to create class",
     ...options,
   });
 }
@@ -103,7 +103,7 @@ export async function createRecurringClassSchedules(
           until: toIsoClassDate(rule.until),
         },
       },
-      { errorMessage: "Create recurring class gagal" }
+      { errorMessage: "Failed to create recurring class" }
     );
     onProgress?.(dates.length, dates.length);
     return { created: dates, failed: [], mode: "series-endpoint" };
@@ -122,7 +122,7 @@ export async function createRecurringClassSchedules(
     } catch (err) {
       failed.push({
         date,
-        message: err instanceof Error ? err.message : "Gagal membuat jadwal",
+        message: err instanceof Error ? err.message : "Failed to create schedule",
       });
     }
     onProgress?.(created.length + failed.length, dates.length);
@@ -161,7 +161,7 @@ export function createClassBooking(
   options?: RequestOptions
 ): Promise<{ message?: string }> {
   return apiPost<{ message?: string }>("/api/v1/class-bookings", body, {
-    errorMessage: "Gagal membooking class",
+    errorMessage: "Failed to book class",
     ...options,
   });
 }
@@ -173,7 +173,7 @@ export async function listMemberUpcomingBookings(
 ): Promise<ClassBooking[]> {
   const payload = await apiGet<ClassBooking[] | PagedResponse<ClassBooking>>(
     `/api/v1/class-bookings/member/${encodeURIComponent(memberId)}/upcoming`,
-    { errorMessage: "Gagal memuat booking mendatang", ...options }
+    { errorMessage: "Failed to load upcoming bookings", ...options }
   );
   return toList(payload);
 }
@@ -185,7 +185,7 @@ export async function listBookingsForSchedule(
 ): Promise<ClassBooking[]> {
   const payload = await apiGet<ClassBooking[] | PagedResponse<ClassBooking>>(
     `/api/v1/class-bookings/class/${encodeURIComponent(classScheduleId)}`,
-    { errorMessage: "Gagal memuat peserta class", ...options }
+    { errorMessage: "Failed to load class participants", ...options }
   );
   return toList(payload);
 }
@@ -227,17 +227,17 @@ export function activateClassSession(
   options?: RequestOptions
 ): Promise<{ message?: string }> {
   return apiPost<{ message?: string }>("/api/v1/attendance/coach-scan", body, {
-    errorMessage: "Gagal mengaktifkan session class",
+    errorMessage: "Failed to activate class session",
     ...options,
   });
 }
 
 /** Why a schedule cannot be activated, or `null` when it can. */
 export function sessionActivationBlocker(c: ApiClass): string | null {
-  if (c.isSessionActive) return "Session untuk class ini sudah aktif.";
-  if (c.isCancelled) return "Class sudah dibatalkan.";
-  if (c.isCompleted) return "Class sudah selesai.";
-  if (c.isActive === false) return "Class non-aktif — aktifkan dulu lewat Edit.";
-  if (!c.coachId) return "Class ini belum punya coach, jadi session tidak bisa diaktifkan.";
+  if (c.isSessionActive) return "The session for this class is already active.";
+  if (c.isCancelled) return "This class has been cancelled.";
+  if (c.isCompleted) return "This class has already finished.";
+  if (c.isActive === false) return "This class is inactive — activate it first via Edit.";
+  if (!c.coachId) return "This class has no coach assigned, so the session cannot be activated.";
   return null;
 }

@@ -33,14 +33,14 @@ export async function searchMembers(
   if (!trimmed) return [];
   const payload = await apiGet<ApiMember[] | PagedResponse<ApiMember>>(
     `/api/v1/members/search?keyword=${encodeURIComponent(trimmed)}&page=1&pageSize=20`,
-    { errorMessage: "Gagal mencari member", ...options }
+    { errorMessage: "Failed to search members", ...options }
   );
   return toList(payload);
 }
 
 export function getMember(id: string, options?: RequestOptions): Promise<ApiMember> {
   return apiGet<ApiMember>(`/api/v1/members/${encodeURIComponent(id)}`, {
-    errorMessage: "Gagal memuat detail member",
+    errorMessage: "Failed to load member details",
     ...options,
   });
 }
@@ -57,7 +57,7 @@ export async function registerMember(
   options?: RequestOptions
 ): Promise<ApiMember | null> {
   await apiPost<{ message?: string }>("/api/v1/auth/register-member", body, {
-    errorMessage: "Gagal mendaftarkan member",
+    errorMessage: "Failed to register member",
     ...options,
   });
   const results = await searchMembers(body.email);

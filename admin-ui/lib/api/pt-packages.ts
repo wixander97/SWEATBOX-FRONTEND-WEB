@@ -13,7 +13,7 @@ export type { PtPackage };
 export async function listPtPackages(options?: RequestOptions): Promise<PtPackage[]> {
   const payload = await apiGet<PtPackage[] | PagedResponse<PtPackage>>(
     "/api/PTPackages?page=1&pageSize=200",
-    { errorMessage: "Gagal memuat PT package", ...options }
+    { errorMessage: "Failed to load PT packages", ...options }
   );
   return toList(payload);
 }
@@ -48,7 +48,7 @@ export async function listMemberPtPackages(
 ): Promise<PtPackage[]> {
   const payload = await apiGet<PtPackage[] | PagedResponse<PtPackage>>(
     `/api/PTPackages/member/${encodeURIComponent(memberId)}`,
-    { errorMessage: "Gagal memuat PT package member", ...options }
+    { errorMessage: "Failed to load member PT packages", ...options }
   );
   return toList(payload);
 }

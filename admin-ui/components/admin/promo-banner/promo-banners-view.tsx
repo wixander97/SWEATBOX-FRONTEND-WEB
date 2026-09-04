@@ -47,14 +47,14 @@ export function PromoBannersView() {
         const msg =
           !Array.isArray(data) && data?.message
             ? data.message
-            : "Gagal mengambil promo banners";
+            : "Failed to load promo banners";
         setError(msg);
         setBanners([]);
       } else {
         setBanners(Array.isArray(data) ? data : []);
       }
     } catch {
-      setError("Gagal mengambil promo banners");
+      setError("Failed to load promo banners");
       setBanners([]);
     } finally {
       setLoading(false);
@@ -72,7 +72,7 @@ export function PromoBannersView() {
     });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     if (!res.ok) {
-      throw new Error((await extractMessage(res)) || "Create promo banner gagal");
+      throw new Error((await extractMessage(res)) || "Failed to create promo banner");
     }
     await loadBanners(filterMode);
   }
@@ -84,7 +84,7 @@ export function PromoBannersView() {
     });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     if (!res.ok) {
-      throw new Error((await extractMessage(res)) || "Update promo banner gagal");
+      throw new Error((await extractMessage(res)) || "Failed to update promo banner");
     }
     await loadBanners(filterMode);
   }
@@ -97,7 +97,7 @@ export function PromoBannersView() {
     });
     if (redirectToLoginIfUnauthorized(res.status)) return;
     if (!res.ok) {
-      const msg = (await extractMessage(res)) || "Delete promo banner gagal";
+      const msg = (await extractMessage(res)) || "Failed to delete promo banner";
       window.alert(msg);
       return;
     }

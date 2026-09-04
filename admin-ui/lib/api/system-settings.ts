@@ -18,7 +18,7 @@ export async function listSystemSettings(
 ): Promise<SystemSetting[]> {
   const payload = await apiGet<SystemSetting[] | PagedResponse<SystemSetting>>(
     "/api/system-settings",
-    { errorMessage: "Gagal memuat system settings", ...options }
+    { errorMessage: "Failed to load system settings", ...options }
   );
   return toList(payload);
 }
@@ -282,7 +282,7 @@ export function dropInOptionsFromSettings(
     const price = toNumber(priceRow.setting.value);
     if (price == null || price <= 0) {
       warnings.push(
-        `${priceRow.setting.key} bukan angka harga yang valid ("${priceRow.setting.value}").`
+        `${priceRow.setting.key} is not a valid price number ("${priceRow.setting.value}").`
       );
       continue;
     }
@@ -298,7 +298,7 @@ export function dropInOptionsFromSettings(
 
     if (priceRow.kind === "pass" && visits <= 1) {
       warnings.push(
-        `${priceRow.setting.key} adalah multi-visit pass tapi jumlah kunjungannya belum diisi di settings.`
+        `${priceRow.setting.key} is a multi-visit pass but its visit count is not set in settings.`
       );
       continue;
     }

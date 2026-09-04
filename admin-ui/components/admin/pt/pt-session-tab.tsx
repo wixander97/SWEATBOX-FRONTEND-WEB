@@ -87,8 +87,8 @@ export function PtSessionTab() {
           const msg =
             typeof payload === "object" && !Array.isArray(payload)
               ? payload.message
-              : "Gagal mengambil PT sessions";
-          setError(msg || "Gagal mengambil PT sessions");
+              : "Failed to load PT sessions";
+          setError(msg || "Failed to load PT sessions");
           setSessions([]);
           setTotalItems(0);
           setTotalPages(1);
@@ -100,7 +100,7 @@ export function PtSessionTab() {
         setTotalItems(ti);
         setTotalPages(tp);
       } catch {
-        setError("Gagal mengambil PT sessions");
+        setError("Failed to load PT sessions");
         setSessions([]);
         setTotalItems(0);
         setTotalPages(1);
@@ -300,7 +300,7 @@ export function PtSessionTab() {
       if (redirectToLoginIfUnauthorized(res.status)) return;
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
-        throw new Error(data?.message ?? "Gagal membuat PT session");
+        throw new Error(data?.message ?? "Failed to create PT session");
       }
       setCreateOpen(false);
       void loadSessions(page);
@@ -323,7 +323,7 @@ export function PtSessionTab() {
       if (redirectToLoginIfUnauthorized(res.status)) return;
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
-        setError(data?.message ?? "Gagal menambahkan member");
+        setError(data?.message ?? "Failed to add member");
         setAddMemberTarget(null);
         return;
       }
@@ -339,7 +339,7 @@ export function PtSessionTab() {
       }
       void loadSessions(page);
     } catch {
-      setError("Gagal menambahkan member");
+      setError("Failed to add member");
       setAddMemberTarget(null);
     }
   }
@@ -354,7 +354,7 @@ export function PtSessionTab() {
     if (redirectToLoginIfUnauthorized(res.status)) return;
     if (!res.ok) {
       const data = (await res.json().catch(() => ({}))) as { message?: string };
-      throw new Error(data?.message ?? "Gagal membatalkan PT session");
+      throw new Error(data?.message ?? "Failed to cancel PT session");
     }
     setCancelTarget(null);
     void loadSessions(page);
@@ -375,7 +375,7 @@ export function PtSessionTab() {
     const val = (s?: string | null) => s || "—";
     const yesNo = (v?: boolean | null) => (v ? "Yes" : "No");
     const fmtDateTime = (iso?: string | null) =>
-      iso ? new Date(iso).toLocaleString("id-ID") : "—";
+      iso ? new Date(iso).toLocaleString("en-GB") : "—";
     const fmtTime = (t?: string | null) => (t ? t.slice(0, 5) : "—");
 
     const header = [
@@ -433,7 +433,7 @@ export function PtSessionTab() {
             <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
             <input
               type="text"
-              placeholder="Cari session..."
+              placeholder="Search sessions..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm pl-9 focus:outline-none focus:border-sweat"
@@ -482,13 +482,13 @@ export function PtSessionTab() {
             {loading ? (
               <tr>
                 <td colSpan={9} className="px-4 py-8 text-center text-muted">
-                  Memuat...
+                  Loading...
                 </td>
               </tr>
             ) : visibleSessions.length === 0 ? (
               <tr>
                 <td colSpan={9} className="px-4 py-8 text-center text-muted">
-                  {search.trim() ? "Tidak ditemukan." : "Tidak ada PT session."}
+                  {search.trim() ? "No results found." : "No PT sessions available."}
                 </td>
               </tr>
             ) : (
@@ -544,8 +544,8 @@ export function PtSessionTab() {
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       <button
                         type="button"
-                        title={expandedId === s.id ? "Tutup peserta" : "Lihat peserta"}
-                        aria-label="Lihat peserta"
+                        title={expandedId === s.id ? "Hide participants" : "View participants"}
+                        aria-label="View participants"
                         onClick={() => toggleExpand(s)}
                         className="text-muted hover:text-fg mx-1"
                       >
@@ -596,8 +596,8 @@ export function PtSessionTab() {
                             onClick={() => loadParticipants(s.id, { force: true })}
                             disabled={participantsStatus[s.id] === "loading"}
                             className="text-muted hover:text-fg text-xs disabled:opacity-50"
-                            aria-label="Refresh peserta"
-                            title="Refresh peserta"
+                            aria-label="Refresh participants"
+                            title="Refresh participants"
                           >
                             <i className="fas fa-sync-alt" aria-hidden />
                           </button>

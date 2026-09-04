@@ -369,7 +369,7 @@ export function CreateClassModal({
                     disabled={branchesLoading}
                     className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat disabled:opacity-50"
                   >
-                    <option value="">{branchesLoading ? "Memuat branch..." : "Pilih Branch..."}</option>
+                    <option value="">{branchesLoading ? "Loading branches..." : "Select Branch..."}</option>
 
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>
@@ -378,11 +378,11 @@ export function CreateClassModal({
 
                     ))}
                     {!branchesLoading && branches.length === 0 && (
-                      <option value="" disabled>Tidak ada branch aktif</option>
+                      <option value="" disabled>No active branches</option>
                     )}
                     {!branchesLoading && form.branchId && !branches.find((b) => b.id === form.branchId) && (
                       <option value={form.branchId} disabled>
-                        ⚠️ Branch tidak ditemukan (ID: {form.branchId})
+                        ⚠️ Branch not found (ID: {form.branchId})
                       </option>
                     )}
                   </select>
@@ -465,8 +465,8 @@ export function CreateClassModal({
                   placeholder={WORKOUT_PLACEHOLDER}
                 />
                 <p className="text-[11px] text-muted mt-1">
-                  Multiline didukung — tulis warm up, strength, conditioning, dan cool
-                  down. Tersimpan di field description yang sudah ada.
+                  Multiline supported — write warm up, strength, conditioning, and cool
+                  down. Saved to the existing description field.
                 </p>
               </div>
 
@@ -495,7 +495,7 @@ export function CreateClassModal({
               >
                 {submitting
                   ? allowRecurrence && isRepeating(recurrence)
-                    ? `Membuat ${expandRecurrence(recurrence, form.classDate).length} jadwal...`
+                    ? `Creating ${expandRecurrence(recurrence, form.classDate).length} schedules...`
                     : "Submitting..."
                   : submitLabel}
               </button>

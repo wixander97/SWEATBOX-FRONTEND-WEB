@@ -9,7 +9,7 @@ export type Branch = {
 
 export async function listBranches(options?: RequestOptions): Promise<Branch[]> {
   const payload = await apiGet<Branch[] | PagedResponse<Branch>>("/api/v1/branches", {
-    errorMessage: "Gagal memuat branch",
+    errorMessage: "Failed to load branches",
     ...options,
   });
   return toList(payload).filter((b) => b.isActive !== false);

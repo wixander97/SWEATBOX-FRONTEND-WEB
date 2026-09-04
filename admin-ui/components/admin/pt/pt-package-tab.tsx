@@ -73,8 +73,8 @@ export function PtPackageTab() {
           const msg =
             typeof payload === "object" && !Array.isArray(payload)
               ? payload.message
-              : "Gagal mengambil PT packages";
-          setError(msg || "Gagal mengambil PT packages");
+              : "Failed to load PT packages";
+          setError(msg || "Failed to load PT packages");
           setPackages([]);
           setTotalItems(0);
           setTotalPages(1);
@@ -87,7 +87,7 @@ export function PtPackageTab() {
         setTotalItems(ti);
         setTotalPages(tp);
       } catch {
-        setError("Gagal mengambil PT packages");
+        setError("Failed to load PT packages");
         setPackages([]);
         setTotalItems(0);
         setTotalPages(1);
@@ -228,7 +228,7 @@ export function PtPackageTab() {
       if (redirectToLoginIfUnauthorized(res.status)) return;
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
-        throw new Error(data?.message ?? "Gagal membuat PT package");
+        throw new Error(data?.message ?? "Failed to create PT package");
       }
       setCreateOpen(false);
       void loadPackages(page);
@@ -260,7 +260,7 @@ export function PtPackageTab() {
       if (redirectToLoginIfUnauthorized(res.status)) return;
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
-        throw new Error(data?.message ?? "Gagal memperbarui PT package");
+        throw new Error(data?.message ?? "Failed to update PT package");
       }
       setEditTarget(null);
       void loadPackages(page);
@@ -270,7 +270,7 @@ export function PtPackageTab() {
   }
 
   async function handleDelete(pkg: PtPackage) {
-    const yes = window.confirm(`Hapus PT package "${pkg.name}"?`);
+    const yes = window.confirm(`Delete PT package "${pkg.name}"?`);
     if (!yes) return;
     setError("");
     try {
@@ -281,12 +281,12 @@ export function PtPackageTab() {
       if (redirectToLoginIfUnauthorized(res.status)) return;
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
-        setError(data?.message ?? "Gagal menghapus PT package");
+        setError(data?.message ?? "Failed to delete PT package");
         return;
       }
       void loadPackages(page);
     } catch {
-      setError("Gagal menghapus PT package");
+      setError("Failed to delete PT package");
     }
   }
 
@@ -338,7 +338,7 @@ export function PtPackageTab() {
             <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
             <input
               type="text"
-              placeholder="Cari package..."
+              placeholder="Search packages..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm pl-9 focus:outline-none focus:border-sweat"
@@ -411,13 +411,13 @@ export function PtPackageTab() {
             {loading ? (
               <tr>
                 <td colSpan={9} className="px-4 py-8 text-center text-muted">
-                  Memuat...
+                  Loading...
                 </td>
               </tr>
             ) : visiblePackages.length === 0 ? (
               <tr>
                 <td colSpan={9} className="px-4 py-8 text-center text-muted">
-                  {search.trim() ? "Tidak ditemukan." : "Tidak ada PT package."}
+                  {search.trim() ? "No results found." : "No PT packages available."}
                 </td>
               </tr>
             ) : (

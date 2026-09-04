@@ -32,7 +32,7 @@ function formatDate(iso?: string | null): string {
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
     ? "-"
-    : d.toLocaleDateString("id-ID", {
+    : d.toLocaleDateString("en-GB", {
         weekday: "long",
         day: "2-digit",
         month: "long",
@@ -170,7 +170,7 @@ export function PosBookClassModal({
         setOffer(null);
         onBooked(schedule);
       } catch (err) {
-        const message = errorMessageOf(err, "Gagal membooking class");
+        const message = errorMessageOf(err, "Failed to book class");
         setError(message);
         // The customer has nothing to book with: offer what they can buy.
         // After a drop-in has already been paid for, a second refusal is not
@@ -235,38 +235,38 @@ export function PosBookClassModal({
 
         <div className="bg-sidebar rounded-lg border border-border px-3 py-1 mb-4">
           <Detail label="Class" value={schedule.className} />
-          <Detail label="Tanggal" value={formatDate(schedule.classDate)} />
+          <Detail label="Date" value={formatDate(schedule.classDate)} />
           <Detail
-            label="Jam"
+            label="Time"
             value={`${schedule.startTime?.slice(0, 5) ?? "-"} – ${schedule.endTime?.slice(0, 5) ?? "-"}`}
           />
           <Detail label="Coach" value={schedule.coachName ?? "-"} />
           <Detail label="Branch" value={schedule.branchName ?? "-"} />
           <Detail
             label="Slot"
-            value={`${bookedCountOf(schedule)} / ${schedule.capacity ?? 0} terisi · ${remainingSlotsOf(schedule)} sisa`}
+            value={`${bookedCountOf(schedule)} / ${schedule.capacity ?? 0} filled · ${remainingSlotsOf(schedule)} left`}
           />
         </div>
 
         {done ? (
           <>
             <p className="text-sm text-green-500 bg-green-500/10 border border-green-500/30 px-3 py-2.5 rounded">
-              ✓ Class berhasil dibooking. Booking langsung muncul di aplikasi member.
-              {dropInPaid ? " Drop-in sudah dibayar dan tercatat di Payments." : ""}
+              ✓ Class booked successfully. The booking appears in the member app immediately.
+              {dropInPaid ? " The drop-in has been paid and recorded in Payments." : ""}
             </p>
             <button
               type="button"
               onClick={onClose}
               className="mt-4 w-full bg-sweat text-black py-2.5 rounded-lg text-sm font-bold hover:brightness-95 transition"
             >
-              Selesai
+              Done
             </button>
           </>
         ) : (
           <>
             {duplicate && (
               <p className="text-xs text-yellow-500 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded mb-3">
-                Member ini sudah punya booking untuk class tersebut.
+                This member already has a booking for that class.
               </p>
             )}
 
@@ -278,27 +278,27 @@ export function PosBookClassModal({
 
             {dropInPaid && !done && (
               <p className="text-xs text-yellow-600 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded mb-3">
-                Drop-in sudah dibayar. Kalau booking masih ditolak, jangan bayar
-                lagi — cek pass-nya di menu Drop In lalu ulangi booking.
+                The drop-in has been paid. If the booking is still rejected, do not charge
+                again — check the pass in the Drop In menu, then retry the booking.
               </p>
             )}
 
             {offerLoading && (
               <p className="text-xs text-muted flex items-center gap-2 mb-3">
                 <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted border-t-transparent" />
-                Memuat opsi drop-in…
+                Loading drop-in options…
               </p>
             )}
 
             {offer && !offerLoading && (
               <div className="mb-4">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-muted mb-1">
-                  Bayar drop-in
+                  Pay for drop-in
                 </p>
                 <p className="text-[11px] text-muted mb-2">
-                  Member ini belum punya entitlement yang berlaku. Pilih drop-in,
-                  bayar sekarang, dan class otomatis dibooking setelah pembayaran
-                  dikonfirmasi backend.
+                  This member has no valid entitlement. Select a drop-in, take payment
+                  now, and the class is booked automatically once the backend confirms
+                  the payment.
                 </p>
 
                 {offer.warning && (
@@ -309,7 +309,7 @@ export function PosBookClassModal({
 
                 {options.length === 0 ? (
                   <p className="text-xs text-muted bg-sidebar border border-border px-3 py-2 rounded">
-                    Belum ada opsi drop-in yang bisa dijual di branch ini.
+                    No drop-in options are available to sell at this branch.
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -341,17 +341,17 @@ export function PosBookClassModal({
                 )}
 
                 <p className="text-[10px] text-muted mt-2">
-                  Harga & masa berlaku diambil dari System Settings branch{" "}
-                  {branchName || "ini"}; backend menagih dari sumber yang sama.
+                  Price & validity are taken from the System Settings for branch{" "}
+                  {branchName || "this"}; the backend charges from the same source.
                 </p>
               </div>
             )}
 
             {!offer && (
               <p className="text-[11px] text-muted mb-3">
-                Class dipotong dari entitlement membership yang berlaku. Kalau
-                member belum punya, POS akan menawarkan drop-in setelah backend
-                menolak booking.
+                Classes are deducted from a valid membership entitlement. If the member
+                has none, the POS offers a drop-in after the backend rejects the
+                booking.
               </p>
             )}
 
@@ -361,7 +361,7 @@ export function PosBookClassModal({
               disabled={busy || duplicate}
               className="w-full bg-sweat text-black py-2.5 rounded-lg text-sm font-bold hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {busy ? "Membooking…" : error ? "Coba book lagi" : "Book Class"}
+              {busy ? "Booking…" : error ? "Try booking again" : "Book Class"}
             </button>
 
             {/* Escape hatch: sell a drop-in even when the refusal was worded in
@@ -372,7 +372,7 @@ export function PosBookClassModal({
                 onClick={() => void openOffer()}
                 className="mt-2 w-full bg-sidebar border border-border text-fg-soft py-2 rounded-lg text-xs font-bold"
               >
-                Jual drop-in untuk member ini
+                Sell a drop-in for this member
               </button>
             )}
           </>
@@ -385,7 +385,7 @@ export function PosBookClassModal({
           customer={customer}
           branchId={branchId}
           branchName={branchName}
-          completeLabel="Lanjut book class"
+          completeLabel="Continue to book class"
           onClose={() => setPaying(null)}
           onCompleted={afterDropInPaid}
         />

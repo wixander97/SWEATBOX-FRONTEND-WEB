@@ -201,8 +201,8 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
         const msg =
           typeof payload === "object" && !Array.isArray(payload)
             ? payload.message
-            : "Gagal mengambil class schedule";
-        setError(msg || "Gagal mengambil class schedule");
+            : "Failed to load class schedules";
+        setError(msg || "Failed to load class schedules");
         setClasses([]);
         setTotalItems(0);
         setTotalPages(1);
@@ -355,13 +355,13 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       const result = await createRecurringClassSchedules(values, recurrence, startDate);
       if (result.created.length === 0) {
         throw new Error(
-          result.failed[0]?.message || "Create recurring class gagal"
+          result.failed[0]?.message || "Failed to create recurring class"
         );
       }
       setSeriesNotice(
         result.failed.length === 0
-          ? `${result.created.length} jadwal berhasil dibuat.`
-          : `${result.created.length} jadwal dibuat, ${result.failed.length} gagal: ${result.failed
+          ? `${result.created.length} schedules created successfully.`
+          : `${result.created.length} schedules created, ${result.failed.length} failed: ${result.failed
               .map((f) => `${f.date} (${f.message})`)
               .join("; ")}`
       );
@@ -374,7 +374,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       if (redirectToLoginIfUnauthorized(res.status)) return;
       const payload = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        throw new Error(payload.message || "Create class gagal");
+        throw new Error(payload.message || "Failed to create class");
       }
     }
 
@@ -394,7 +394,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
     const payload = (await res.json().catch(() => ({}))) as { message?: string };
     setDeleteLoading(false);
     if (!res.ok) {
-      setDeleteError(payload.message || "Delete class gagal");
+      setDeleteError(payload.message || "Failed to delete class");
       return;
     }
     setDeleteId(null);
@@ -417,7 +417,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
     const payload = (await res.json().catch(() => ({}))) as { message?: string };
     setCancelLoading(false);
     if (!res.ok) {
-      setCancelError(payload.message || "Cancel class gagal");
+      setCancelError(payload.message || "Failed to cancel class");
       return;
     }
     setCancelTarget(null);
@@ -429,7 +429,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
     const enrolled =
       c.bookedCount ?? Math.max(0, c.capacity - (c.remainingSlots ?? c.capacity));
     return [
-      c.classDate ? new Date(c.classDate).toLocaleDateString("id-ID") : "-",
+      c.classDate ? new Date(c.classDate).toLocaleDateString("en-GB") : "-",
       c.startTime?.slice(0, 5) || "-",
       c.className || "-",
       c.coachName || c.coachId || "-",
@@ -572,7 +572,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
               <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
               <input
                 type="text"
-                placeholder="Cari class schedule..."
+                placeholder="Search class schedules..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -762,7 +762,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
               ) : mappedRows.length === 0 ? (
                 <tr>
                   <td className="px-6 py-6 text-muted" colSpan={8}>
-                    Belum ada data class.,
+                    No class data available.
                   </td>
                 </tr>
               ) : (
@@ -771,7 +771,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                   return (
                     <tr key={c.id} className="table-row transition">
                       <td className="px-6 py-4 text-fg-soft">
-                        {c.classDate ? new Date(c.classDate).toLocaleDateString("id-ID") : "-"}
+                        {c.classDate ? new Date(c.classDate).toLocaleDateString("en-GB") : "-"}
                       </td>
                       <td className="px-6 py-4 font-bold text-fg">{c.time}</td>
                       <td className="px-6 py-4 font-medium text-fg">{c.className}</td>

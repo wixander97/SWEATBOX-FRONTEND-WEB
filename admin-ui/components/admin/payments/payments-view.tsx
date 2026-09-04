@@ -223,7 +223,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
     const num = (n?: number | null) =>
       n != null ? n.toLocaleString("id-ID") : "—";
     const fmtDateTime = (iso?: string | null) =>
-      iso ? new Date(iso).toLocaleString("id-ID") : "—";
+      iso ? new Date(iso).toLocaleString("en-GB") : "—";
 
     const header = [
       "Invoice No",
@@ -303,7 +303,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
             {badge.label}
           </span>
         </td>
-        <td className="px-6 py-4">{new Date(p.created).toLocaleDateString("id-ID")}</td>
+        <td className="px-6 py-4">{new Date(p.created).toLocaleDateString("en-GB")}</td>
         <td className="px-6 py-4 text-right">
           <div className="flex gap-2 justify-end">
             <button
@@ -368,7 +368,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
             <span>
               <span className="block font-mono text-xs text-accent-ink">{ref}</span>
               <span className="block text-[11px] text-muted">
-                {group.length} invoice · 1 transaksi
+                {group.length} invoices · 1 transaction
               </span>
             </span>
           </button>
@@ -389,14 +389,14 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
             {badge.label}
           </span>
         </td>
-        <td className="px-6 py-4">{new Date(earliest).toLocaleDateString("id-ID")}</td>
+        <td className="px-6 py-4">{new Date(earliest).toLocaleDateString("en-GB")}</td>
         <td className="px-6 py-4 text-right">
           <button
             type="button"
             onClick={() => toggleGroup(ref)}
             className="text-xs text-muted hover:text-fg border border-border px-2 py-1 rounded transition"
           >
-            {open ? "Tutup" : "Lihat invoice"}
+            {open ? "Close" : "View invoices"}
           </button>
         </td>
       </tr>

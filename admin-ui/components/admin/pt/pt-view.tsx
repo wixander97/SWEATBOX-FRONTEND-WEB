@@ -18,7 +18,7 @@ export function PtView() {
             Personal Training
           </h1>
           <p className="text-sm text-muted mt-1">
-            Kelola PT Package dan PT Session
+            Manage PT Packages and PT Sessions
           </p>
         </div>
       </div>

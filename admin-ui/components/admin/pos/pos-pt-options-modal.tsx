@@ -70,7 +70,7 @@ export function PosPtOptionsModal({
               {pkg.name}
             </h3>
             <p className="text-xs text-muted mt-0.5">
-              {pkg.sessionCount ?? 0} sesi · {formatRupiah(pkg.price ?? 0)}
+              {pkg.sessionCount ?? 0} sessions · {formatRupiah(pkg.price ?? 0)}
             </p>
           </div>
           <button
@@ -85,15 +85,15 @@ export function PosPtOptionsModal({
 
         {assignedToMember && (
           <p className="text-[11px] text-fg-soft bg-sweat/10 border border-sweat/30 rounded-lg px-3 py-2 mb-4">
-            Package ini sudah di-assign ke customer yang dipilih, jadi bisa langsung
-            ditagihkan di sini.
+            This package is already assigned to the selected customer, so it can be
+            charged directly here.
           </p>
         )}
 
         <div className="bg-sidebar rounded-lg border border-border px-3 py-1 mb-4">
-          <Detail label="Sessions" value={`${pkg.sessionCount ?? 0} sesi`} />
+          <Detail label="Sessions" value={`${pkg.sessionCount ?? 0} sessions`} />
           <Detail label="Price" value={formatRupiah(pkg.price ?? 0)} />
-          <Detail label="Coach" value={pkg.coachName || "Ditentukan saat sesi dibuat"} />
+          <Detail label="Coach" value={pkg.coachName || "Assigned when the session is created"} />
           <Detail label="Branch" value={branchName || "-"} />
         </div>
 
@@ -105,7 +105,7 @@ export function PosPtOptionsModal({
 
         {!branchId && (
           <p className="text-xs text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded mb-3">
-            Branch belum dipilih di POS — pembelian PT package ditolak backend tanpa branch.
+            No branch selected in the POS — the backend rejects PT package purchases without a branch.
           </p>
         )}
 
@@ -115,7 +115,7 @@ export function PosPtOptionsModal({
           disabled={!branchId}
           className="w-full bg-sweat text-black py-2.5 rounded-lg text-sm font-bold hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Tambah ke transaksi · {formatRupiah(pkg.price ?? 0)}
+          Add to transaction · {formatRupiah(pkg.price ?? 0)}
         </button>
       </div>
     </div>

@@ -43,7 +43,7 @@ function providerLabel(provider: number): string {
  * rail, so the label has to say which one the reader is looking at.
  */
 function transactionLabel(provider: number): string {
-  return provider === 0 ? "No. Transaksi EDC" : "Transaction ID";
+  return provider === 0 ? "EDC Transaction No." : "Transaction ID";
 }
 
 /**
@@ -58,7 +58,7 @@ function formatDateTime(iso?: string | null): string | null {
   if (!iso) return null;
   const date = new Date(iso);
   if (Number.isNaN(date.getTime()) || date.getFullYear() <= 1970) return null;
-  return date.toLocaleString("id-ID");
+  return date.toLocaleString("en-GB");
 }
 
 function SectionHeader({

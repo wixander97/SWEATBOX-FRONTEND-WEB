@@ -272,7 +272,7 @@ export function HistoryView() {
       // Backend stores wall-clock local times with a `Z` suffix; render the
       // UTC components to avoid converting to the viewer's local timezone
       // (e.g. 23:00Z must show as 23.00, not 06.00 next day in WIB).
-      return date.toLocaleDateString("id-ID", {
+      return date.toLocaleDateString("en-GB", {
         timeZone: "UTC",
         day: "2-digit",
         month: "short",
@@ -288,7 +288,7 @@ export function HistoryView() {
   function formatClassDate(dateStr: string): string {
     try {
       const date = new Date(dateStr);
-      return date.toLocaleDateString("id-ID", {
+      return date.toLocaleDateString("en-GB", {
         timeZone: "UTC",
         day: "2-digit",
         month: "short",

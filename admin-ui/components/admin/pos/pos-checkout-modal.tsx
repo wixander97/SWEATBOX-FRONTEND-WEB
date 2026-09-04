@@ -63,7 +63,7 @@ export function PosCheckoutModal({
   branchName,
   onClose,
   onCompleted,
-  completeLabel = "Transaksi baru",
+  completeLabel = "New transaction",
   onBusyChange,
 }: Props) {
   const checkout = usePosCheckout(items, customer, branchName, branchId);
@@ -107,7 +107,7 @@ export function PosCheckoutModal({
       <div className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl max-h-[92vh] overflow-y-auto">
         <div className="p-5 sm:p-6 border-b border-border flex justify-between items-start gap-3">
           <div className="min-w-0">
-            <h3 className="text-xl font-bold font-display uppercase text-fg">Pembayaran</h3>
+            <h3 className="text-xl font-bold font-display uppercase text-fg">Payment</h3>
             <p className="text-xs text-muted truncate mt-0.5">
               {memberDisplayName(customer)} · {items.length} item
               {branchName ? ` · ${branchName}` : ""}
@@ -130,7 +130,7 @@ export function PosCheckoutModal({
             <>
               <div className="bg-sidebar border border-border rounded-lg px-4 py-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted">Total tagihan</span>
+                  <span className="text-muted">Amount due</span>
                   <span className="text-lg font-bold text-accent-ink font-display">
                     {formatRupiah(subtotal)}
                   </span>
@@ -144,7 +144,7 @@ export function PosCheckoutModal({
                 <div className="space-y-2">
                   {POS_PAYMENT_CHOICES.map((c) => {
                     const unavailable = c.value === "qris" && qrisAvailable === false;
-                    const unavailableHint = "Tidak aktif di payment method settings";
+                    const unavailableHint = "Not enabled in payment method settings";
                     return (
                       <button
                         key={c.value}
@@ -178,7 +178,7 @@ export function PosCheckoutModal({
                 <input
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={`Opsional — default: Front Desk${branchName ? ` · ${branchName}` : ""} · <item>`}
+                  placeholder={`Optional — default: Front Desk${branchName ? ` · ${branchName}` : ""} · <item>`}
                   className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-sweat"
                 />
               </label>
@@ -195,7 +195,7 @@ export function PosCheckoutModal({
                 disabled={checkout.isBusy()}
                 className="w-full bg-sweat text-black py-3 rounded-lg text-sm font-bold hover:brightness-95 transition disabled:opacity-60"
               >
-                Bayar {formatRupiah(subtotal)}
+                Pay {formatRupiah(subtotal)}
               </button>
             </>
           )}
@@ -205,7 +205,7 @@ export function PosCheckoutModal({
             <div className="space-y-2">
               {steps.length > 1 && (
                 <p className="text-[11px] text-muted uppercase tracking-wide">
-                  Payment {Math.min(activeIndex + 1, steps.length)} dari {steps.length}
+                  Payment {Math.min(activeIndex + 1, steps.length)} of {steps.length}
                 </p>
               )}
               {steps.map((step, index) => {
@@ -270,12 +270,12 @@ export function PosCheckoutModal({
                                   }))
                                 }
                                 autoFocus
-                                placeholder="mis. EDC-123456"
+                                placeholder="e.g. EDC-123456"
                                 className="mt-1 w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-fg font-mono focus:outline-none focus:border-sweat"
                               />
                               <span className="block text-[11px] text-muted mt-1">
-                                Salin nomor referensi dari struk mesin EDC. Jangan pernah
-                                memasukkan nomor kartu, CVV, PIN, atau masa berlaku.
+                                Copy the reference number from the EDC machine receipt. Never
+                                enter a card number, CVV, PIN, or expiry date.
                               </span>
                             </label>
                             <button
@@ -296,7 +296,7 @@ export function PosCheckoutModal({
                             <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                               <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
                               <p className="text-xs text-blue-500">
-                                Waiting for QRIS payment… status dibaca dari backend.
+                                Waiting for QRIS payment… status is read from the backend.
                               </p>
                             </div>
                             <div className="flex gap-2">
@@ -311,13 +311,13 @@ export function PosCheckoutModal({
                                 }`}
                               >
                                 <i className="fas fa-qrcode mr-2" aria-hidden />
-                                {step.paymentUrl ? "Buka halaman QRIS" : "Menyiapkan QRIS..."}
+                                {step.paymentUrl ? "Open QRIS page" : "Preparing QRIS..."}
                               </a>
                               <button
                                 type="button"
                                 onClick={() => void checkout.refreshActivePayment()}
                                 className="px-3 bg-sidebar border border-border text-fg rounded-lg text-sm"
-                                title="Cek status sekarang"
+                                title="Check status now"
                               >
                                 <i className="fas fa-sync" aria-hidden />
                               </button>
@@ -344,35 +344,35 @@ export function PosCheckoutModal({
                     {step.dropInCheck === "checking" && (
                       <p className="mt-2 text-[11px] text-muted flex items-center gap-2">
                         <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted border-t-transparent" />
-                        Memverifikasi penerbitan drop-in pass…
+                        Verifying drop-in pass issuance…
                       </p>
                     )}
                     {step.dropInCheck === "issued" && (
                       <p className="mt-2 text-[11px] text-green-600 bg-green-500/10 border border-green-500/30 px-3 py-2 rounded">
                         <i className="fas fa-check mr-1.5" aria-hidden />
-                        Drop-in pass terbit di akun member.
+                        Drop-in pass issued to the member&apos;s account.
                       </p>
                     )}
                     {step.dropInCheck === "not-credited" && (
                       <p className="mt-2 text-[11px] text-yellow-600 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded">
                         <i className="fas fa-triangle-exclamation mr-1.5" aria-hidden />
-                        Pass terbit, tapi kuota drop-in member tidak bertambah, jadi
-                        booking class masih akan ditolak (&quot;No remaining drop-in
-                        pass&quot;). Ini keterbatasan backend untuk pembelian multi-visit
-                        pass — jangan bayar ulang, laporkan invoice ini ke tim backend.
+                        The pass was issued, but the member&apos;s drop-in quota did not increase, so
+                        class booking will still be rejected (&quot;No remaining drop-in
+                        pass&quot;). This is a backend limitation for multi-visit pass
+                        purchases — do not charge again, report this invoice to the backend team.
                       </p>
                     )}
                     {step.dropInCheck === "missing" && (
                       <p className="mt-2 text-[11px] text-yellow-600 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded">
                         <i className="fas fa-triangle-exclamation mr-1.5" aria-hidden />
-                        Pembayaran sudah Paid, tapi drop-in pass belum terlihat di akun
-                        member. Jangan ulangi pembayaran — cek menu Drop In dulu, pass
-                        bisa menyusul beberapa saat.
+                        The payment is Paid, but the drop-in pass is not yet visible on the
+                        member&apos;s account. Do not repeat the payment — check the Drop In menu
+                        first, the pass may arrive shortly.
                       </p>
                     )}
                     {step.dropInCheck === "skipped" && (
                       <p className="mt-2 text-[11px] text-muted">
-                        Drop-in pass tidak bisa diverifikasi otomatis — cek menu Drop In.
+                        The drop-in pass could not be verified automatically — check the Drop In menu.
                       </p>
                     )}
 
@@ -384,14 +384,14 @@ export function PosCheckoutModal({
                           className="flex-1 bg-sidebar border border-border text-fg py-2 rounded-lg text-xs"
                         >
                           <i className="fas fa-redo mr-2" aria-hidden />
-                          {step.payment ? "Cek ulang status" : "Coba lagi"}
+                          {step.payment ? "Re-check status" : "Try again"}
                         </button>
                         <button
                           type="button"
                           onClick={onClose}
                           className="flex-1 bg-sidebar border border-border text-fg-soft py-2 rounded-lg text-xs"
                         >
-                          Tutup
+                          Close
                         </button>
                       </div>
                     )}
@@ -406,12 +406,12 @@ export function PosCheckoutModal({
             <div className="p-4 rounded-lg border bg-green-500/10 border-green-500/30">
               <p className="font-bold text-sm text-green-600">✓ Payment Successful</p>
               <p className="text-xs text-muted mt-1">
-                Semua payment sudah dikonfirmasi backend.
+                All payments have been confirmed by the backend.
               </p>
               {steps.some((s) => s.dropInCheck === "missing") && (
                 <p className="text-[11px] text-yellow-700 mt-2">
-                  Ada drop-in pass yang belum terverifikasi terbit — buka menu Drop In
-                  untuk memastikan sebelum customer pergi.
+                  Some drop-in passes are not yet verified as issued — open the Drop In menu
+                  to confirm before the customer leaves.
                 </p>
               )}
 

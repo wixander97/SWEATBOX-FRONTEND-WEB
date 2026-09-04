@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   console.log("[API/v1/auth/login/POST] Payload:", { email: body.email, password: "***" });
 
   if (!body.email || !body.password) {
-    return NextResponse.json({ message: "Email dan password wajib diisi" }, { status: 400 });
+    return NextResponse.json({ message: "Email and password are required" }, { status: 400 });
   }
 
   const url = `${API_BASE_URL}/api/v1/auth/login`;

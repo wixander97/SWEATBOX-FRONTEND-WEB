@@ -96,7 +96,7 @@ export function PayrollView() {
         <i className="fas fa-lock text-red-500 text-5xl mb-4" aria-hidden />
         <h3 className="text-2xl font-bold text-fg mb-2">Access Denied</h3>
         <p className="text-muted">
-          Anda tidak memiliki izin untuk melihat halaman Keuangan &amp; Payroll.
+          You do not have permission to view the Finance &amp; Payroll page.
         </p>
       </div>
     );

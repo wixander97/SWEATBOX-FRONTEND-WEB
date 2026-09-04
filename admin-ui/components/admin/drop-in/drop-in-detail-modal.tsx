@@ -18,7 +18,7 @@ type Props = {
 };
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("id-ID", {
+  return new Date(iso).toLocaleDateString("en-GB", {
     year: "numeric",
     month: "short",
     day: "2-digit",

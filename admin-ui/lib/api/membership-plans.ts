@@ -23,7 +23,7 @@ export type MembershipPlan = {
 export async function listMembershipPlans(options?: RequestOptions): Promise<MembershipPlan[]> {
   const payload = await apiGet<MembershipPlan[] | PagedResponse<MembershipPlan>>(
     "/api/v1/membership-plans?page=1&pageSize=200",
-    { errorMessage: "Gagal memuat membership plan", ...options }
+    { errorMessage: "Failed to load membership plans", ...options }
   );
   return toList(payload).filter((p) => p.isActive !== false);
 }
@@ -42,7 +42,7 @@ export function getMembershipPlan(
 ): Promise<MembershipPlan> {
   return apiGet<MembershipPlan>(
     `/api/v1/membership-plans/${encodeURIComponent(id)}`,
-    { errorMessage: "Gagal memuat membership plan", ...options }
+    { errorMessage: "Failed to load membership plans", ...options }
   );
 }
 
@@ -108,9 +108,9 @@ export function dropInVisitsOf(plan: MembershipPlan): number {
   return Number.isFinite(credits) && credits > 0 ? Math.floor(credits) : 1;
 }
 
-/** Card/line subtitle for a drop-in plan: "10x kunjungan · 30 hari". */
+/** Card/line subtitle for a drop-in plan: "10x visits · 30 days". */
 export function dropInSubtitle(plan: MembershipPlan): string {
   const visits = dropInVisitsOf(plan);
-  const label = visits > 1 ? `${visits}x kunjungan` : "1x kunjungan";
-  return `${label} · berlaku ${plan.validityDays} hari`;
+  const label = visits > 1 ? `${visits}x visits` : "1x visit";
+  return `${label} · valid for ${plan.validityDays} days`;
 }

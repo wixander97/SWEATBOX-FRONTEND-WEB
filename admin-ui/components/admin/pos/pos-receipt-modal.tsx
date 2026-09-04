@@ -32,7 +32,7 @@ function formatDateTime(iso?: string | null): string {
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
     ? "-"
-    : d.toLocaleString("id-ID", {
+    : d.toLocaleString("en-GB", {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -70,10 +70,10 @@ function Receipt({ receipt }: { receipt: PaymentReceipt }) {
       <table>
         <tbody>
           <Line label="Invoice" value={receipt.invoiceNo} />
-          <Line label="Tanggal" value={formatDateTime(receipt.paidAt ?? receipt.issuedAt)} />
+          <Line label="Date" value={formatDateTime(receipt.paidAt ?? receipt.issuedAt)} />
           <Line label="Member" value={receipt.memberName || "-"} />
-          {receipt.memberCode ? <Line label="Kode" value={receipt.memberCode} /> : null}
-          {receipt.cashierName ? <Line label="Kasir" value={receipt.cashierName} /> : null}
+          {receipt.memberCode ? <Line label="Code" value={receipt.memberCode} /> : null}
+          {receipt.cashierName ? <Line label="Cashier" value={receipt.cashierName} /> : null}
         </tbody>
       </table>
 
@@ -85,9 +85,9 @@ function Receipt({ receipt }: { receipt: PaymentReceipt }) {
         <tbody>
           <Line label="Subtotal" value={formatRupiah(receipt.amount)} />
           {receipt.discount > 0 ? (
-            <Line label="Diskon" value={`-${formatRupiah(receipt.discount)}`} />
+            <Line label="Discount" value={`-${formatRupiah(receipt.discount)}`} />
           ) : null}
-          {receipt.tax > 0 ? <Line label="Pajak" value={formatRupiah(receipt.tax)} /> : null}
+          {receipt.tax > 0 ? <Line label="Tax" value={formatRupiah(receipt.tax)} /> : null}
           <tr style={{ fontWeight: 700, fontSize: 11 }}>
             <td>TOTAL</td>
             <td className="receipt-value">{formatRupiah(receipt.finalAmount)}</td>
@@ -99,7 +99,7 @@ function Receipt({ receipt }: { receipt: PaymentReceipt }) {
 
       <table>
         <tbody>
-          <Line label="Metode" value={receipt.paymentMethod} />
+          <Line label="Method" value={receipt.paymentMethod} />
           <Line label="Status" value={receipt.paymentStatus} />
           {receipt.referenceNo ? <Line label="Ref" value={receipt.referenceNo} /> : null}
         </tbody>
@@ -107,7 +107,7 @@ function Receipt({ receipt }: { receipt: PaymentReceipt }) {
 
       <hr className="receipt-rule" />
 
-      <div style={{ textAlign: "center" }}>Terima kasih — sampai jumpa</div>
+      <div style={{ textAlign: "center" }}>Thank you — see you next time</div>
     </div>
   );
 }
@@ -148,11 +148,11 @@ function CombinedReceipt({
 
       <table>
         <tbody>
-          {orderRef ? <Line label="Transaksi" value={orderRef} /> : null}
-          <Line label="Tanggal" value={formatDateTime(paidAt)} />
+          {orderRef ? <Line label="Transaction" value={orderRef} /> : null}
+          <Line label="Date" value={formatDateTime(paidAt)} />
           <Line label="Member" value={first.memberName || "-"} />
-          {first.memberCode ? <Line label="Kode" value={first.memberCode} /> : null}
-          {first.cashierName ? <Line label="Kasir" value={first.cashierName} /> : null}
+          {first.memberCode ? <Line label="Code" value={first.memberCode} /> : null}
+          {first.cashierName ? <Line label="Cashier" value={first.cashierName} /> : null}
         </tbody>
       </table>
 
@@ -175,10 +175,10 @@ function CombinedReceipt({
         <tbody>
           <Line label="Subtotal" value={formatRupiah(sum((r) => r.amount))} />
           {sum((r) => r.discount) > 0 ? (
-            <Line label="Diskon" value={`-${formatRupiah(sum((r) => r.discount))}`} />
+            <Line label="Discount" value={`-${formatRupiah(sum((r) => r.discount))}`} />
           ) : null}
           {sum((r) => r.tax) > 0 ? (
-            <Line label="Pajak" value={formatRupiah(sum((r) => r.tax))} />
+            <Line label="Tax" value={formatRupiah(sum((r) => r.tax))} />
           ) : null}
           <tr style={{ fontWeight: 700, fontSize: 11 }}>
             <td>TOTAL</td>
@@ -191,7 +191,7 @@ function CombinedReceipt({
 
       <table>
         <tbody>
-          <Line label="Metode" value={methods.join(" / ") || "-"} />
+          <Line label="Method" value={methods.join(" / ") || "-"} />
           <Line label="Status" value={statuses.join(" / ") || "-"} />
           {references.length > 0 ? <Line label="Ref" value={references.join(" / ")} /> : null}
         </tbody>
@@ -199,7 +199,7 @@ function CombinedReceipt({
 
       <hr className="receipt-rule" />
 
-      <div style={{ textAlign: "center" }}>Terima kasih — sampai jumpa</div>
+      <div style={{ textAlign: "center" }}>Thank you — see you next time</div>
     </div>
   );
 }
@@ -248,11 +248,11 @@ export function PosReceiptModal({ paymentIds, orderRef, defaultEmail, onClose }:
           setError(
             errorMessageOf(
               (failed[0] as PromiseRejectedResult).reason,
-              "Gagal memuat receipt"
+              "Failed to load receipt"
             )
           );
         } else if (failed.length > 0) {
-          setError(`${failed.length} receipt gagal dimuat.`);
+          setError(`${failed.length} receipts failed to load.`);
         }
         // Prefer the address the backend has on file for the payer.
         setEmail((current) => current || ok[0]?.memberEmail || "");
@@ -281,9 +281,9 @@ export function PosReceiptModal({ paymentIds, orderRef, defaultEmail, onClose }:
       for (const receipt of receipts) {
         await emailPaymentReceipt(receipt.paymentId, email.trim());
       }
-      setSent(`Receipt terkirim ke ${email.trim()}.`);
+      setSent(`Receipt sent to ${email.trim()}.`);
     } catch (err) {
-      setEmailError(errorMessageOf(err, "Gagal mengirim receipt"));
+      setEmailError(errorMessageOf(err, "Failed to send receipt"));
     } finally {
       setSending(false);
     }
@@ -304,10 +304,10 @@ export function PosReceiptModal({ paymentIds, orderRef, defaultEmail, onClose }:
             <h3 className="text-lg font-bold font-display uppercase text-fg">Receipt</h3>
             <p className="text-xs text-muted mt-0.5">
               {loading
-                ? "Memuat…"
+                ? "Loading…"
                 : receipts.length > 1
-                  ? `1 struk · ${receipts.length} invoice · thermal 80 mm`
-                  : "1 struk · thermal 80 mm"}
+                  ? `1 slip · ${receipts.length} invoices · thermal 80 mm`
+                  : "1 slip · thermal 80 mm"}
             </p>
           </div>
           <button
@@ -358,19 +358,19 @@ export function PosReceiptModal({ paymentIds, orderRef, defaultEmail, onClose }:
                   disabled={!canEmail || sending}
                   className="px-4 bg-sidebar border border-border text-fg rounded-lg text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {sending ? "Mengirim…" : "Send"}
+                  {sending ? "Sending…" : "Send"}
                 </button>
               </div>
             </label>
             {!loading && receipts.length > 1 && (
               <p className="text-[11px] text-muted mt-1">
-                Email dikirim backend per invoice, jadi member menerima {receipts.length}{" "}
-                email untuk transaksi ini. Struk cetaknya tetap satu lembar.
+                The backend sends one email per invoice, so the member receives {receipts.length}{" "}
+                emails for this transaction. The printed slip is still a single sheet.
               </p>
             )}
             {!loading && receipts.length > 0 && !receipts[0].memberEmail && (
               <p className="text-[11px] text-muted mt-1">
-                Member ini belum punya email di sistem — isi manual untuk mengirim.
+                This member has no email on file — enter one manually to send.
               </p>
             )}
             {sent && <p className="text-xs text-green-500 mt-1">{sent}</p>}
@@ -380,10 +380,10 @@ export function PosReceiptModal({ paymentIds, orderRef, defaultEmail, onClose }:
 
         <div className="bg-card border border-border rounded-b-2xl px-5 py-5 space-y-5">
           {loading ? (
-            <p className="text-sm text-muted text-center py-8">Memuat receipt…</p>
+            <p className="text-sm text-muted text-center py-8">Loading receipt…</p>
           ) : receipts.length === 0 ? (
             <p className="text-sm text-muted text-center py-8">
-              Tidak ada receipt untuk ditampilkan.
+              No receipts to display.
             </p>
           ) : receipts.length > 1 ? (
             // One transaction, one slip — even though the backend recorded it

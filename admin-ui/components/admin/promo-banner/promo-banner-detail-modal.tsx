@@ -19,7 +19,7 @@ function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("id-ID", {
+  return d.toLocaleString("en-GB", {
     year: "numeric",
     month: "short",
     day: "2-digit",
@@ -57,13 +57,13 @@ export function PromoBannerDetailModal({ bannerId, onClose }: Props) {
         };
         if (cancelled) return;
         if (!res.ok) {
-          setError(data.message || "Gagal mengambil detail promo banner");
+          setError(data.message || "Failed to load promo banner details");
           setBanner(null);
         } else {
           setBanner(data);
         }
       } catch {
-        if (!cancelled) setError("Gagal mengambil detail promo banner");
+        if (!cancelled) setError("Failed to load promo banner details");
       } finally {
         if (!cancelled) setLoading(false);
       }

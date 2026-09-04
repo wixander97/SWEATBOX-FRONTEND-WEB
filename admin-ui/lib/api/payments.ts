@@ -125,7 +125,7 @@ export function createMembershipPayment(
   options?: RequestOptions
 ): Promise<Payment> {
   return apiPost<Payment>("/api/v1/payments", body, {
-    errorMessage: "Gagal membuat payment",
+    errorMessage: "Failed to create payment",
     ...options,
   });
 }
@@ -168,7 +168,7 @@ export function createDropInPayment(
       paymentMethod: PaymentMethod.QRIS,
       paymentProvider: PaymentProvider.AsteriPay,
     },
-    { errorMessage: "Gagal membuat payment drop-in", ...options }
+    { errorMessage: "Failed to create drop-in payment", ...options }
   );
 }
 
@@ -204,7 +204,7 @@ export function confirmEdcPayment(
     notes: payment.notes ?? null,
   };
   return apiPut<Payment>(`/api/v1/payments/${encodeURIComponent(payment.id)}`, body, {
-    errorMessage: "Gagal mencatat pembayaran EDC",
+    errorMessage: "Failed to record EDC payment",
     ...options,
   });
 }
@@ -252,7 +252,7 @@ export async function listPaymentMethods(
   try {
     const payload = await apiGet<PaymentMethodOption[] | PagedResponse<PaymentMethodOption>>(
       `/api/v1/payments/payment-methods?provider=${provider}`,
-      { errorMessage: "Gagal memuat payment method" }
+      { errorMessage: "Failed to load payment methods" }
     );
     return toList(payload);
   } catch {
@@ -265,14 +265,14 @@ export function purchasePtPackage(
   options?: RequestOptions
 ): Promise<Payment> {
   return apiPost<Payment>("/api/v1/payments/pt-package", body, {
-    errorMessage: "Gagal membuat payment PT package",
+    errorMessage: "Failed to create PT package payment",
     ...options,
   });
 }
 
 export function getPayment(id: string, options?: RequestOptions): Promise<Payment> {
   return apiGet<Payment>(`/api/v1/payments/${encodeURIComponent(id)}`, {
-    errorMessage: "Gagal memuat status payment",
+    errorMessage: "Failed to load payment status",
     ...options,
   });
 }
@@ -412,7 +412,7 @@ export function getPaymentReceipt(
 ): Promise<PaymentReceipt> {
   return apiGet<PaymentReceipt>(
     `/api/v1/payments/${encodeURIComponent(paymentId)}/receipt`,
-    { errorMessage: "Gagal memuat receipt", ...options }
+    { errorMessage: "Failed to load receipt", ...options }
   );
 }
 
@@ -431,6 +431,6 @@ export function emailPaymentReceipt(
   return apiPost<{ message?: string; email?: string }>(
     `/api/v1/payments/${encodeURIComponent(paymentId)}/receipt/email`,
     { email: email?.trim() || null },
-    { errorMessage: "Gagal mengirim receipt", ...options }
+    { errorMessage: "Failed to send receipt", ...options }
   );
 }

@@ -49,7 +49,7 @@ export async function dispatchScan(
       if (!scanBranchId) {
         return {
           ok: false,
-          message: "Branch QR tidak ditemukan. Pastikan QR member menyertakan branchId.",
+          message: "Branch QR not found. Make sure the member QR includes a branchId.",
           raw: "No branch in QR.",
         };
       }

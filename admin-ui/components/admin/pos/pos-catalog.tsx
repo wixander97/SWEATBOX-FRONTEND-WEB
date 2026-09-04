@@ -62,7 +62,7 @@ function formatDate(iso?: string | null): string {
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
     ? "-"
-    : d.toLocaleDateString("id-ID", { day: "2-digit", month: "short" });
+    : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
 }
 
 /**
@@ -73,9 +73,9 @@ function formatDate(iso?: string | null): string {
  * everything else is credit-based.
  */
 function planSubtitle(plan: MembershipPlan): string {
-  const days = `${plan.validityDays} hari`;
+  const days = `${plan.validityDays} days`;
   if ((plan.planCategory ?? "").toLowerCase() === "regular") {
-    return `${days} · Gym access (tanpa class)`;
+    return `${days} · Gym access (no classes)`;
   }
   if (plan.isUnlimitedClasses) return `${days} · Unlimited class`;
   return `${days} · ${plan.credits} credit`;
@@ -230,7 +230,7 @@ export function PosCatalog({
       .catch((err) => {
         if (cancelled) return;
         setMemberPackages([]);
-        setMemberPackagesError(errorMessageOf(err, "Gagal memuat PT package member"));
+        setMemberPackagesError(errorMessageOf(err, "Failed to load member PT packages"));
       });
 
     return () => {
@@ -370,7 +370,7 @@ export function PosCatalog({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari membership, PT package, atau class"
+            placeholder="Search memberships, PT packages, or classes"
             className="w-full bg-sidebar border border-border text-fg pl-10 pr-9 py-3 rounded-lg text-sm focus:outline-none focus:border-sweat"
           />
           {search && (
@@ -423,7 +423,7 @@ export function PosCatalog({
           <div className="text-center py-16">
             <i className="fas fa-box-open text-3xl text-muted mb-3 block" aria-hidden />
             <p className="text-sm text-muted">
-              Tidak ada item yang cocok untuk {branchName || "branch ini"}.
+              No matching items for {branchName || "this branch"}.
             </p>
           </div>
         ) : (
@@ -433,7 +433,7 @@ export function PosCatalog({
             {visibleMemberPackages.length > 0 && (
               <section>
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted mb-2">
-                  PT Package member ini
+                  This member&apos;s PT Packages
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
                   {visibleMemberPackages.map((pkg) => {
@@ -443,11 +443,11 @@ export function PosCatalog({
                         key={pkg.id}
                         badge="Assigned"
                         title={pkg.name}
-                        subtitle={`${pkg.sessionCount ?? 0} sesi`}
+                        subtitle={`${pkg.sessionCount ?? 0} sessions`}
                         meta={pkg.coachName ? `Coach ${pkg.coachName}` : pkg.branchName}
                         price={formatRupiah(pkg.price ?? 0)}
                         disabled={disabled || queued}
-                        disabledLabel={queued ? "Sudah di transaksi" : undefined}
+                        disabledLabel={queued ? "Already in transaction" : undefined}
                         onClick={() => setPtTarget(pkg)}
                       />
                     );
@@ -475,12 +475,12 @@ export function PosCatalog({
                         subtitle={planSubtitle(plan)}
                         meta={
                           plan.isPtIncluded
-                            ? `Termasuk ${plan.ptSessions ?? 0} sesi PT`
+                            ? `Includes ${plan.ptSessions ?? 0} PT sessions`
                             : plan.planCategory
                         }
                         price={formatRupiah(plan.price ?? 0)}
                         disabled={disabled || queued}
-                        disabledLabel={queued ? "Sudah di transaksi" : undefined}
+                        disabledLabel={queued ? "Already in transaction" : undefined}
                         onClick={() => addPlan(plan)}
                       />
                     );
@@ -501,11 +501,11 @@ export function PosCatalog({
                       <Card
                         key={pkg.id}
                         title={pkg.name}
-                        subtitle={`${pkg.sessionCount ?? 0} sesi`}
+                        subtitle={`${pkg.sessionCount ?? 0} sessions`}
                         meta={pkg.coachName ? `Coach ${pkg.coachName}` : pkg.branchName}
                         price={formatRupiah(pkg.price ?? 0)}
                         disabled={disabled || queued}
-                        disabledLabel={queued ? "Sudah di transaksi" : undefined}
+                        disabledLabel={queued ? "Already in transaction" : undefined}
                         onClick={() => setPtTarget(pkg)}
                       />
                     );
@@ -517,7 +517,7 @@ export function PosCatalog({
             {visibleClasses.length > 0 && (
               <section>
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted mb-2">
-                  Classes · Book langsung, tanpa pembayaran
+                  Classes · Book directly, no payment
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
                   {visibleClasses.map((c) => {
@@ -532,7 +532,7 @@ export function PosCatalog({
                         price={`${bookedCountOf(c)} / ${c.capacity ?? 0} · ${remainingSlotsOf(c)} slot`}
                         disabled={disabled || already || full}
                         disabledLabel={
-                          already ? "Sudah dibooking" : full ? "Penuh / tidak aktif" : undefined
+                          already ? "Already booked" : full ? "Full / inactive" : undefined
                         }
                         onClick={() => setClassTarget(c)}
                       />
@@ -592,16 +592,16 @@ function PosBookClassGuard({ onClose }: { onClose: () => void }) {
     >
       <div className="bg-card w-full max-w-sm rounded-2xl border border-border p-6 text-center">
         <i className="fas fa-user-slash text-2xl text-muted mb-3 block" aria-hidden />
-        <p className="text-sm text-fg font-semibold mb-1">Pilih customer dulu</p>
+        <p className="text-sm text-fg font-semibold mb-1">Select a customer first</p>
         <p className="text-xs text-muted mb-4">
-          Class dibooking atas nama member, jadi customer harus dipilih lebih dulu.
+          Classes are booked in a member&apos;s name, so a customer must be selected first.
         </p>
         <button
           type="button"
           onClick={onClose}
           className="w-full bg-sweat text-black py-2.5 rounded-lg text-sm font-bold"
         >
-          Mengerti
+          Got it
         </button>
       </div>
     </div>

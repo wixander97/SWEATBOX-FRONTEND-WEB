@@ -16,7 +16,7 @@ export async function fetchParticipants(id: string): Promise<PtSessionParticipan
     { cache: "no-store" }
   );
   if (redirectToLoginIfUnauthorized(res.status)) return [];
-  if (!res.ok) throw new Error("Gagal memuat peserta PT session.");
+  if (!res.ok) throw new Error("Failed to load PT session participants.");
   const data = await res.json().catch(() => []);
   return Array.isArray(data) ? (data as PtSessionParticipant[]) : [];
 }

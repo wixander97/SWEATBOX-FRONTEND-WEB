@@ -125,8 +125,8 @@ export function MembersView() {
         const msg =
           typeof payload === "object" && !Array.isArray(payload)
             ? payload.message
-            : "Gagal mengambil data member";
-        setError(msg || "Gagal mengambil data member");
+            : "Failed to load member data";
+        setError(msg || "Failed to load member data");
         setMembers([]);
         setTotalItems(0);
         setTotalPages(1);
@@ -226,7 +226,7 @@ export function MembersView() {
 
   async function exportXlsx() {
     const fmtDate = (iso?: string | null) =>
-      iso ? new Date(iso).toLocaleDateString("id-ID") : "-";
+      iso ? new Date(iso).toLocaleDateString("en-GB") : "-";
     const yesNo = (v?: boolean | null) => (v ? "Yes" : "No");
     const val = (s?: string | null) => s || "-";
 
@@ -476,7 +476,7 @@ export function MembersView() {
             ) : displayMembers.length === 0 ? (
               <tr>
                 <td className="px-6 py-6 text-muted" colSpan={10}>
-                  Tidak ada data member.
+                  No member data available.
                 </td>
               </tr>
             ) : (

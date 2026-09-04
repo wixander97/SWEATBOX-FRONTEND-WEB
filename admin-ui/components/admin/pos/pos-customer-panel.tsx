@@ -31,7 +31,7 @@ type Props = {
 function formatDate(iso?: string | null): string {
   if (!iso) return "-";
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString("id-ID");
+  return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString("en-GB");
 }
 
 function initialsOf(name: string): string {
@@ -75,9 +75,9 @@ function creditsLabel(
 ): { value: string; tone: "normal" | "warn" } {
   switch (kind) {
     case "unlimited":
-      return { value: "Unlimited · tidak pakai credit", tone: "normal" };
+      return { value: "Unlimited · no credits used", tone: "normal" };
     case "regular":
-      return { value: "Gym access · tidak bisa book class", tone: "normal" };
+      return { value: "Gym access · cannot book classes", tone: "normal" };
     case "credit":
       return {
         value: `${remainingCredits} class credit`,
@@ -139,7 +139,7 @@ export function PosCustomerPanel({
         setResults(list);
         setShowResults(true);
       } catch (err) {
-        setSearchError(errorMessageOf(err, "Gagal mencari customer"));
+        setSearchError(errorMessageOf(err, "Failed to search customers"));
         setResults([]);
         setShowResults(true);
       } finally {
@@ -251,7 +251,7 @@ export function PosCustomerPanel({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => query.trim().length >= 2 && setShowResults(true)}
-              placeholder="Cari phone, email, nama, atau member code"
+              placeholder="Search by phone, email, name, or member code"
               className="w-full bg-sidebar border border-border text-fg pl-9 pr-9 py-2.5 rounded-lg text-sm focus:outline-none focus:border-sweat"
             />
             {searching && (
@@ -265,7 +265,7 @@ export function PosCustomerPanel({
                 <p className="px-3 py-3 text-xs text-red-500">{searchError}</p>
               ) : results.length === 0 ? (
                 <p className="px-3 py-3 text-xs text-muted">
-                  {searching ? "Mencari..." : "Customer tidak ditemukan."}
+                  {searching ? "Searching..." : "No customers found."}
                 </p>
               ) : (
                 results.map((r) => (
@@ -316,7 +316,7 @@ export function PosCustomerPanel({
               type="button"
               onClick={() => onSelect(null)}
               disabled={locked}
-              title={locked ? "Selesaikan transaksi dulu" : "Ganti customer"}
+              title={locked ? "Complete the transaction first" : "Change customer"}
               className="text-muted hover:text-fg text-sm disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label="Clear customer"
             >
@@ -326,7 +326,7 @@ export function PosCustomerPanel({
 
           <div className="mt-3 bg-sidebar rounded-lg border border-border px-3 py-2">
             {contextLoading && !detail ? (
-              <p className="text-xs text-muted py-1">Memuat data customer...</p>
+              <p className="text-xs text-muted py-1">Loading customer data...</p>
             ) : (
               <>
                 <ContextRow
@@ -334,7 +334,7 @@ export function PosCustomerPanel({
                   value={
                     m?.membershipPlanName
                       ? `${m.membershipPlanName}${m.membershipStatus ? ` · ${m.membershipStatus}` : ""}`
-                      : "Belum ada membership aktif"
+                      : "No active membership"
                   }
                   tone={m?.membershipPlanName && inactive ? "warn" : "normal"}
                 />
@@ -347,12 +347,12 @@ export function PosCustomerPanel({
                 )}
                 <ContextRow label="Credits" value={credits.value} tone={credits.tone} />
                 <ContextRow
-                  label="PT sesi"
-                  value={`${m?.remainingPtSessions ?? 0} sesi tersisa`}
+                  label="PT sessions"
+                  value={`${m?.remainingPtSessions ?? 0} sessions remaining`}
                 />
                 <ContextRow
                   label="Drop in"
-                  value={`${m?.remainingDropInVisits ?? 0} kunjungan tersisa`}
+                  value={`${m?.remainingDropInVisits ?? 0} visits remaining`}
                 />
 
                 <div className="pt-1 mt-1 border-t border-border/60">
@@ -360,11 +360,11 @@ export function PosCustomerPanel({
                     PT package assigned
                   </p>
                   {ptPackages.length === 0 ? (
-                    <p className="text-xs text-muted">Belum ada package di-assign.</p>
+                    <p className="text-xs text-muted">No packages assigned yet.</p>
                   ) : (
                     ptPackages.slice(0, 3).map((p) => (
                       <p key={p.id} className="text-xs text-fg-soft truncate">
-                        {p.name} · {p.sessionCount ?? 0} sesi
+                        {p.name} · {p.sessionCount ?? 0} sessions
                       </p>
                     ))
                   )}
@@ -375,7 +375,7 @@ export function PosCustomerPanel({
                     Upcoming classes
                   </p>
                   {upcoming.length === 0 ? (
-                    <p className="text-xs text-muted">Tidak ada booking mendatang.</p>
+                    <p className="text-xs text-muted">No upcoming bookings.</p>
                   ) : (
                     upcoming.map((b) => (
                       <p key={b.id} className="text-xs text-fg-soft truncate">

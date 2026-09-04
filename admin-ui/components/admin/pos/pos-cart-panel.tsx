@@ -19,7 +19,7 @@ type Props = {
 function lineDetail(item: CartItem): string {
   switch (item.kind) {
     case "membership":
-      return `${item.plan.validityDays} hari · ${
+      return `${item.plan.validityDays} days · ${
         (item.plan.planCategory ?? "").toLowerCase() === "regular"
           ? "Gym access"
           : item.plan.isUnlimitedClasses
@@ -28,14 +28,14 @@ function lineDetail(item: CartItem): string {
       }`;
     case "dropin":
       return [
-        item.dropInKind === "pass" ? `${item.visits}x kunjungan` : "1x kunjungan",
-        item.validityDays ? `berlaku ${item.validityDays} hari` : null,
+        item.dropInKind === "pass" ? `${item.visits}x visits` : "1x visit",
+        item.validityDays ? `valid for ${item.validityDays} days` : null,
       ]
         .filter(Boolean)
         .join(" · ");
     case "pt":
       return [
-        `${item.sessionCount} sesi`,
+        `${item.sessionCount} sessions`,
         item.branchName,
         item.coachName ? `Coach ${item.coachName}` : null,
         item.assignedToMember ? "Assigned" : null,
@@ -63,16 +63,16 @@ export function PosCartPanel({
   const subtotal = cartSubtotal(items);
 
   const blockedReason = !hasCustomer
-    ? "Pilih customer dulu"
+    ? "Select a customer first"
     : items.length === 0
-      ? "Belum ada item"
+      ? "No items yet"
       : null;
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
-          Transaksi {items.length > 0 && `(${items.length})`}
+          Transaction {items.length > 0 && `(${items.length})`}
         </p>
         {items.length > 0 && (
           <button
@@ -91,8 +91,8 @@ export function PosCartPanel({
           <div className="text-center py-12">
             <i className="fas fa-receipt text-2xl text-muted mb-2 block" aria-hidden />
             <p className="text-xs text-muted">
-              Pilih membership, drop in, atau PT package dari katalog. Class dibooking
-              langsung tanpa pembayaran.
+              Select a membership, drop in, or PT package from the catalog. Classes are
+              booked directly without payment.
             </p>
           </div>
         ) : (
@@ -135,7 +135,7 @@ export function PosCartPanel({
           <span className="text-muted">Discount</span>
           <span
             className="text-fg-soft"
-            title="Harga diambil apa adanya dari plan/package record — backend tidak menerapkan diskon"
+            title="Prices are taken as-is from the plan/package record — the backend applies no discount"
           >
             {formatRupiah(0)}
           </span>
@@ -154,7 +154,7 @@ export function PosCartPanel({
           className="w-full bg-sweat text-black py-3 rounded-lg text-sm font-bold hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           <i className="fas fa-cash-register" aria-hidden />
-          {blockedReason ?? `Bayar · ${formatRupiah(subtotal)}`}
+          {blockedReason ?? `Pay · ${formatRupiah(subtotal)}`}
         </button>
       </div>
     </div>

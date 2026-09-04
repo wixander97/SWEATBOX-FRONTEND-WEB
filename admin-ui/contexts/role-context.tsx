@@ -79,7 +79,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
    * `RoleGuard` blocks rendering until the role is known, so whoever resolves it
    * must always be mounted on a guarded page. Hanging that off `AdminHeader`
    * meant any admin screen without the header — the full-screen POS — sat on
-   * "Memeriksa akses..." forever. The provider is always mounted, so it owns it.
+   * "Checking access..." forever. The provider is always mounted, so it owns it.
    *
    * Restricted to /admin so the login page does not fire a profile call it can
    * only get a 401 from.

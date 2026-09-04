@@ -149,13 +149,13 @@ export type CheckoutPhase = "idle" | "paying" | "done" | "blocked";
  */
 function wrongAccountMessage(payment: Payment, customer: ApiMember): string | null {
   const stop = (detail: string) =>
-    `${detail} Transaksi dihentikan — hapus payment ini dari menu Payments sebelum mencoba lagi.`;
+    `${detail} Transaction stopped — delete this payment from the Payments menu before trying again.`;
 
   if (customer.userId && payment.userId) {
     return payment.userId.toLowerCase() === customer.userId.toLowerCase()
       ? null
       : stop(
-          `Payment tercatat untuk user ${payment.userId}, bukan akun customer ${customer.userId}.`
+          `The payment was recorded for user ${payment.userId}, not the customer account ${customer.userId}.`
         );
   }
 
@@ -164,7 +164,7 @@ function wrongAccountMessage(payment: Payment, customer: ApiMember): string | nu
   const expected = memberDisplayName(customer).trim().toLowerCase();
   if (!expected || onPayment === expected) return null;
   return stop(
-    `Payment tercatat atas nama "${payment.memberName}", bukan "${memberDisplayName(customer)}".`
+    `The payment was recorded under the name "${payment.memberName}", not "${memberDisplayName(customer)}".`
   );
 }
 
@@ -250,8 +250,8 @@ export function usePosCheckout(
           status: "failed",
           error:
             item.kind === "pt"
-              ? "Branch wajib dipilih untuk pembelian PT package."
-              : "Branch wajib dipilih untuk pembelian drop-in.",
+              ? "A branch must be selected to purchase a PT package."
+              : "A branch must be selected to purchase a drop-in.",
         });
         setPhase("blocked");
         return;
@@ -310,7 +310,7 @@ export function usePosCheckout(
           updateStep(item.lineId, {
             status: "failed",
             error:
-              "Payment dibuat tapi backend tidak mengembalikan ID — cek menu Payments sebelum mengulang.",
+              "The payment was created but the backend returned no ID — check the Payments menu before retrying.",
           });
           setPhase("blocked");
           return;
@@ -343,8 +343,8 @@ export function usePosCheckout(
           updateStep(item.lineId, {
             status: "failed",
             error:
-              "Backend belum menerima checkout AsteriPay untuk payment ini " +
-              "(ProviderOrderId/Signature kosong). Cek konfigurasi merchant AsteriPay untuk branch tersebut.",
+              "The backend has not accepted the AsteriPay checkout for this payment " +
+              "(ProviderOrderId/Signature is empty). Check the AsteriPay merchant configuration for that branch.",
           });
           setPhase("blocked");
           return;
@@ -359,12 +359,12 @@ export function usePosCheckout(
         // drop-in still leaves a Pending `DIP-` invoice that each retry adds to.
         createdRef.current.delete(item.lineId);
         if (!mountedRef.current) return;
-        const message = errorMessageOf(err, "Gagal membuat payment");
+        const message = errorMessageOf(err, "Failed to create payment");
         updateStep(item.lineId, {
           status: "failed",
           error:
             item.kind === "dropin"
-              ? `${message} Payment drop-in yang gagal tetap tersimpan Pending di menu Payments (invoice DIP-) — hapus dari sana, jangan diulang berkali-kali.`
+              ? `${message} A failed drop-in payment is still stored as Pending in the Payments menu (invoice DIP-) — delete it there, do not retry repeatedly.`
               : message,
         });
         setPhase("blocked");
@@ -402,7 +402,7 @@ export function usePosCheckout(
           updateStep(item.lineId, {
             status: "failed",
             error:
-              "Timeout menunggu pembayaran. Payment tetap ada di backend — cek statusnya di menu Payments sebelum mengulang.",
+              "Timed out waiting for payment. The payment still exists in the backend — check its status in the Payments menu before retrying.",
           });
           setPhase("blocked");
           return;
@@ -420,14 +420,14 @@ export function usePosCheckout(
           status: "failed",
           payment,
           statusLabel: label,
-          error: `Pembayaran ${label.toLowerCase()}. Transaksi belum diselesaikan.`,
+          error: `Payment ${label.toLowerCase()}. The transaction was not completed.`,
         });
         setPhase("blocked");
       } catch (err) {
         if (!mountedRef.current) return;
         updateStep(item.lineId, {
           status: "failed",
-          error: errorMessageOf(err, "Gagal memeriksa status pembayaran"),
+          error: errorMessageOf(err, "Failed to check payment status"),
         });
         setPhase("blocked");
       } finally {
@@ -541,11 +541,11 @@ export function usePosCheckout(
   }) => {
     if (busyRef.current) return;
     if (!customer) {
-      setError("Pilih customer terlebih dahulu.");
+      setError("Select a customer first.");
       return;
     }
     if (payables.length === 0) {
-      setError("Belum ada item berbayar di transaksi ini.");
+      setError("There are no payable items in this transaction.");
       return;
     }
     busyRef.current = true;
@@ -614,7 +614,7 @@ export function usePosCheckout(
       const step = steps[activeIndex];
       if (!step?.payment?.id) return;
       if (!trimmed) {
-        updateStep(step.lineId, { error: "Nomor transaksi EDC wajib diisi." });
+        updateStep(step.lineId, { error: "The EDC transaction number is required." });
         return;
       }
       if (busyRef.current) return;
@@ -636,14 +636,14 @@ export function usePosCheckout(
           status: "failed",
           payment,
           statusLabel: label,
-          error: `Backend belum menandai payment ini Paid (status: ${label}).`,
+          error: `The backend has not marked this payment as Paid (status: ${label}).`,
         });
         setPhase("blocked");
       } catch (err) {
         if (!mountedRef.current) return;
         updateStep(step.lineId, {
           status: "awaiting",
-          error: errorMessageOf(err, "Gagal mencatat pembayaran EDC"),
+          error: errorMessageOf(err, "Failed to record EDC payment"),
         });
       } finally {
         busyRef.current = false;
@@ -669,7 +669,7 @@ export function usePosCheckout(
         await advanceAfterPaid(activeIndex);
       }
     } catch (err) {
-      setError(errorMessageOf(err, "Gagal memeriksa status pembayaran"));
+      setError(errorMessageOf(err, "Failed to check payment status"));
     }
   }, [steps, activeIndex, updateStep, advanceAfterPaid]);
 
@@ -683,7 +683,7 @@ export function usePosCheckout(
       updateStep(step.lineId, {
         status: "failed",
         error:
-          "Menunggu pembayaran dibatalkan dari POS. Payment masih ada di backend — cek menu Payments sebelum mengulang.",
+          "Waiting for payment was cancelled from the POS. The payment still exists in the backend — check the Payments menu before retrying.",
       });
     }
     setPhase("blocked");

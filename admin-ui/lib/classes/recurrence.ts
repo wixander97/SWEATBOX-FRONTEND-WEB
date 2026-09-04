@@ -46,25 +46,25 @@ export function validateRecurrence(
   startDate: string
 ): RecurrenceValidation {
   if (!isRepeating(rule)) return { ok: true };
-  if (!startDate) return { ok: false, message: "Class date wajib diisi." };
-  if (!rule.until) return { ok: false, message: "Repeat until date wajib diisi." };
+  if (!startDate) return { ok: false, message: "Class date is required." };
+  if (!rule.until) return { ok: false, message: "Repeat until date is required." };
   if (rule.until < startDate) {
-    return { ok: false, message: "Repeat until harus setelah class date." };
+    return { ok: false, message: "Repeat until must be after the class date." };
   }
   if (
     (rule.frequency === "weekly" || rule.frequency === "biweekly") &&
     rule.daysOfWeek.length === 0
   ) {
-    return { ok: false, message: "Pilih minimal satu hari untuk jadwal mingguan." };
+    return { ok: false, message: "Select at least one day for a weekly schedule." };
   }
   const dates = expandRecurrence(rule, startDate);
   if (dates.length === 0) {
-    return { ok: false, message: "Tidak ada tanggal yang cocok dengan pengaturan ini." };
+    return { ok: false, message: "No dates match these settings." };
   }
   if (dates.length > MAX_OCCURRENCES) {
     return {
       ok: false,
-      message: `Terlalu banyak jadwal (${dates.length}). Maksimum ${MAX_OCCURRENCES} per seri — persempit rentang tanggalnya.`,
+      message: `Too many schedules (${dates.length}). Maximum ${MAX_OCCURRENCES} per series — narrow the date range.`,
     };
   }
   return { ok: true };
@@ -144,7 +144,7 @@ export function describeRecurrence(rule: RecurrenceRule, startDate: string): str
     .map((d) => d.short)
     .join(" + ");
   const until = rule.until
-    ? new Date(`${rule.until}T00:00:00`).toLocaleDateString("id-ID")
+    ? new Date(`${rule.until}T00:00:00`).toLocaleDateString("en-GB")
     : "?";
   const count = expandRecurrence(rule, startDate).length;
   const suffix = `until ${until} (${count} class${count === 1 ? "" : "es"})`;

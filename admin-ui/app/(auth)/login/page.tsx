@@ -28,7 +28,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (!res.ok) {
-      setError(payload.message || "Login gagal");
+      setError(payload.message || "Login failed");
       return;
     }
 
@@ -43,9 +43,9 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-dark text-fg flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8">
       <section className="w-full max-w-md bg-card border border-border rounded-xl p-5 sm:p-8">
-        <h1 className="font-display text-xl sm:text-2xl font-bold mb-2">Login Admin</h1>
+        <h1 className="font-display text-xl sm:text-2xl font-bold mb-2">Admin Login</h1>
         <p className="text-sm text-muted mb-5 sm:mb-6">
-          Masuk untuk mengakses dashboard Sweatbox.
+          Sign in to access the Sweatbox dashboard.
         </p>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
@@ -73,7 +73,7 @@ export default function LoginPage() {
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted hover:text-fg transition"
                 tabIndex={-1}
-                aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -100,7 +100,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-sweat text-black font-bold py-3 rounded-lg hover:bg-yellow-400 transition disabled:opacity-70 text-sm sm:text-base"
           >
-            {loading ? "Memproses..." : "Login"}
+            {loading ? "Signing in..." : "Login"}
           </button>
         </form>
       </section>

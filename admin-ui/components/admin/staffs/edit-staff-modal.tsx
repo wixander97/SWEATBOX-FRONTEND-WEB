@@ -51,7 +51,7 @@ export function EditStaffModal({
         message?: string;
       };
       if (!res.ok) {
-        setError(data?.message ?? "Gagal mengambil detail staff.");
+        setError(data?.message ?? "Failed to load staff details.");
         setLoading(false);
         return;
       }
@@ -90,7 +90,7 @@ export function EditStaffModal({
       }
       const data = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        setSaveError(data.message ?? "Gagal memperbarui staff.");
+        setSaveError(data.message ?? "Failed to update staff.");
         setSaving(false);
         return;
       }
@@ -174,7 +174,7 @@ export function EditStaffModal({
                     disabled={branchesLoading}
                   >
                     <option value="">
-                      {branchesLoading ? "Memuat Branch..." : "Pilih Branch..."}
+                      {branchesLoading ? "Loading branches..." : "Select Branch..."}
                     </option>
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>
@@ -229,7 +229,7 @@ export function EditStaffModal({
                   disabled={saving}
                   className="flex-1 bg-sweat text-black py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
                 >
-                  {saving ? "Menyimpan..." : "Save changes"}
+                  {saving ? "Saving..." : "Save changes"}
                 </button>
                 <button
                   type="button"

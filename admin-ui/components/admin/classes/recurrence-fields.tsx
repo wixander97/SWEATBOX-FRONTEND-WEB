@@ -119,11 +119,11 @@ export function RecurrenceFields({ value, onChange, startDate, disabled }: Props
           {describeRecurrence(value, startDate)}
           {preview.length > 0 && (
             <span className="block text-muted mt-1">
-              Mulai {new Date(`${preview[0]}T00:00:00`).toLocaleDateString("id-ID")}
+              Starts {new Date(`${preview[0]}T00:00:00`).toLocaleDateString("en-GB")}
               {preview.length > 1 &&
-                ` · terakhir ${new Date(
+                ` · last ${new Date(
                   `${preview[preview.length - 1]}T00:00:00`
-                ).toLocaleDateString("id-ID")}`}
+                ).toLocaleDateString("en-GB")}`}
             </span>
           )}
         </p>

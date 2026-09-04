@@ -100,7 +100,7 @@ export function EditMemberModal({
       if (redirectToLoginIfUnauthorized(res.status)) return;
       const data = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        throw new Error(data.message ?? "Gagal memperbarui member.");
+        throw new Error(data.message ?? "Failed to update member.");
       }
       onSuccess();
     },

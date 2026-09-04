@@ -169,8 +169,8 @@ export function ScanCameraView() {
       <div>
         <h1 className="text-2xl font-bold font-display uppercase">Webcam Scanner</h1>
         <p className="text-sm text-muted mt-1">
-          Arahkan kamera ke QR code coach / member / PT session. Nilai yang
-          ter-decode dikirim lewat scan pipeline yang sama dengan manual scanner.
+          Point the camera at a coach / member / PT session QR code. The decoded value
+          is sent through the same scan pipeline as the manual scanner.
         </p>
       </div>
 
@@ -215,8 +215,8 @@ export function ScanCameraView() {
 
           <p className="text-xs text-muted leading-relaxed">
             Camera needs a secure context: serve over <code className="font-mono">https://</code> or
-            open from <code className="font-mono">http://localhost</code>. Coach, member, dan PT
-            session QR yang ditahan depan kamera hanya dikirim satu kali
+            open from <code className="font-mono">http://localhost</code>. A coach, member, or PT
+            session QR held in front of the camera is only sent once
             (duplicate-guarded).
           </p>
         </div>

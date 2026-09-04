@@ -50,7 +50,7 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
       });
       const data = await res.json().catch(() => ({})) as { message?: string };
       if (!res.ok) {
-        setMsg(data.message ?? "Gagal memperbarui user.");
+        setMsg(data.message ?? "Failed to update user.");
         return;
       }
       onSuccess();
@@ -101,7 +101,7 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
               required
               className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             >
-              <option value="">— Pilih role —</option>
+              <option value="">— Select role —</option>
               {roles.map((r) => (
                 <option key={r.id} value={r.id}>{r.name ?? r.id}</option>
               ))}
@@ -142,7 +142,7 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
               onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
               className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             >
-              <option value="">— Pilih branch —</option>
+              <option value="">— Select branch —</option>
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.branchName}</option>
               ))}
@@ -229,14 +229,14 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
             disabled={loading}
             className="flex-1 bg-sweat text-black py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
           >
-            {loading ? "Menyimpan…" : "Save changes"}
+            {loading ? "Saving…" : "Save changes"}
           </button>
           <button
             type="button"
             onClick={onCancel}
             className="px-4 py-2 rounded-lg text-sm border border-border text-fg-soft hover:text-fg"
           >
-            Batal
+            Cancel
           </button>
         </div>
       </form>

@@ -75,11 +75,11 @@ export function PosView() {
     (item: CartItem) => {
       setNotice(null);
       if (!customer) {
-        setNotice({ title: "Pilih customer dulu sebelum menambah item." });
+        setNotice({ title: "Select a customer before adding items." });
         return;
       }
       if (item.kind === "pt" && hasPackage(items, item.pkg.id)) {
-        setNotice({ title: "PT package tersebut sudah ada di transaksi." });
+        setNotice({ title: "That PT package is already in the transaction." });
         return;
       }
       setItems((current) => [...current, item]);
@@ -150,11 +150,11 @@ export function PosView() {
             value={branchId}
             onChange={(e) => setBranchId(e.target.value)}
             disabled={branchLoading || checkoutBusy}
-            title={checkoutBusy ? "Selesaikan transaksi dulu" : "Pilih branch"}
+            title={checkoutBusy ? "Complete the transaction first" : "Select branch"}
             className="bg-card border border-border text-fg rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:border-sweat disabled:opacity-50 max-w-[10rem] sm:max-w-none"
           >
             <option value="">
-              {branchLoading ? "Memuat…" : "Pilih branch"}
+              {branchLoading ? "Loading…" : "Select branch"}
             </option>
             {branches.map((b) => (
               <option key={b.id} value={b.id}>
@@ -178,7 +178,7 @@ export function PosView() {
           type="button"
           onClick={exitPos}
           disabled={checkoutBusy}
-          title={checkoutBusy ? "Selesaikan transaksi dulu" : "Kembali ke Admin Portal"}
+          title={checkoutBusy ? "Complete the transaction first" : "Back to Admin Portal"}
           className="h-10 px-3 sm:px-4 rounded-lg bg-card border border-border text-fg-soft hover:text-fg hover:border-red-500/60 transition text-sm font-bold flex items-center gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <i className="fas fa-right-from-bracket" aria-hidden />
@@ -218,10 +218,10 @@ export function PosView() {
           <div className="flex-1 grid place-items-center">
             <div className="text-center max-w-sm">
               <i className="fas fa-store text-4xl text-muted mb-4 block" aria-hidden />
-              <p className="text-lg font-bold text-fg mb-1">Pilih branch dulu</p>
+              <p className="text-lg font-bold text-fg mb-1">Select a branch first</p>
               <p className="text-sm text-muted">
-                Katalog, harga, dan merchant pembayaran berbeda per branch, jadi POS
-                menunggu branch dipilih sebelum menampilkan item.
+                The catalog, prices, and payment merchant differ per branch, so the POS
+                waits for a branch to be selected before showing any items.
               </p>
             </div>
           </div>
@@ -262,7 +262,7 @@ export function PosView() {
               {drawerOpen && (
                 <div className="lg:hidden flex justify-between items-center px-4 pt-3">
                   <span className="text-[11px] uppercase font-bold tracking-wider text-muted">
-                    Transaksi
+                    Transaction
                   </span>
                   <button
                     type="button"
@@ -309,7 +309,7 @@ export function PosView() {
               {items.length} item
             </span>
             <span>{formatRupiah(total)}</span>
-            <span className="uppercase text-xs">Buka transaksi</span>
+            <span className="uppercase text-xs">Open transaction</span>
           </button>
         </div>
       )}

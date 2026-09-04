@@ -93,13 +93,13 @@ export function PtSessionDetailModal({
         if (redirectToLoginIfUnauthorized(res.status)) return;
         if (!res.ok) {
           const data = (await res.json().catch(() => ({}))) as { message?: string };
-          if (!cancelled) setError(data?.message ?? "Gagal memuat detail PT session.");
+          if (!cancelled) setError(data?.message ?? "Failed to load PT session details.");
           return;
         }
         const data = (await res.json().catch(() => null)) as PtSession | null;
         if (!cancelled) setDetail(data);
       } catch {
-        if (!cancelled) setError("Gagal memuat detail PT session.");
+        if (!cancelled) setError("Failed to load PT session details.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -154,7 +154,7 @@ export function PtSessionDetailModal({
         {/* Body */}
         <div className="p-5 sm:p-6 space-y-1">
           {loading ? (
-            <p className="text-sm text-muted py-8 text-center">Memuat detail...</p>
+            <p className="text-sm text-muted py-8 text-center">Loading details...</p>
           ) : error ? (
             <p className="text-sm text-danger py-8 text-center">{error}</p>
           ) : (
@@ -194,8 +194,8 @@ export function PtSessionDetailModal({
                   onClick={onRefreshParticipants}
                   disabled={participantsStatus === "loading"}
                   className="text-muted hover:text-fg text-xs disabled:opacity-50"
-                  aria-label="Refresh peserta"
-                  title="Refresh peserta"
+                  aria-label="Refresh participants"
+                  title="Refresh participants"
                 >
                   <i className="fas fa-sync-alt" aria-hidden />
                 </button>

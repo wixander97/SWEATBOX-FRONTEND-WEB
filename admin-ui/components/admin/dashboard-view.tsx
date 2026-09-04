@@ -412,7 +412,7 @@ export function DashboardView() {
             <div>
               <p className="font-bold text-sm uppercase tracking-wide">Upcoming Expiry Alert</p>
               <p className="text-xs text-yellow-500/80 mt-1">
-                Terdapat <strong>{expiringCount} member</strong> yang masa aktifnya akan habis dalam 5 hari ke depan.
+                <strong>{expiringCount} members</strong> have memberships expiring in the next 5 days.
               </p>
             </div>
           </div>
@@ -420,7 +420,7 @@ export function DashboardView() {
             href={adminPaths.members}
             className="bg-yellow-500 text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-yellow-400 transition shrink-0"
           >
-            Lihat Data
+            View Data
           </Link>
         </div>
       )}
@@ -430,7 +430,7 @@ export function DashboardView() {
         <StatCard
           label="Active Members"
           value={activeMembers?.toLocaleString("id-ID") ?? "—"}
-          sub={totalMembers != null ? `dari ${totalMembers.toLocaleString("id-ID")} total` : undefined}
+          sub={totalMembers != null ? `of ${totalMembers.toLocaleString("id-ID")} total` : undefined}
           icon="fa-users"
           loading={loading}
           href={adminPaths.members}
@@ -531,7 +531,7 @@ export function DashboardView() {
             <div className="bg-card rounded-xl border border-border p-4">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-bold text-xs uppercase tracking-wide text-fg-soft">Member Status</h4>
-                <Link href={adminPaths.members} className="text-[10px] text-accent-ink hover:underline">Lihat</Link>
+                <Link href={adminPaths.members} className="text-[10px] text-accent-ink hover:underline">View</Link>
               </div>
               <div className="space-y-2">
                 {loading ? (
@@ -556,7 +556,7 @@ export function DashboardView() {
             <div className="bg-card rounded-xl border border-border p-4">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-bold text-xs uppercase tracking-wide text-fg-soft">Staff Attendance</h4>
-                <Link href={adminPaths.reports} className="text-[10px] text-accent-ink hover:underline">Lihat</Link>
+                <Link href={adminPaths.reports} className="text-[10px] text-accent-ink hover:underline">View</Link>
               </div>
               <div className="space-y-2">
                 {loading ? (
@@ -585,8 +585,8 @@ export function DashboardView() {
             {/* Class & Coach Stats */}
             <div className="bg-card rounded-xl border border-border p-4">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="font-bold text-xs uppercase tracking-wide text-fg-soft">Kelas &amp; Coach</h4>
-                <Link href={adminPaths.classes} className="text-[10px] text-accent-ink hover:underline">Lihat</Link>
+                <h4 className="font-bold text-xs uppercase tracking-wide text-fg-soft">Classes &amp; Coaches</h4>
+                <Link href={adminPaths.classes} className="text-[10px] text-accent-ink hover:underline">View</Link>
               </div>
               <div className="space-y-2">
                 {loading ? (
@@ -598,7 +598,7 @@ export function DashboardView() {
                   ))
                 ) : (
                   <>
-                    <QuickStatRow label="Total Kelas" value={totalClasses} />
+                    <QuickStatRow label="Total Classes" value={totalClasses} />
                     <QuickStatRow label="Cancelled" value={cancelledClasses} accent="text-danger" />
                     <QuickStatRow label="Completed" value={completedClasses} accent="text-muted" />
                     {avgRating != null && (

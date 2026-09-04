@@ -52,13 +52,13 @@ export async function loadDropInOptions(branchName?: string): Promise<DropInOpti
   } catch {
     return {
       options: [],
-      warning: "System Settings gagal dimuat, jadi harga drop-in belum bisa ditampilkan.",
+      warning: "System Settings failed to load, so drop-in prices cannot be shown.",
     };
   }
 
   const parsed = dropInOptionsFromSettings(settings);
   if (parsed.disabled) {
-    return { options: [], warning: "Drop-in dimatikan di System Settings." };
+    return { options: [], warning: "Drop-in is disabled in System Settings." };
   }
 
   const wanted = branchName ? normalizeToken(branchName) : "";
@@ -73,8 +73,8 @@ export async function loadDropInOptions(branchName?: string): Promise<DropInOpti
     );
     notes.push(
       configured.length > 0
-        ? `Drop-in belum dikonfigurasi untuk branch ${branchName || "ini"} — yang ada di System Settings baru ${configured.join(", ")}.`
-        : `Belum ada konfigurasi drop-in di System Settings (mis. DROP_IN_SINGLE_${wanted || "<BRANCH>"}).`
+        ? `Drop-in is not configured for branch ${branchName || "this"} — System Settings currently only has ${configured.join(", ")}.`
+        : `No drop-in configuration in System Settings yet (e.g. DROP_IN_SINGLE_${wanted || "<BRANCH>"}).`
     );
   }
 
@@ -92,8 +92,8 @@ export async function loadDropInOptions(branchName?: string): Promise<DropInOpti
   };
 }
 
-/** Card/line subtitle: "5x kunjungan · berlaku 30 hari". */
+/** Card/line subtitle: "5x visits · valid for 30 days". */
 export function dropInOptionSubtitle(option: DropInOption): string {
-  const visits = option.visits > 1 ? `${option.visits}x kunjungan` : "1x kunjungan";
-  return option.validityDays ? `${visits} · berlaku ${option.validityDays} hari` : visits;
+  const visits = option.visits > 1 ? `${option.visits}x visits` : "1x visit";
+  return option.validityDays ? `${visits} · valid for ${option.validityDays} days` : visits;
 }

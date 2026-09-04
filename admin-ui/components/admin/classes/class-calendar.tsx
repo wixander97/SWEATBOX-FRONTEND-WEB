@@ -55,7 +55,7 @@ function rangeFor(view: CalendarView, anchor: Date): Date[] {
 
 function titleFor(view: CalendarView, anchor: Date): string {
   if (view === "day") {
-    return anchor.toLocaleDateString("id-ID", {
+    return anchor.toLocaleDateString("en-GB", {
       weekday: "long",
       day: "2-digit",
       month: "long",
@@ -65,12 +65,12 @@ function titleFor(view: CalendarView, anchor: Date): string {
   if (view === "week") {
     const start = startOfWeek(anchor);
     const end = addDays(start, 6);
-    return `${start.toLocaleDateString("id-ID", { day: "2-digit", month: "short" })} – ${end.toLocaleDateString(
-      "id-ID",
+    return `${start.toLocaleDateString("en-GB", { day: "2-digit", month: "short" })} – ${end.toLocaleDateString(
+      "en-GB",
       { day: "2-digit", month: "short", year: "numeric" }
     )}`;
   }
-  return anchor.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  return anchor.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 }
 
 function eventTone(c: ApiClass): string {
@@ -125,7 +125,7 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
       const list = await listClassSchedules();
       setClasses(list);
     } catch (err) {
-      setError(errorMessageOf(err, "Gagal memuat class schedule"));
+      setError(errorMessageOf(err, "Failed to load class schedules"));
       setClasses([]);
     } finally {
       setLoading(false);
@@ -294,7 +294,7 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
       {loading ? (
         <div className="py-16 text-center">
           <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-sweat border-t-transparent" />
-          <p className="text-sm text-muted mt-3">Memuat kalender...</p>
+          <p className="text-sm text-muted mt-3">Loading calendar...</p>
         </div>
       ) : view === "day" ? (
         <div className="border border-border rounded-lg overflow-hidden">
@@ -304,7 +304,7 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
           <div className="p-3 space-y-2 min-h-[240px]">
             {(byDate.get(formatDateOnly(days[0])) ?? []).length === 0 ? (
               <p className="text-sm text-muted text-center py-10">
-                Tidak ada class pada hari ini.
+                No classes today.
               </p>
             ) : (
               (byDate.get(formatDateOnly(days[0])) ?? []).map((c) => (
@@ -365,7 +365,7 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
                         }}
                         className="w-full text-[10px] text-muted hover:text-accent-ink text-left px-1"
                       >
-                        +{events.length - 3} lainnya
+                        +{events.length - 3} more
                       </button>
                     )}
                   </div>

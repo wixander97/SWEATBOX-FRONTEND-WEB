@@ -92,7 +92,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
           typeof payload === "object" && !Array.isArray(payload)
             ? payload.message
             : undefined;
-        setError(msg ?? "Gagal mengambil data staff.");
+        setError(msg ?? "Failed to load staff data.");
         setStaffs([]);
         setTotalItems(0);
         setTotalPages(1);
@@ -170,7 +170,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
     }
     const data = (await res.json().catch(() => ({}))) as { message?: string };
     if (!res.ok) {
-      setDeleteError(data.message ?? "Gagal menghapus staff.");
+      setDeleteError(data.message ?? "Failed to delete staff.");
       setDeleteLoading(false);
       return;
     }
@@ -198,7 +198,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
           typeof payload === "object" && !Array.isArray(payload)
             ? payload.message
             : undefined;
-        setExportError(msg ?? "Gagal mengambil data staff untuk export.");
+        setExportError(msg ?? "Failed to load staff data for export.");
         setExporting(false);
         return;
       }
@@ -209,7 +209,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
       const fmtDate = (v?: number | string | null) => {
         if (v == null || v === "") return "-";
         const d = new Date(v);
-        return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString("id-ID");
+        return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString("en-GB");
       };
       const val = (s?: string | null) => s || "-";
       const money = (n?: number | null) =>
@@ -248,7 +248,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
       ]);
       await downloadXlsx([header, ...rows], "staffs.xlsx");
     } catch {
-      setExportError("Gagal mengambil data staff untuk export.");
+      setExportError("Failed to load staff data for export.");
     } finally {
       setExporting(false);
     }
@@ -269,7 +269,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
               type="button"
               onClick={() => void exportXlsx()}
               disabled={exporting}
-              title="Export semua data staff (tanpa filter)"
+              title="Export all staff data (unfiltered)"
               className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition disabled:opacity-50"
             >
               {exporting ? (
@@ -289,7 +289,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
             <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
             <input
               type="text"
-              placeholder="Cari nama / email..."
+              placeholder="Search by name / email..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => {
@@ -323,7 +323,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
             className={`${selectCls} w-full sm:w-44 min-w-0`}
           >
             <option value="">
-              {branchesLoading ? "Memuat Branch..." : "All Branches"}
+              {branchesLoading ? "Loading branches..." : "All Branches"}
             </option>
             {branches.map((b) => (
               <option key={b.id} value={b.id}>
@@ -386,7 +386,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
             ) : staffs.length === 0 ? (
               <tr>
                 <td className="px-6 py-6 text-muted" colSpan={8}>
-                  Tidak ada data staff.
+                  No staff data available.
                 </td>
               </tr>
             ) : (

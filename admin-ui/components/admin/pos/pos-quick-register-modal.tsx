@@ -51,15 +51,15 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
     setDuplicate(null);
 
     if (!phoneNumber.trim()) {
-      setError("Nomor telepon wajib diisi.");
+      setError("Phone number is required.");
       return;
     }
     if (!EMAIL_PATTERN.test(email.trim())) {
-      setError("Email tidak valid.");
+      setError("Invalid email address.");
       return;
     }
     if (!fullName.trim()) {
-      setError("Nama wajib diisi — backend menolak registrasi tanpa nama.");
+      setError("Name is required — the backend rejects registration without a name.");
       return;
     }
 
@@ -80,13 +80,13 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
       });
       if (!member) {
         setError(
-          "Customer terdaftar, tapi belum muncul di pencarian. Coba cari manual dengan emailnya."
+          "The customer was registered but does not appear in search yet. Try searching manually by email."
         );
         return;
       }
       setRegistered(member);
     } catch (err) {
-      setError(errorMessageOf(err, "Gagal mendaftarkan member"));
+      setError(errorMessageOf(err, "Failed to register member"));
     } finally {
       setSubmitting(false);
     }
@@ -106,8 +106,8 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
               Quick Register
             </h3>
             <p className="text-xs text-muted mt-0.5">
-              Akun customer dibuat otomatis; password di-reset sendiri lewat
-              &ldquo;forgot password&rdquo;.
+              The customer account is created automatically; the password is set by the
+              customer via &ldquo;forgot password&rdquo;.
             </p>
           </div>
           <button
@@ -146,9 +146,9 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
               desk never triggers, sees or sets one.
             */}
             <p className="text-[11px] text-fg-soft">
-              Minta customer buka aplikasi mobile lalu pilih{" "}
-              <span className="text-fg-soft font-semibold">Forgot Password</span> dengan email
-              di atas untuk membuat password sendiri, lalu login.
+              Ask the customer to open the mobile app and choose{" "}
+              <span className="text-fg-soft font-semibold">Forgot Password</span> with the email
+              above to set their own password, then sign in.
             </p>
 
             <button
@@ -156,7 +156,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
               onClick={() => onCreated(registered)}
               className="w-full bg-sweat text-black py-2.5 rounded-lg text-sm font-bold hover:bg-yellow-400 transition"
             >
-              Pilih customer ini
+              Select this customer
             </button>
           </div>
         ) : (
@@ -183,7 +183,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
-              placeholder="nama@email.com"
+              placeholder="name@email.com"
               className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
@@ -195,7 +195,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
             <input
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Nama customer"
+              placeholder="Customer name"
               className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
@@ -203,7 +203,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
           {duplicate && (
             <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
               <p className="text-yellow-600 text-xs font-bold uppercase">
-                Customer sudah terdaftar
+                Customer already registered
               </p>
               <p className="text-sm text-fg mt-1">{memberDisplayName(duplicate)}</p>
               <p className="text-xs text-fg-soft">
@@ -214,7 +214,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
                 onClick={() => onCreated(duplicate)}
                 className="mt-2 w-full bg-sweat text-black py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition"
               >
-                Gunakan customer ini
+                Use this customer
               </button>
             </div>
           )}
@@ -231,7 +231,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
               disabled={submitting}
               className="flex-1 bg-sweat text-black py-2.5 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-60"
             >
-              {submitting ? "Menyimpan..." : "Register & Select"}
+              {submitting ? "Saving..." : "Register & Select"}
             </button>
             <button
               type="button"

@@ -78,7 +78,7 @@ export function PosBranchProvider({ children }: { children: React.ReactNode }) {
         setBranchIdState(next);
       })
       .catch((err) => {
-        if (!cancelled) setError(errorMessageOf(err, "Gagal memuat branch"));
+        if (!cancelled) setError(errorMessageOf(err, "Failed to load branches"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

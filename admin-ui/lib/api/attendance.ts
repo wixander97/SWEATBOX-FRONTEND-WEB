@@ -62,9 +62,9 @@ export async function recordManualAttendance(
         memberId: input.memberId,
         classScheduleId: input.classScheduleId,
       },
-      { errorMessage: "Gagal mencatat absensi", ...options }
+      { errorMessage: "Failed to record attendance", ...options }
     );
-    return normalize(result, "Absensi tercatat.");
+    return normalize(result, "Attendance recorded.");
   } catch (err) {
     // 403 is the role gate, not a bad request: retry on the open rail.
     if (!(err instanceof ApiError) || err.status !== 403) throw err;
@@ -95,7 +95,7 @@ async function recordAttendanceViaScan(
     return {
       success: false,
       message:
-        "Absensi manual ditolak (403) dan branch class tidak diketahui, jadi jalur scan tidak bisa dipakai.",
+        "Manual attendance was refused (403) and the class branch is unknown, so the scan path cannot be used.",
     };
   }
 
@@ -111,7 +111,7 @@ async function recordAttendanceViaScan(
     return {
       success: false,
       message:
-        "Absensi manual ditolak (403) dan member code tidak ditemukan, jadi jalur scan tidak bisa dipakai.",
+        "Manual attendance was refused (403) and the member code was not found, so the scan path cannot be used.",
     };
   }
 
@@ -123,10 +123,10 @@ async function recordAttendanceViaScan(
         branchId: input.branchId,
         classScheduleId: input.classScheduleId,
       },
-      { errorMessage: "Gagal mencatat absensi", ...options }
+      { errorMessage: "Failed to record attendance", ...options }
     );
 
-  let result = normalize(await scan(), "Absensi tercatat.");
+  let result = normalize(await scan(), "Attendance recorded.");
   if (result.success || !notBooked(result.message)) return result;
 
   // Walk-in: no booking yet, so make one and scan again.
@@ -138,10 +138,10 @@ async function recordAttendanceViaScan(
   } catch (err) {
     return {
       success: false,
-      message: errorMessageOf(err, "Gagal membooking member untuk class ini"),
+      message: errorMessageOf(err, "Failed to book the member for this class"),
     };
   }
 
-  result = normalize(await scan(), "Absensi tercatat.");
+  result = normalize(await scan(), "Attendance recorded.");
   return result;
 }

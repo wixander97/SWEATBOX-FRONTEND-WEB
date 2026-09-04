@@ -122,7 +122,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
       const payload = (await res.json().catch(() => [])) as Coach[] | PagedResponse<Coach>;
       if (!res.ok) {
         const msg = typeof payload === "object" && !Array.isArray(payload) ? payload.message : undefined;
-        setExportError(msg ?? "Gagal mengambil data coach untuk export.");
+        setExportError(msg ?? "Failed to load coach data for export.");
         setExporting(false);
         return;
       }
@@ -154,7 +154,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
       ]);
       await downloadXlsx([header, ...rows], "coaches.xlsx");
     } catch {
-      setExportError("Gagal mengambil data coach untuk export.");
+      setExportError("Failed to load coach data for export.");
     } finally {
       setExporting(false);
     }
@@ -330,7 +330,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
           <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
           <input
             type="text"
-            placeholder="Cari coach..."
+            placeholder="Search coaches..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -375,7 +375,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
             type="button"
             onClick={() => void exportXlsx()}
             disabled={exporting}
-            title="Export semua data coach (tanpa filter)"
+            title="Export all coach data (unfiltered)"
             className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition disabled:opacity-50"
           >
             {exporting ? (
@@ -432,7 +432,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
           <div className="bg-card/50 border border-border/50 rounded-lg px-4 py-3 mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-muted">
             <span className="font-bold uppercase tracking-wide text-muted">Status Coach</span>
             <span className="text-muted">
-              Tombol power digunakan untuk mengaktifkan (on) atau menonaktifkan (off) status coach.
+              The power button activates (on) or deactivates (off) a coach&apos;s status.
             </span>
             <span className="inline-flex items-center gap-1.5">
               <i className="fas fa-power-off text-success" aria-hidden />
@@ -662,7 +662,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                         {attendanceHistory.map((record, idx) => (
                           <tr key={idx} className="transition hover:bg-fg/5">
                             <td className="px-3 py-2 text-fg text-xs">
-                              {new Date(record.classDate).toLocaleDateString("id-ID", {
+                              {new Date(record.classDate).toLocaleDateString("en-GB", {
                                 day: "2-digit",
                                 month: "short",
                                 year: "numeric",

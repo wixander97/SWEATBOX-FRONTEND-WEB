@@ -43,14 +43,14 @@ function formatTime(val?: string | null) {
   if (!val) return "-";
   const d = new Date(val);
   if (isNaN(d.getTime())) return val;
-  return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
 function formatDate(val?: string | null) {
   if (!val) return "-";
   const d = new Date(val);
   if (isNaN(d.getTime())) return val;
-  return d.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 export default function ReportsPage() {
@@ -100,8 +100,8 @@ export default function ReportsPage() {
     if (!res.ok) {
       setError(
         typeof data === "object" && !Array.isArray(data)
-          ? (data.message ?? "Gagal mengambil data attendance")
-          : "Gagal mengambil data attendance"
+          ? (data.message ?? "Failed to load attendance data")
+          : "Failed to load attendance data"
       );
       setAttendances([]);
       setLoading(false);
@@ -314,7 +314,7 @@ export default function ReportsPage() {
               ) : sortedRows.length === 0 ? (
                 <tr>
                   <td className="px-6 py-6 text-muted" colSpan={7}>
-                    Tidak ada data attendance.
+                    No attendance data available.
                   </td>
                 </tr>
               ) : (

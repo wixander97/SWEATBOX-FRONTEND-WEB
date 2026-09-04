@@ -10,7 +10,7 @@ export type Coach = {
 export async function listCoaches(options?: RequestOptions): Promise<Coach[]> {
   const payload = await apiGet<Coach[] | PagedResponse<Coach>>(
     "/api/v1/coaches?page=1&pageSize=200",
-    { errorMessage: "Gagal memuat coach", ...options }
+    { errorMessage: "Failed to load coaches", ...options }
   );
   return toList(payload);
 }

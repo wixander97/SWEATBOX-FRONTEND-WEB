@@ -99,8 +99,8 @@ export function MembershipPlansView() {
             const msg =
                 typeof payload === "object" && !Array.isArray(payload)
                     ? payload.message
-                    : "Gagal mengambil membership plans";
-            setError(msg || "Gagal mengambil membership plans");
+                    : "Failed to load membership plans";
+            setError(msg || "Failed to load membership plans");
             setPlans([]);
             setTotalItems(0);
             setTotalPages(1);
@@ -159,7 +159,7 @@ export function MembershipPlansView() {
         const rows = filteredPlans.map((p) => ({
             ...p,
             priceDisplay: p.price ? p.price.toLocaleString("id-ID") : "-",
-            validityDisplay: `${p.validityDays} hari`,
+            validityDisplay: `${p.validityDays} days`,
             statusBadge: p.isActive
                 ? "bg-green-500/15 text-success border border-green-500/35"
                 : "bg-red-500/15 text-danger border border-red-500/35",
@@ -186,7 +186,7 @@ export function MembershipPlansView() {
         if (redirectToLoginIfUnauthorized(res.status)) return;
         const payload = (await res.json().catch(() => ({}))) as { message?: string };
         if (!res.ok) {
-            throw new Error(payload.message || "Create membership plan gagal");
+            throw new Error(payload.message || "Failed to create membership plan");
         }
         await loadPlans(page, keyword);
     }
@@ -201,7 +201,7 @@ export function MembershipPlansView() {
         if (redirectToLoginIfUnauthorized(res.status)) return;
         const payload = (await res.json().catch(() => ({}))) as { message?: string };
         if (!res.ok) {
-            throw new Error(payload.message || "Update membership plan gagal");
+            throw new Error(payload.message || "Failed to update membership plan");
         }
         await loadPlans(page, keyword);
     }
@@ -215,7 +215,7 @@ export function MembershipPlansView() {
         if (redirectToLoginIfUnauthorized(res.status)) return;
         const payload = (await res.json().catch(() => ({}))) as { message?: string };
         if (!res.ok) {
-            window.alert(payload.message || "Delete membership plan gagal");
+            window.alert(payload.message || "Failed to delete membership plan");
             return;
         }
         await loadPlans(page, keyword);
@@ -282,7 +282,7 @@ export function MembershipPlansView() {
                                 <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
                                 <input
                                     type="text"
-                                    placeholder="Cari membership plan..."
+                                    placeholder="Search membership plans..."
                                     value={searchInput}
                                     onChange={(e) => setSearchInput(e.target.value)}
                                     onKeyDown={(e) => {

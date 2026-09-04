@@ -56,7 +56,7 @@ export function PaymentMethodsView() {
           !Array.isArray(payload) && payload && "message" in payload
             ? (payload as { message?: string }).message
             : undefined;
-        setError(msg ?? "Gagal memuat payment methods");
+        setError(msg ?? "Failed to load payment methods");
         return;
       }
       const list = Array.isArray(payload)
@@ -64,7 +64,7 @@ export function PaymentMethodsView() {
         : (payload.data ?? payload.items ?? []);
       setRows(list.map(toRowState));
     } catch {
-      setError("Gagal memuat payment methods");
+      setError("Failed to load payment methods");
       setRows([]);
     } finally {
       setLoading(false);
@@ -96,10 +96,10 @@ export function PaymentMethodsView() {
       }
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
-        setStatusError(data?.message ?? "Gagal memperbarui status payment method");
+        setStatusError(data?.message ?? "Failed to update payment method status");
       }
     } catch {
-      setStatusError("Gagal memperbarui status payment method");
+      setStatusError("Failed to update payment method status");
     } finally {
       setStatusLoading(null);
       // Re-fetch to reflect server truth (reverts on failure, updates on success).
@@ -115,7 +115,7 @@ export function PaymentMethodsView() {
             Payment Methods
           </h1>
           <p className="text-xs text-muted mt-1">
-            Kelola daftar payment method yang tersedia.
+            Manage the available payment methods.
           </p>
         </div>
       </div>
@@ -151,7 +151,7 @@ export function PaymentMethodsView() {
             ) : rows.length === 0 ? (
               <tr>
                 <td className="px-6 py-6 text-muted" colSpan={3}>
-                  Tidak ada data payment method.
+                  No payment methods available.
                 </td>
               </tr>
             ) : (

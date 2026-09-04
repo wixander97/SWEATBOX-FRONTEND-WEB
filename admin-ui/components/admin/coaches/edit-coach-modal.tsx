@@ -102,7 +102,7 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
   async function handleSubmit() {
     setError("");
     if (!form.branchId.trim()) {
-      setError("Branch wajib diisi");
+      setError("Branch is required");
       return;
     }
     setLoading(true);

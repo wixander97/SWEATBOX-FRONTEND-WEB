@@ -256,15 +256,15 @@ export function ScanBarcodeView() {
           : "bg-green-500";
   const bannerTitle =
     result.status === "loading"
-      ? "Memproses scan…"
+      ? "Processing scan…"
       : result.status === "failed"
-        ? "Scan gagal"
+        ? "Scan failed"
         : result.status === "success"
-          ? "Scan terkirim"
-          : "Siap menerima scan";
+          ? "Scan sent"
+          : "Ready to receive a scan";
   const bannerHint =
     result.status === "idle" || result.status === "success"
-      ? "Arahkan scanner QR ke kode — kolom di bawah terisi otomatis. Atau isi manual, lalu klik Send scan."
+      ? "Point the QR scanner at the code — the fields below fill in automatically. Or enter them manually, then click Send scan."
       : result.message;
 
   return (
@@ -272,9 +272,9 @@ export function ScanBarcodeView() {
       <div>
         <h1 className="text-2xl font-bold font-display uppercase">Barcode Scanner</h1>
         <p className="text-sm text-muted mt-1">
-          Arahkan scanner QR ke kode anggota/pelatih/sesi PT. Hasil scan terdeteksi
-          otomatis dan mengisi kolom di bawah. Untuk input manual, ketik langsung di
-          kolom yang tersedia lalu klik &quot;Send scan&quot;.
+          Point the QR scanner at a member / coach / PT session code. The scan is
+          detected automatically and fills the fields below. For manual input, type
+          directly into the fields and click &quot;Send scan&quot;.
         </p>
       </div>
 

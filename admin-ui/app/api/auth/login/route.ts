@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   const body = (await req.json()) as Partial<LoginRequest>;
   if (!body.email || !body.password) {
     return NextResponse.json(
-      { message: "Email dan password wajib diisi" },
+      { message: "Email and password are required" },
       { status: 400 }
     );
   }

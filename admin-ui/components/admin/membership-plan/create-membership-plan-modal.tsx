@@ -214,9 +214,9 @@ export function CreateMembershipPlanModal({
                                         category a plan is sold under, so the drop-in
                                         wording is spelled out rather than assumed. */}
                                     <p className="text-xs text-muted mt-1">
-                                        Isi &quot;Drop In&quot;, &quot;Drop In Single&quot;, atau &quot;Drop In Pass&quot; agar plan
-                                        ini muncul di POS sebagai produk drop in (jumlah kunjungan
-                                        diambil dari Credits).
+                                        Enter &quot;Drop In&quot;, &quot;Drop In Single&quot;, or &quot;Drop In Pass&quot; so this
+                                        plan appears in the POS as a drop in product (the visit count is
+                                        taken from Credits).
                                     </p>
                                 </div>
                                 <div>

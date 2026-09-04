@@ -19,7 +19,7 @@ export function CancelPtSessionModal({ onClose, onSubmit }: Props) {
       setSaving(true);
       try {
         if (!reason.trim()) {
-          setError("Reason wajib diisi");
+          setError("Reason is required");
           setSaving(false);
           return;
         }
@@ -68,7 +68,7 @@ export function CancelPtSessionModal({ onClose, onSubmit }: Props) {
               }}
               className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat resize-none"
               rows={3}
-              placeholder="Alasan pembatalan..."
+              placeholder="Cancellation reason..."
             />
           </div>
 

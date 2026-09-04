@@ -173,8 +173,8 @@ export function PtPackageFormModal({
               onChange={(v) => setForm((f) => ({ ...f, memberId: v ?? "" }))}
               getOptionValue={(o) => o.id}
               getOptionLabel={(o) => o.label}
-              placeholder="Pilih member..."
-              searchPlaceholder="Cari member..."
+              placeholder="Select member..."
+              searchPlaceholder="Search members..."
             />
           </div>
 
@@ -201,7 +201,7 @@ export function PtPackageFormModal({
               className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
               required
             >
-              <option value="">Pilih coach...</option>
+              <option value="">Select coach...</option>
               {coachOptions.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.label}
@@ -220,7 +220,7 @@ export function PtPackageFormModal({
               className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
               required
             >
-              <option value="">Pilih branch...</option>
+              <option value="">Select branch...</option>
               {branchOptions.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.label}

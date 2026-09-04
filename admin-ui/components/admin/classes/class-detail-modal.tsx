@@ -128,7 +128,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
         className={`fas ${state === "copied" ? "fa-check" : "fa-copy"} mr-1`}
         aria-hidden
       />
-      {state === "copied" ? "Copied" : state === "failed" ? "Gagal" : "Copy"}
+      {state === "copied" ? "Copied" : state === "failed" ? "Failed" : "Copy"}
     </button>
   );
 }
@@ -190,13 +190,13 @@ export function ClassDetailModal({ cls, onClose }: Props) {
         if (redirectToLoginIfUnauthorized(res.status)) return;
         if (!res.ok) {
           const data = (await res.json().catch(() => ({}))) as { message?: string };
-          if (!cancelled) setError(data?.message ?? "Gagal memuat detail class schedule.");
+          if (!cancelled) setError(data?.message ?? "Failed to load class schedule details.");
           return;
         }
         const data = (await res.json().catch(() => null)) as ApiClass | null;
         if (!cancelled) setDetail(data);
       } catch {
-        if (!cancelled) setError("Gagal memuat detail class schedule.");
+        if (!cancelled) setError("Failed to load class schedule details.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -209,7 +209,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
         if (!cancelled) setAttendees(list);
       } catch (err) {
         if (!cancelled) {
-          setAttendeesError(errorMessageOf(err, "Gagal memuat peserta class."));
+          setAttendeesError(errorMessageOf(err, "Failed to load class participants."));
           setAttendees([]);
         }
       } finally {
@@ -254,9 +254,9 @@ export function ClassDetailModal({ cls, onClose }: Props) {
   const enrolled =
     c.bookedCount ?? Math.max(0, c.capacity - (c.remainingSlots ?? c.capacity));
   const fmtDate = (iso?: string | null) =>
-    iso ? new Date(iso).toLocaleDateString("id-ID") : null;
+    iso ? new Date(iso).toLocaleDateString("en-GB") : null;
   const fmtDateTime = (iso?: string | null) =>
-    iso ? new Date(iso).toLocaleString("id-ID") : null;
+    iso ? new Date(iso).toLocaleString("en-GB") : null;
 
   const activationBlocker = sessionActivationBlocker(c);
   /**
@@ -267,7 +267,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
    * checks — membership, credits, drop-in pass, capacity — is left to it.
    */
   const attendanceClosed = c.isCancelled === true || c.isCompleted === true;
-  /** Booked members not yet marked present — what "Absen semua" works on. */
+  /** Booked members not yet marked present — what "Mark all present" works on. */
   const pendingAttendance = attendees.filter(
     (b) => !b.isCancelled && (b.bookingStatus ?? "").toLowerCase() !== "attended"
   );
@@ -291,11 +291,11 @@ export function ClassDetailModal({ cls, onClose }: Props) {
         coachId: c.coachId,
         classScheduleId: c.id,
       });
-      setActivateMessage(result?.message?.trim() || "Session class diaktifkan.");
+      setActivateMessage(result?.message?.trim() || "Class session activated.");
       setConfirmActivate(false);
       setReloadKey((v) => v + 1);
     } catch (err) {
-      setActivateError(errorMessageOf(err, "Gagal mengaktifkan session class"));
+      setActivateError(errorMessageOf(err, "Failed to activate class session"));
     } finally {
       setActivating(false);
     }
@@ -336,7 +336,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
         setAttendanceError(`${label}: ${result.message}`);
       }
     } catch (err) {
-      setAttendanceError(errorMessageOf(err, "Gagal mencatat absensi"));
+      setAttendanceError(errorMessageOf(err, "Failed to record attendance"));
     } finally {
       setAttendingId(null);
     }
@@ -378,17 +378,17 @@ export function ClassDetailModal({ cls, onClose }: Props) {
         if (result.success) done += 1;
         else failures.push(`${label}: ${result.message}`);
       } catch (err) {
-        failures.push(`${label}: ${errorMessageOf(err, "gagal")}`);
+        failures.push(`${label}: ${errorMessageOf(err, "failed")}`);
       }
     }
 
     setBulkRunning(false);
     setReloadKey((v) => v + 1);
     if (done > 0) {
-      setAttendanceMessage(`${done} dari ${pending.length} member ditandai hadir.`);
+      setAttendanceMessage(`${done} of ${pending.length} members marked present.`);
     }
     if (failures.length > 0) {
-      setAttendanceError(`Tidak bisa diabsen — ${failures.join(" · ")}`);
+      setAttendanceError(`Could not mark present — ${failures.join(" · ")}`);
     }
   }
 
@@ -443,7 +443,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
         {/* Body */}
         <div className="p-5 sm:p-6 space-y-1">
           {loading ? (
-            <p className="text-sm text-muted py-8 text-center">Memuat detail...</p>
+            <p className="text-sm text-muted py-8 text-center">Loading details...</p>
           ) : error ? (
             <p className="text-sm text-danger py-8 text-center">{error}</p>
           ) : (
@@ -490,15 +490,15 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                 {c.isSessionActive ? (
                   <p className="text-xs text-success flex items-center gap-2">
                     <i className="fas fa-circle-check" aria-hidden />
-                    Session sudah aktif — member bisa check-in ke class ini.
+                    Session is active — members can check in to this class.
                   </p>
                 ) : (
                   <>
                     <p className="text-xs text-muted leading-relaxed">
-                      Normalnya session menyala saat coach scan QR. Kalau coach tidak
-                      bisa scan, admin bisa mengaktifkannya di sini — request-nya sama
-                      persis dengan coach scan, dengan Coach ID dan Class Schedule ID
-                      dari class ini.
+                      Normally the session turns on when the coach scans the QR code. If the
+                      coach cannot scan, an admin can activate it here — the request is
+                      identical to the coach scan, using the Coach ID and Class Schedule ID
+                      of this class.
                     </p>
 
                     {activationBlocker ? (
@@ -508,10 +508,10 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                     ) : confirmActivate ? (
                       <div className="space-y-2">
                         <p className="text-xs text-warning bg-yellow-500/10 border border-yellow-500/30 rounded px-3 py-2">
-                          Aktifkan session untuk{" "}
-                          <span className="font-bold">{c.className}</span> dengan coach{" "}
+                          Activate the session for{" "}
+                          <span className="font-bold">{c.className}</span> with coach{" "}
                           <span className="font-bold">{c.coachName ?? c.coachId}</span>?
-                          Tercatat di backend seperti coach scan biasa.
+                          Recorded in the backend just like a normal coach scan.
                         </p>
                         <div className="flex gap-2">
                           <button
@@ -520,7 +520,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                             disabled={activating}
                             className="flex-1 bg-sweat text-black py-2 rounded-lg text-xs font-bold hover:brightness-95 transition disabled:opacity-60"
                           >
-                            {activating ? "Mengaktifkan…" : "Ya, aktifkan session"}
+                            {activating ? "Activating…" : "Yes, activate session"}
                           </button>
                           <button
                             type="button"
@@ -528,7 +528,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                             disabled={activating}
                             className="flex-1 bg-card border border-border text-fg-soft py-2 rounded-lg text-xs font-bold disabled:opacity-60"
                           >
-                            Batal
+                            Cancel
                           </button>
                         </div>
                       </div>
@@ -581,7 +581,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                     {c.description}
                   </p>
                 ) : (
-                  <p className="text-xs text-muted">Belum ada detail workout.</p>
+                  <p className="text-xs text-muted">No workout details yet.</p>
                 )}
               </div>
 
@@ -594,20 +594,20 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                     onClick={() => void markAllPresent()}
                     disabled={bulkRunning || attendingId !== null}
                     className="w-full mb-2 bg-sweat text-black text-[11px] font-bold uppercase tracking-wide px-3 py-2 rounded transition hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Catat hadir semua peserta yang sudah booking, tanpa scan QR"
+                    title="Mark all booked participants present, without a QR scan"
                   >
                     <i className="fas fa-user-check mr-2" aria-hidden />
                     {bulkRunning
-                      ? "Mengabsen…"
-                      : `Absen semua (${pendingAttendance.length})`}
+                      ? "Marking present…"
+                      : `Mark all present (${pendingAttendance.length})`}
                   </button>
                 )}
                 {attendeesLoading ? (
-                  <p className="text-xs text-muted py-1">Memuat peserta...</p>
+                  <p className="text-xs text-muted py-1">Loading participants...</p>
                 ) : attendeesError ? (
                   <p className="text-xs text-danger py-1">{attendeesError}</p>
                 ) : attendees.length === 0 ? (
-                  <p className="text-xs text-muted py-1">Belum ada member yang booking.</p>
+                  <p className="text-xs text-muted py-1">No members have booked yet.</p>
                 ) : (
                   <ul className="divide-y divide-border/40">
                     {attendees.map((b) => {
@@ -624,7 +624,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                             </span>
                             {b.bookingDate && (
                               <span className="block text-[10px] text-muted">
-                                Booked {new Date(b.bookingDate).toLocaleDateString("id-ID")}
+                                Booked {new Date(b.bookingDate).toLocaleDateString("en-GB")}
                               </span>
                             )}
                           </span>
@@ -637,9 +637,9 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                                 }
                                 disabled={attendingId !== null || bulkRunning}
                                 className="text-[10px] font-bold uppercase tracking-wide border border-border text-fg-soft hover:text-fg hover:border-sweat px-2 py-1 rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
-                                title="Catat hadir tanpa scan QR member"
+                                title="Mark present without scanning the member QR code"
                               >
-                                {attendingId === b.memberId ? "Absen…" : "Absen"}
+                                {attendingId === b.memberId ? "Marking…" : "Mark present"}
                               </button>
                             )}
                             <span
@@ -671,7 +671,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                         className="w-full text-[11px] font-bold uppercase tracking-wide border border-dashed border-border text-muted hover:text-fg hover:border-sweat px-3 py-2 rounded transition"
                       >
                         <i className="fas fa-user-plus mr-2" aria-hidden />
-                        Walk-in — absen member tanpa booking
+                        Walk-in — mark a member present without a booking
                       </button>
                     ) : (
                       <div className="space-y-2">
@@ -688,26 +688,26 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                             }}
                             className="text-muted hover:text-fg text-xs"
                           >
-                            Tutup
+                            Close
                           </button>
                         </div>
                         <input
                           value={walkInQuery}
                           onChange={(e) => setWalkInQuery(e.target.value)}
                           autoFocus
-                          placeholder="Cari nama / kode member / email"
+                          placeholder="Search by name / member code / email"
                           className="w-full bg-card border border-border text-fg text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-sweat"
                         />
                         {walkInSearching ? (
-                          <p className="text-[11px] text-muted">Mencari…</p>
+                          <p className="text-[11px] text-muted">Searching…</p>
                         ) : walkInQuery.trim().length < 2 ? (
                           <p className="text-[11px] text-muted">
-                            Ketik minimal 2 huruf. Member yang belum booking akan
-                            dibookingkan otomatis oleh backend saat diabsen.
+                            Type at least 2 characters. Members without a booking are
+                            booked automatically by the backend when marked present.
                           </p>
                         ) : walkInResults.length === 0 ? (
                           <p className="text-[11px] text-muted">
-                            Tidak ada member yang cocok.
+                            No matching members.
                           </p>
                         ) : (
                           <ul className="space-y-1">
@@ -741,10 +741,10 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                                     className="shrink-0 text-[10px] font-bold uppercase tracking-wide bg-sweat text-black px-2.5 py-1.5 rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
                                     {already
-                                      ? "Sudah di list"
+                                      ? "Already listed"
                                       : attendingId === m.id
-                                        ? "Absen…"
-                                        : "Absen"}
+                                        ? "Marking…"
+                                        : "Mark present"}
                                   </button>
                                 </li>
                               );
@@ -758,8 +758,8 @@ export function ClassDetailModal({ cls, onClose }: Props) {
 
                 {attendanceClosed && (
                   <p className="mt-2 pt-2 border-t border-border/40 text-[11px] text-muted">
-                    Class sudah {c.isCancelled ? "dibatalkan" : "selesai"} — absensi
-                    ditutup backend.
+                    Class has been {c.isCancelled ? "cancelled" : "completed"} — attendance
+                    is closed by the backend.
                   </p>
                 )}
 

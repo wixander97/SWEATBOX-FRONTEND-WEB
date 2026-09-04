@@ -27,7 +27,7 @@ export function EditClassModal({ cls, open, onClose, trainerOptions, onSuccess }
       if (redirectToLoginIfUnauthorized(res.status)) return;
       const payload = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        throw new Error(payload.message || "Update class gagal");
+        throw new Error(payload.message || "Failed to update class");
       }
       onSuccess();
     },

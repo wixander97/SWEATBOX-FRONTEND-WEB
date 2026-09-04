@@ -314,7 +314,7 @@ export function PromoBannerFormModal({
               className="w-full bg-sidebar border border-border text-fg-soft px-4 py-3 rounded-lg focus:outline-none focus:border-sweat file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-sweat file:text-black file:font-bold file:cursor-pointer"
             />
             <p className="mt-1.5 text-xs text-muted">
-              Disarankan {RECOMMENDED_BANNER_WIDTH} × {RECOMMENDED_BANNER_HEIGHT} px (rasio 3:1) untuk tampilan terbaik. Ukuran lain tetap diperbolehkan.
+              {RECOMMENDED_BANNER_WIDTH} × {RECOMMENDED_BANNER_HEIGHT} px (3:1 ratio) is recommended for the best result. Other sizes are still allowed.
             </p>
             {isEdit && initialValues?.imageUrl && !imageFile && (
               <p className="mt-1.5 text-xs text-muted">

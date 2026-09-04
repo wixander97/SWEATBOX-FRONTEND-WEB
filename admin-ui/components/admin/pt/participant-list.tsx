@@ -23,13 +23,13 @@ export function ParticipantList({
   status: ParticipantsStatus;
 }) {
   if (status === "loading" && participants.length === 0) {
-    return <p className="text-xs text-muted py-2">Memuat peserta...</p>;
+    return <p className="text-xs text-muted py-2">Loading participants...</p>;
   }
   if (status === "error" && participants.length === 0) {
-    return <p className="text-xs text-danger py-2">Gagal memuat peserta.</p>;
+    return <p className="text-xs text-danger py-2">Failed to load participants.</p>;
   }
   if (participants.length === 0) {
-    return <p className="text-xs text-muted py-2">Belum ada peserta.</p>;
+    return <p className="text-xs text-muted py-2">No participants yet.</p>;
   }
 
   return (
