@@ -8,7 +8,6 @@ import {
   generateMemberPassword,
   memberDisplayName,
   registerMember,
-  sendPasswordReset,
   type ApiMember,
 } from "@/lib/api/members";
 
@@ -44,23 +43,6 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
   const [duplicate, setDuplicate] = useState<ApiMember | null>(null);
   /** Set once registration succeeded, so staff can hand over next steps. */
   const [registered, setRegistered] = useState<ApiMember | null>(null);
-  const [resetState, setResetState] = useState<"idle" | "sending" | "sent" | "failed">(
-    "idle"
-  );
-  const [resetError, setResetError] = useState("");
-
-
-  async function sendReset(email: string) {
-    setResetState("sending");
-    setResetError("");
-    try {
-      await sendPasswordReset(email);
-      setResetState("sent");
-    } catch (err) {
-      setResetState("failed");
-      setResetError(errorMessageOf(err, "Gagal mengirim reset password"));
-    }
-  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -158,29 +140,16 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
               </div>
             </div>
 
+            {/*
+              No password action here on purpose: the customer sets their own
+              password through Forgot Password in the mobile app, so the front
+              desk never triggers, sees or sets one.
+            */}
             <p className="text-[11px] text-fg-soft">
-              Customer bisa membuat password sendiri lewat{" "}
-              <span className="text-fg-soft font-semibold">Forgot Password</span> di aplikasi
-              mobile, lalu login. Staff tidak pernah melihat atau mengatur password customer.
+              Minta customer buka aplikasi mobile lalu pilih{" "}
+              <span className="text-fg-soft font-semibold">Forgot Password</span> dengan email
+              di atas untuk membuat password sendiri, lalu login.
             </p>
-
-            {registered.email && (
-              <button
-                type="button"
-                onClick={() => void sendReset(registered.email as string)}
-                disabled={resetState === "sending" || resetState === "sent"}
-                className="w-full bg-sidebar border border-border text-fg py-2.5 rounded-lg text-sm disabled:opacity-60"
-              >
-                <i className="fas fa-envelope mr-2" aria-hidden />
-                {resetState === "sending"
-                  ? "Mengirim..."
-                  : resetState === "sent"
-                    ? "Reset password terkirim ✓"
-                    : "Send Password Reset"}
-              </button>
-            )}
-
-            {resetError && <p className="text-xs text-red-500">{resetError}</p>}
 
             <button
               type="button"

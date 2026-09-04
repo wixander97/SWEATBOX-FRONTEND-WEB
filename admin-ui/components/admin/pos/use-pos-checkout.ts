@@ -18,7 +18,14 @@ import {
   type Payment,
 } from "@/lib/api/payments";
 import { PaymentStatus, paymentStatusMeta } from "@/components/admin/payments/payment-status";
-import { cartSubtotal, payableItems, type CartItem } from "@/lib/pos/cart";
+import { listMemberDropInPasses } from "@/lib/api/drop-in-passes";
+import {
+  cartSubtotal,
+  payableItems,
+  type CartItem,
+  type DropInCartItem,
+  type MembershipCartItem,
+} from "@/lib/pos/cart";
 import { memberDisplayName, type ApiMember } from "@/lib/api/members";
 
 /**
@@ -37,6 +44,13 @@ import { memberDisplayName, type ApiMember } from "@/lib/api/members";
  * entitlement rather than money, so it is booked directly against
  * `POST /api/v1/class-bookings` from the catalogue and never queued behind a
  * checkout it would take no payment for.
+ *
+ * Drop-ins ride the same rails as a membership — one `POST /api/v1/payments`,
+ * only under `PaymentCategory.DropInSingle` / `DropInPass` — and are then
+ * verified: after the backend reports Paid, the member's drop-in passes are
+ * re-read to confirm one was actually issued. The payment is real either way,
+ * so a failed check never fails the sale; it tells the front desk to issue the
+ * pass from the Drop In screen instead of sending the customer away.
  */
 
 /**
@@ -78,6 +92,27 @@ export function isEdc(choice: PosPaymentChoice): boolean {
   return choice === "edc";
 }
 
+/**
+ * Which backend category a plan-backed line is charged under.
+ *
+ * Same endpoint and same plan record for both; the category is the whole
+ * difference between starting a membership and issuing a drop-in pass.
+ */
+function paymentCategoryFor(item: MembershipCartItem | DropInCartItem): PaymentCategory {
+  if (item.kind === "membership") return PaymentCategory.Membership;
+  return item.dropInKind === "pass"
+    ? PaymentCategory.DropInPass
+    : PaymentCategory.DropInSingle;
+}
+
+/** Attempts and spacing for the post-sale drop-in pass check. */
+const DROP_IN_CHECK_ATTEMPTS = 4;
+const DROP_IN_CHECK_INTERVAL_MS = 1500;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function methodFor(choice: PosPaymentChoice): PaymentMethod {
   // The terminal settles debit vs credit; the record keeps the generic card
   // method and the slip reference identifies the actual transaction.
@@ -109,6 +144,13 @@ export type CheckoutStep = {
   /** Backend status label, e.g. "Pending" / "Expired". */
   statusLabel: string | null;
   error: string | null;
+  /**
+   * Post-sale check on a drop-in line: did the backend actually issue the pass
+   * the customer paid for? `skipped` means the check could not run (the
+   * pre-sale snapshot failed), which is reported as nothing rather than as a
+   * false alarm.
+   */
+  dropInCheck: "none" | "checking" | "issued" | "missing" | "skipped";
 };
 
 export type CheckoutPhase = "idle" | "paying" | "done" | "blocked";
@@ -166,6 +208,12 @@ export function usePosCheckout(
   const advancedRef = useRef<Set<number>>(new Set());
   const abortRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
+  /**
+   * Drop-in pass ids the customer already held when this checkout started.
+   * `null` means the snapshot could not be read, and the post-sale check is
+   * skipped rather than guessed at.
+   */
+  const dropInBeforeRef = useRef<Set<string> | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -204,12 +252,21 @@ export function usePosCheckout(
 
       try {
         const payment =
-          item.kind === "membership"
-            ? await createMembershipPayment({
+          item.kind === "pt"
+            ? await purchasePtPackage({
+                userId: customer.id,
+                ptPackageId: item.pkg.id,
+                branchId: item.branchId,
+                paymentMethod,
+                paymentProvider: providerFor(selected),
+              })
+            : await createMembershipPayment({
                 // Names the customer; the JWT still identifies the operator.
                 memberId: customer.id,
                 membershipPlanId: item.plan.id,
-                paymentCategory: PaymentCategory.Membership,
+                // Membership, drop-in single or drop-in pass — the plan record
+                // is the same shape, the category is what the backend acts on.
+                paymentCategory: paymentCategoryFor(item),
                 paymentMethod,
                 paymentProvider: providerFor(selected),
                 // The plan's own branch wins — a PIK2 plan is a PIK2 sale
@@ -223,13 +280,6 @@ export function usePosCheckout(
                 // not the literal word "POS" followed by a plan name, which is
                 // what this used to write.
                 notes: notes?.trim() || defaultNote(branchName, item.name),
-              })
-            : await purchasePtPackage({
-                userId: customer.id,
-                ptPackageId: item.pkg.id,
-                branchId: item.branchId,
-                paymentMethod,
-                paymentProvider: providerFor(selected),
               });
 
         if (!mountedRef.current) return;
@@ -359,11 +409,60 @@ export function usePosCheckout(
     [payables, updateStep]
   );
 
+  /**
+   * Confirm the backend really issued the drop-in pass that was just paid for.
+   *
+   * Activation happens backend-side — on the AsteriPay callback for QRIS, on
+   * the status write for EDC — so the pass can land a moment after the payment
+   * reads Paid; hence the short retry. Anything that goes wrong here is
+   * reported as "unverified", never as a failed sale: the money has already
+   * changed hands and the payment record exists either way.
+   */
+  const verifyDropInIssued = useCallback(
+    async (item: CartItem) => {
+      if (item.kind !== "dropin" || !customer) return;
+      const before = dropInBeforeRef.current;
+      if (!before) {
+        updateStep(item.lineId, { dropInCheck: "skipped" });
+        return;
+      }
+
+      updateStep(item.lineId, { dropInCheck: "checking" });
+
+      for (let attempt = 0; attempt < DROP_IN_CHECK_ATTEMPTS; attempt++) {
+        if (!mountedRef.current) return;
+        try {
+          const passes = await listMemberDropInPasses(customer.id, {
+            redirectOn401: false,
+          });
+          if (!mountedRef.current) return;
+          if (passes.some((pass) => pass.id && !before.has(pass.id))) {
+            updateStep(item.lineId, { dropInCheck: "issued" });
+            return;
+          }
+        } catch {
+          // A read that fails is not evidence the pass is missing; keep trying
+          // and fall through to "missing" only after the last attempt.
+        }
+        if (attempt < DROP_IN_CHECK_ATTEMPTS - 1) {
+          await delay(DROP_IN_CHECK_INTERVAL_MS);
+        }
+      }
+
+      if (mountedRef.current) updateStep(item.lineId, { dropInCheck: "missing" });
+    },
+    [customer, updateStep]
+  );
+
   /** Move to the next payment, or finish when the queue is empty. */
   const advanceAfterPaid = useCallback(
     async (index: number, selected?: PosPaymentChoice, notes?: string) => {
       if (advancedRef.current.has(index)) return;
       advancedRef.current.add(index);
+      // Deliberately not awaited: the queue must not stall behind a check that
+      // only reports on a payment already settled.
+      const paidItem = payables[index];
+      if (paidItem) void verifyDropInIssued(paidItem);
       const next = index + 1;
       if (next < payables.length) {
         setActiveIndex(next);
@@ -373,7 +472,7 @@ export function usePosCheckout(
       busyRef.current = false;
       setPhase("done");
     },
-    [payables.length, choice, createPaymentForStep]
+    [payables, choice, createPaymentForStep, verifyDropInIssued]
   );
 
   /** Kick off checkout. Ignored while a checkout is already running. */
@@ -410,9 +509,30 @@ export function usePosCheckout(
         paymentUrl: null,
         statusLabel: null,
         error: null,
+        dropInCheck: "none" as const,
       }))
     );
     setPhase("paying");
+
+    /*
+     * Snapshot the passes the customer already holds *before* any money moves,
+     * so a pass issued by this sale can be told apart from one bought last
+     * week. Only taken when the cart actually contains a drop-in, and a failed
+     * read leaves the snapshot null so the check is skipped rather than
+     * reporting a pass as missing on no evidence.
+     */
+    dropInBeforeRef.current = null;
+    if (payables.some((item) => item.kind === "dropin")) {
+      try {
+        const existing = await listMemberDropInPasses(customer.id, {
+          redirectOn401: false,
+        });
+        dropInBeforeRef.current = new Set(existing.map((pass) => pass.id));
+      } catch {
+        dropInBeforeRef.current = null;
+      }
+    }
+
     await createPaymentForStep(0, selected, notes);
     busyRef.current = false;
   }, [customer, payables, createPaymentForStep]);

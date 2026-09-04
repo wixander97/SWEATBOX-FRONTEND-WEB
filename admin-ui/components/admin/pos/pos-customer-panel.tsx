@@ -350,6 +350,10 @@ export function PosCustomerPanel({
                   label="PT sesi"
                   value={`${m?.remainingPtSessions ?? 0} sesi tersisa`}
                 />
+                <ContextRow
+                  label="Drop in"
+                  value={`${m?.remainingDropInVisits ?? 0} kunjungan tersisa`}
+                />
 
                 <div className="pt-1 mt-1 border-t border-border/60">
                   <p className="text-[11px] text-muted uppercase tracking-wide mb-1">

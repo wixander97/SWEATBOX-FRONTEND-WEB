@@ -1,4 +1,4 @@
-import type { MembershipPlan } from "@/lib/api/membership-plans";
+import type { DropInKind, MembershipPlan } from "@/lib/api/membership-plans";
 import type { PtPackage } from "@/lib/api/pt-packages";
 
 /**
@@ -7,11 +7,11 @@ import type { PtPackage } from "@/lib/api/pt-packages";
  * A cart line is a *pending intent*; nothing is persisted until checkout, where
  * each line becomes a real backend payment.
  *
- * The cart holds only what money is taken for — memberships and PT packages.
- * Classes are deliberately not sellable lines: a class is settled with the
- * member's own entitlement, not with a payment, so it is booked directly
- * through `POST /api/v1/class-bookings` (see `PosBookClassModal`) rather than
- * being queued behind a checkout it would never take money for.
+ * The cart holds only what money is taken for — memberships, drop-in passes and
+ * PT packages. Classes are deliberately not sellable lines: a class is settled
+ * with the member's own entitlement, not with a payment, so it is booked
+ * directly through `POST /api/v1/class-bookings` (see `PosBookClassModal`)
+ * rather than being queued behind a checkout it would never take money for.
  */
 
 export type MembershipCartItem = {
@@ -45,10 +45,31 @@ export type PtCartItem = {
   assignedToMember?: boolean;
 };
 
-export type CartItem = MembershipCartItem | PtCartItem;
+/**
+ * A drop-in visit or multi-visit pass.
+ *
+ * Backed by a membership plan record like any other sellable line, but rung up
+ * under `PaymentCategory.DropInSingle` / `DropInPass` instead of `Membership`,
+ * which is what makes the backend issue a `MemberDropInPass` rather than
+ * starting a membership. `dropInKind` is resolved once, at add-to-cart time, so
+ * the line carries the category it will be charged under.
+ */
+export type DropInCartItem = {
+  lineId: string;
+  kind: "dropin";
+  name: string;
+  price: number;
+  plan: MembershipPlan;
+  dropInKind: DropInKind;
+  /** Visits the pass is worth, for the cart line and the post-sale check. */
+  visits: number;
+};
+
+export type CartItem = MembershipCartItem | DropInCartItem | PtCartItem;
 
 export const CART_KIND_LABEL: Record<CartItem["kind"], string> = {
   membership: "Membership",
+  dropin: "Drop In",
   pt: "PT Package",
 };
 
@@ -71,6 +92,16 @@ export function payableItems(items: CartItem[]): CartItem[] {
 /** Guard against queueing the same PT package twice in one transaction. */
 export function hasPackage(items: CartItem[], packageId: string): boolean {
   return items.some((item) => item.kind === "pt" && item.pkg.id === packageId);
+}
+
+/** Plan-backed lines already in the cart — memberships and drop-ins alike. */
+export function queuedPlanIds(items: CartItem[]): string[] {
+  return items
+    .filter(
+      (item): item is MembershipCartItem | DropInCartItem =>
+        item.kind === "membership" || item.kind === "dropin"
+    )
+    .map((item) => item.plan.id);
 }
 
 export function formatRupiah(amount: number | null | undefined): string {

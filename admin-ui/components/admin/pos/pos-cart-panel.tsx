@@ -26,6 +26,14 @@ function lineDetail(item: CartItem): string {
             ? "Unlimited class"
             : `${item.plan.credits} credit`
       }`;
+    case "dropin":
+      return [
+        item.dropInKind === "pass" ? `${item.visits}x kunjungan` : "1x kunjungan",
+        `berlaku ${item.plan.validityDays} hari`,
+        item.plan.branchName,
+      ]
+        .filter(Boolean)
+        .join(" · ");
     case "pt":
       return [
         `${item.sessionCount} sesi`,
@@ -84,8 +92,8 @@ export function PosCartPanel({
           <div className="text-center py-12">
             <i className="fas fa-receipt text-2xl text-muted mb-2 block" aria-hidden />
             <p className="text-xs text-muted">
-              Pilih membership atau PT package dari katalog. Class dibooking langsung
-              tanpa pembayaran.
+              Pilih membership, drop in, atau PT package dari katalog. Class dibooking
+              langsung tanpa pembayaran.
             </p>
           </div>
         ) : (

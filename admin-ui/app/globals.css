@@ -105,9 +105,10 @@ body {
  *
  * Unlike the status colours these carry no shared meaning — the hue *is* the
  * class type — so they keep their own families instead of collapsing into a
- * token. Only the lightness moves, and only in light mode, where a -200 shade
- * on a 15% tint is barely darker than the card behind it.
+ * token. Only the lightness moves, and only in light mode, where a -100/-200
+ * shade on a 15% tint is barely darker than the card behind it.
  */
+[data-theme="light"] .text-amber-100 { color: #92400e; }
 [data-theme="light"] .text-emerald-200 { color: #047857; }
 [data-theme="light"] .text-sky-200 { color: #0369a1; }
 [data-theme="light"] .text-rose-200 { color: #be123c; }

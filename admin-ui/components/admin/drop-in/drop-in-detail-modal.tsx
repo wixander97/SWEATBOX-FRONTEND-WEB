@@ -3,31 +3,10 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import type { MemberDropInPass } from "@/lib/api/drop-in-passes";
 
-export type MemberDropInPass = {
-  id: string;
-  memberId: string;
-  member: {
-    fullName: string;
-    memberCode: string;
-    email?: string;
-    phoneNumber?: string;
-    membershipStatus?: string;
-    remainingCredits?: number;
-    remainingPtSessions?: number;
-    joinDate?: string;
-    expiryDate?: string;
-  };
-  branchId: string;
-  branch: {
-    branchName: string;
-  };
-  totalVisits: number;
-  remainingVisits: number;
-  purchasedAt: string;
-  expiredAt: string;
-  isActive: boolean;
-};
+/** The pass model lives with its service now; re-exported for existing callers. */
+export type { MemberDropInPass };
 
 type Props = {
   memberId: string;

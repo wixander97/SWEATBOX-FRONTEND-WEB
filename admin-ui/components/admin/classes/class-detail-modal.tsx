@@ -7,8 +7,10 @@ import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import type { ApiClass } from "@/components/admin/classes/classes.types";
 import {
+  activateClassSession,
   listBookingsForSchedule,
   remainingSlotsOf,
+  sessionActivationBlocker,
   type ClassBooking,
 } from "@/lib/api/classes";
 import { errorMessageOf } from "@/lib/api/http";
@@ -70,6 +72,87 @@ function Row({
   );
 }
 
+/**
+ * Copy a value to the clipboard.
+ *
+ * `navigator.clipboard` is unavailable on plain HTTP and in older kiosk
+ * browsers, which is exactly where a front desk tablet tends to live, so the
+ * legacy `execCommand` path stays as a fallback rather than leaving staff with
+ * a button that silently does nothing.
+ */
+async function copyText(value: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch {
+    // Fall through to the textarea fallback below.
+  }
+  try {
+    const area = document.createElement("textarea");
+    area.value = value;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(area);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+function CopyButton({ value, label }: { value: string; label: string }) {
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
+
+  useEffect(() => {
+    if (state === "idle") return;
+    const timer = setTimeout(() => setState("idle"), 1600);
+    return () => clearTimeout(timer);
+  }, [state]);
+
+  return (
+    <button
+      type="button"
+      onClick={async () => setState((await copyText(value)) ? "copied" : "failed")}
+      title={`Copy ${label}`}
+      aria-label={`Copy ${label}`}
+      className="shrink-0 px-2 py-1 rounded border border-border text-[11px] text-muted hover:text-fg hover:border-sweat transition"
+    >
+      <i
+        className={`fas ${state === "copied" ? "fa-check" : "fa-copy"} mr-1`}
+        aria-hidden
+      />
+      {state === "copied" ? "Copied" : state === "failed" ? "Gagal" : "Copy"}
+    </button>
+  );
+}
+
+/**
+ * An identifier row: the full value, never truncated, plus a copy button.
+ *
+ * These GUIDs are working data — the manual Barcode Scanner page and every
+ * backend support request need them in full — so they wrap instead of ending
+ * in an ellipsis that has to be retyped from a screenshot.
+ */
+function IdRow({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-start justify-between gap-2 py-2 border-b border-border/40 last:border-b-0">
+      <div className="min-w-0">
+        <span className="block text-xs text-muted">{label}</span>
+        <span className="block text-[11px] font-mono text-fg-soft break-all select-all leading-relaxed">
+          {value}
+        </span>
+      </div>
+      <CopyButton value={value} label={label} />
+    </div>
+  );
+}
+
 export function ClassDetailModal({ cls, onClose }: Props) {
   const [detail, setDetail] = useState<ApiClass | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,6 +160,12 @@ export function ClassDetailModal({ cls, onClose }: Props) {
   const [attendees, setAttendees] = useState<ClassBooking[]>([]);
   const [attendeesLoading, setAttendeesLoading] = useState(true);
   const [attendeesError, setAttendeesError] = useState("");
+  /** Bumped after an activation so the flags below are re-read from backend. */
+  const [reloadKey, setReloadKey] = useState(0);
+  const [confirmActivate, setConfirmActivate] = useState(false);
+  const [activating, setActivating] = useState(false);
+  const [activateError, setActivateError] = useState("");
+  const [activateMessage, setActivateMessage] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -121,7 +210,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [cls.id]);
+  }, [cls.id, reloadKey]);
 
   const c: ApiClass = detail ?? cls;
   const badge = statusBadge(c);
@@ -131,6 +220,37 @@ export function ClassDetailModal({ cls, onClose }: Props) {
     iso ? new Date(iso).toLocaleDateString("id-ID") : null;
   const fmtDateTime = (iso?: string | null) =>
     iso ? new Date(iso).toLocaleString("id-ID") : null;
+
+  const activationBlocker = sessionActivationBlocker(c);
+
+  /**
+   * Turn the session on without the coach's QR.
+   *
+   * Same endpoint the coach scan hits, with the ids taken from the schedule
+   * itself — so this cannot be pointed at the wrong class the way retyping two
+   * GUIDs into the manual scanner can. The schedule is re-read afterwards, and
+   * only what the backend then reports is shown: the button never decides on
+   * its own that the session is active.
+   */
+  async function runActivation() {
+    if (activating || !c.coachId || activationBlocker) return;
+    setActivating(true);
+    setActivateError("");
+    setActivateMessage("");
+    try {
+      const result = await activateClassSession({
+        coachId: c.coachId,
+        classScheduleId: c.id,
+      });
+      setActivateMessage(result?.message?.trim() || "Session class diaktifkan.");
+      setConfirmActivate(false);
+      setReloadKey((v) => v + 1);
+    } catch (err) {
+      setActivateError(errorMessageOf(err, "Gagal mengaktifkan session class"));
+    } finally {
+      setActivating(false);
+    }
+  }
 
   return (
     <div
@@ -147,7 +267,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
               <p className="text-xs text-muted uppercase tracking-wider font-semibold mb-1">
                 Class Schedule Detail
               </p>
-              <p className="text-sm font-mono text-accent-ink font-bold truncate">{c.id}</p>
+              <p className="text-base font-bold text-fg truncate">{c.className}</p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <span
@@ -164,6 +284,19 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                 ×
               </button>
             </div>
+          </div>
+
+          {/* The id in full: it is what the manual scanner and support ask for. */}
+          <div className="mt-3 flex items-start justify-between gap-2 bg-sidebar border border-border rounded-lg px-3 py-2">
+            <div className="min-w-0">
+              <span className="block text-[10px] uppercase tracking-wider text-muted">
+                Class Schedule ID
+              </span>
+              <span className="block text-[11px] font-mono text-accent-ink font-bold break-all select-all leading-relaxed">
+                {c.id}
+              </span>
+            </div>
+            <CopyButton value={c.id} label="Class Schedule ID" />
           </div>
         </div>
 
@@ -209,6 +342,83 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                 <Row label="Cancelled" value={yesNo(c.isCancelled)} />
                 <Row label="Completed" value={yesNo(c.isCompleted)} />
                 <Row label="Session Active" value={yesNo(c.isSessionActive)} />
+              </div>
+
+              {/* Session — the admin bypass for the coach QR scan */}
+              <SectionHeader icon="fas fa-bolt" label="Session" />
+              <div className="bg-sidebar rounded-lg border border-border px-3 py-3 space-y-2">
+                {c.isSessionActive ? (
+                  <p className="text-xs text-success flex items-center gap-2">
+                    <i className="fas fa-circle-check" aria-hidden />
+                    Session sudah aktif — member bisa check-in ke class ini.
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted leading-relaxed">
+                      Normalnya session menyala saat coach scan QR. Kalau coach tidak
+                      bisa scan, admin bisa mengaktifkannya di sini — request-nya sama
+                      persis dengan coach scan, dengan Coach ID dan Class Schedule ID
+                      dari class ini.
+                    </p>
+
+                    {activationBlocker ? (
+                      <p className="text-xs text-fg-soft bg-fg/5 border border-border rounded px-3 py-2">
+                        {activationBlocker}
+                      </p>
+                    ) : confirmActivate ? (
+                      <div className="space-y-2">
+                        <p className="text-xs text-warning bg-yellow-500/10 border border-yellow-500/30 rounded px-3 py-2">
+                          Aktifkan session untuk{" "}
+                          <span className="font-bold">{c.className}</span> dengan coach{" "}
+                          <span className="font-bold">{c.coachName ?? c.coachId}</span>?
+                          Tercatat di backend seperti coach scan biasa.
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void runActivation()}
+                            disabled={activating}
+                            className="flex-1 bg-sweat text-black py-2 rounded-lg text-xs font-bold hover:brightness-95 transition disabled:opacity-60"
+                          >
+                            {activating ? "Mengaktifkan…" : "Ya, aktifkan session"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmActivate(false)}
+                            disabled={activating}
+                            className="flex-1 bg-card border border-border text-fg-soft py-2 rounded-lg text-xs font-bold disabled:opacity-60"
+                          >
+                            Batal
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActivateError("");
+                          setActivateMessage("");
+                          setConfirmActivate(true);
+                        }}
+                        className="w-full bg-card border border-sweat/60 text-fg py-2 rounded-lg text-xs font-bold hover:bg-sweat/10 transition flex items-center justify-center gap-2"
+                      >
+                        <i className="fas fa-bolt text-accent-ink" aria-hidden />
+                        Activate Session (bypass coach scan)
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {activateMessage && (
+                  <p className="text-xs text-success bg-green-500/10 border border-green-500/30 rounded px-3 py-2">
+                    {activateMessage}
+                  </p>
+                )}
+                {activateError && (
+                  <p className="text-xs text-danger bg-red-500/10 border border-red-500/30 rounded px-3 py-2">
+                    {activateError}
+                  </p>
+                )}
               </div>
 
               {/* Cancellation */}
@@ -279,8 +489,9 @@ export function ClassDetailModal({ cls, onClose }: Props) {
               {/* Identifiers */}
               <SectionHeader icon="fas fa-fingerprint" label="Identifiers" />
               <div className="bg-sidebar rounded-lg border border-border px-3 py-1">
-                <Row label="Coach ID" value={c.coachId ?? null} />
-                <Row label="Branch ID" value={c.branchId ?? null} />
+                <IdRow label="Class Schedule ID" value={c.id} />
+                <IdRow label="Coach ID" value={c.coachId} />
+                <IdRow label="Branch ID" value={c.branchId} />
               </div>
 
               {/* Timestamps */}

@@ -332,6 +332,33 @@ export function PosCheckoutModal({
                       </p>
                     )}
 
+                    {/* Drop-in lines: did the backend actually issue the pass? */}
+                    {step.dropInCheck === "checking" && (
+                      <p className="mt-2 text-[11px] text-muted flex items-center gap-2">
+                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted border-t-transparent" />
+                        Memverifikasi penerbitan drop-in pass…
+                      </p>
+                    )}
+                    {step.dropInCheck === "issued" && (
+                      <p className="mt-2 text-[11px] text-green-600 bg-green-500/10 border border-green-500/30 px-3 py-2 rounded">
+                        <i className="fas fa-check mr-1.5" aria-hidden />
+                        Drop-in pass terbit di akun member.
+                      </p>
+                    )}
+                    {step.dropInCheck === "missing" && (
+                      <p className="mt-2 text-[11px] text-yellow-600 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded">
+                        <i className="fas fa-triangle-exclamation mr-1.5" aria-hidden />
+                        Pembayaran sudah Paid, tapi drop-in pass belum terlihat di akun
+                        member. Jangan ulangi pembayaran — cek menu Drop In dulu, pass
+                        bisa menyusul beberapa saat.
+                      </p>
+                    )}
+                    {step.dropInCheck === "skipped" && (
+                      <p className="mt-2 text-[11px] text-muted">
+                        Drop-in pass tidak bisa diverifikasi otomatis — cek menu Drop In.
+                      </p>
+                    )}
+
                     {index === activeIndex && step.status === "failed" && (
                       <div className="mt-2 flex gap-2">
                         <button
@@ -364,6 +391,12 @@ export function PosCheckoutModal({
               <p className="text-xs text-muted mt-1">
                 Semua payment sudah dikonfirmasi backend.
               </p>
+              {steps.some((s) => s.dropInCheck === "missing") && (
+                <p className="text-[11px] text-yellow-700 mt-2">
+                  Ada drop-in pass yang belum terverifikasi terbit — buka menu Drop In
+                  untuk memastikan sebelum customer pergi.
+                </p>
+              )}
 
               <button
                 type="button"

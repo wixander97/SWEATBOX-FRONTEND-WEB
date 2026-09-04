@@ -114,24 +114,6 @@ export function normalizePhone(phone: string | null | undefined): string {
   return digits;
 }
 
-/**
- * Trigger the customer's own password reset.
- *
- * Uses the existing `POST /api/v1/auth/forgot-password`, which mails a 6-digit
- * code the customer redeems through `reset-password` in the mobile app. Staff
- * never see or set a password.
- */
-export async function sendPasswordReset(
-  email: string,
-  options?: RequestOptions
-): Promise<void> {
-  await apiPost<{ message?: string }>(
-    "/api/v1/auth/forgot-password",
-    { email },
-    { errorMessage: "Gagal mengirim reset password", ...options }
-  );
-}
-
 export function memberDisplayName(m: ApiMember | null | undefined): string {
   if (!m) return "-";
   return m.fullName || m.memberCode || m.id;

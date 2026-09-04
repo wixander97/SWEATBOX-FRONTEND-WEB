@@ -206,10 +206,18 @@ export function CreateMembershipPlanModal({
                                     <input
                                         type="text"
                                         className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
-                                        placeholder="e.g. Monthly, Annual"
+                                        placeholder="e.g. Monthly, Annual, Drop In Pass"
                                         name="planCategory"
                                         defaultValue={initialValues?.planCategory ?? ""}
                                     />
+                                    {/* The POS reads this field to decide which payment
+                                        category a plan is sold under, so the drop-in
+                                        wording is spelled out rather than assumed. */}
+                                    <p className="text-xs text-muted mt-1">
+                                        Isi &quot;Drop In&quot;, &quot;Drop In Single&quot;, atau &quot;Drop In Pass&quot; agar plan
+                                        ini muncul di POS sebagai produk drop in (jumlah kunjungan
+                                        diambil dari Credits).
+                                    </p>
                                 </div>
                                 <div>
                                     <label className="block text-muted text-sm mb-1">

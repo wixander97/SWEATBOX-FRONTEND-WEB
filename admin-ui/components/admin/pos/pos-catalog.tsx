@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { errorMessageOf } from "@/lib/api/http";
-import { listMembershipPlans, type MembershipPlan } from "@/lib/api/membership-plans";
+import {
+  dropInKindOf,
+  dropInSubtitle,
+  dropInVisitsOf,
+  isDropInPlan,
+  listMembershipPlans,
+  type MembershipPlan,
+} from "@/lib/api/membership-plans";
 import {
   isTemplatePackage,
   listMemberPtPackages,
@@ -20,15 +27,23 @@ import {
   type ClassBooking,
 } from "@/lib/api/classes";
 import type { ApiMember } from "@/lib/api/members";
-import { formatRupiah, newLineId, type CartItem, type MembershipCartItem } from "@/lib/pos/cart";
+import {
+  formatRupiah,
+  newLineId,
+  queuedPlanIds as planIdsInCart,
+  type CartItem,
+  type DropInCartItem,
+  type MembershipCartItem,
+} from "@/lib/pos/cart";
 import { PosPtOptionsModal } from "./pos-pt-options-modal";
 import { PosBookClassModal } from "./pos-book-class-modal";
 
-type Category = "all" | "membership" | "pt" | "class";
+type Category = "all" | "membership" | "dropin" | "pt" | "class";
 
 const CATEGORIES: Array<{ key: Category; label: string; icon: string }> = [
   { key: "all", label: "All", icon: "fa-th-large" },
   { key: "membership", label: "Membership", icon: "fa-ticket-alt" },
+  { key: "dropin", label: "Drop In", icon: "fa-door-open" },
   { key: "pt", label: "PT Package", icon: "fa-id-badge" },
   { key: "class", label: "Classes", icon: "fa-calendar-alt" },
 ];
@@ -269,11 +284,33 @@ export function PosCatalog({
     [branchId]
   );
 
+  /*
+   * Drop-in products are membership plan records marked `planCategory: "Drop
+   * In"`, so they are split out here rather than left in the Membership shelf:
+   * they are rung up under a different payment category and must never be sold
+   * as a membership by accident.
+   */
   const visiblePlans = useMemo(
     () =>
       category === "all" || category === "membership"
         ? plans.filter(
-            (p) => inBranch(p.branchId) && matches(p.planName, p.description, p.planCategory)
+            (p) =>
+              !isDropInPlan(p) &&
+              inBranch(p.branchId) &&
+              matches(p.planName, p.description, p.planCategory)
+          )
+        : [],
+    [plans, category, matches, inBranch]
+  );
+
+  const visibleDropInPlans = useMemo(
+    () =>
+      category === "all" || category === "dropin"
+        ? plans.filter(
+            (p) =>
+              isDropInPlan(p) &&
+              inBranch(p.branchId) &&
+              matches(p.planName, p.description, p.planCategory)
           )
         : [],
     [plans, category, matches, inBranch]
@@ -319,14 +356,12 @@ export function PosCatalog({
     [cartItems]
   );
 
-  const queuedPlanIds = useMemo(
-    () => cartItems.filter((i) => i.kind === "membership").map((i) => i.plan.id),
-    [cartItems]
-  );
+  const queuedPlanIds = useMemo(() => planIdsInCart(cartItems), [cartItems]);
 
   const isEmpty =
     !loading &&
     visiblePlans.length === 0 &&
+    visibleDropInPlans.length === 0 &&
     visiblePackages.length === 0 &&
     visibleMemberPackages.length === 0 &&
     visibleClasses.length === 0;
@@ -342,6 +377,23 @@ export function PosCatalog({
     onAdd(item);
   }
 
+  function addDropIn(plan: MembershipPlan) {
+    // Resolved here, once: the line carries the category it will be charged
+    // under, so a later edit to the plan cannot change a queued sale.
+    const dropInKind = dropInKindOf(plan);
+    if (!dropInKind) return;
+    const item: DropInCartItem = {
+      lineId: newLineId(),
+      kind: "dropin",
+      name: plan.planName,
+      price: plan.price ?? 0,
+      plan,
+      dropInKind,
+      visits: dropInVisitsOf(plan),
+    };
+    onAdd(item);
+  }
+
   return (
     <div className="flex flex-col h-full min-h-0">
       <div className="p-4 sm:p-5 border-b border-border space-y-3">
@@ -353,7 +405,7 @@ export function PosCatalog({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari membership, PT package, atau class"
+            placeholder="Cari membership, drop in, PT package, atau class"
             className="w-full bg-sidebar border border-border text-fg pl-10 pr-9 py-3 rounded-lg text-sm focus:outline-none focus:border-sweat"
           />
           {search && (
@@ -465,6 +517,36 @@ export function PosCatalog({
                         disabled={disabled || queued}
                         disabledLabel={queued ? "Sudah di transaksi" : undefined}
                         onClick={() => addPlan(plan)}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {visibleDropInPlans.length > 0 && (
+              <section>
+                <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted mb-2">
+                  Drop In
+                </h3>
+                <p className="text-[11px] text-muted mb-2">
+                  Pass terbit otomatis dari backend setelah pembayaran Paid; POS
+                  memverifikasinya sebelum transaksi ditutup.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {visibleDropInPlans.map((plan) => {
+                    const queued = queuedPlanIds.includes(plan.id);
+                    return (
+                      <Card
+                        key={plan.id}
+                        badge={dropInKindOf(plan) === "pass" ? "Pass" : "Single"}
+                        title={plan.planName}
+                        subtitle={dropInSubtitle(plan)}
+                        meta={plan.branchName}
+                        price={formatRupiah(plan.price ?? 0)}
+                        disabled={disabled || queued}
+                        disabledLabel={queued ? "Sudah di transaksi" : undefined}
+                        onClick={() => addDropIn(plan)}
                       />
                     );
                   })}

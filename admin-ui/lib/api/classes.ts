@@ -208,3 +208,36 @@ export function isBookable(c: ApiClass): boolean {
   if (c.isActive === false) return false;
   return remainingSlotsOf(c) > 0;
 }
+
+/**
+ * Admin bypass for the coach QR scan.
+ *
+ * A class session is switched on backend-side by `POST /api/v1/attendance/coach-scan`
+ * — the endpoint the coach's own QR normally hits — which is what flips
+ * `isSessionActive` and lets member check-ins land on that schedule. When the
+ * coach cannot scan (lost QR, dead tablet, coach already teaching), the front
+ * desk otherwise has to key the two GUIDs into the manual Barcode Scanner page.
+ *
+ * This is the same call with the ids read straight off the schedule, so there
+ * is no second activation path and no backend change behind it: whatever the
+ * coach scan does — attendance row, payroll, session state — happens here too.
+ */
+export function activateClassSession(
+  body: { coachId: string; classScheduleId: string },
+  options?: RequestOptions
+): Promise<{ message?: string }> {
+  return apiPost<{ message?: string }>("/api/v1/attendance/coach-scan", body, {
+    errorMessage: "Gagal mengaktifkan session class",
+    ...options,
+  });
+}
+
+/** Why a schedule cannot be activated, or `null` when it can. */
+export function sessionActivationBlocker(c: ApiClass): string | null {
+  if (c.isSessionActive) return "Session untuk class ini sudah aktif.";
+  if (c.isCancelled) return "Class sudah dibatalkan.";
+  if (c.isCompleted) return "Class sudah selesai.";
+  if (c.isActive === false) return "Class non-aktif — aktifkan dulu lewat Edit.";
+  if (!c.coachId) return "Class ini belum punya coach, jadi session tidak bisa diaktifkan.";
+  return null;
+}
