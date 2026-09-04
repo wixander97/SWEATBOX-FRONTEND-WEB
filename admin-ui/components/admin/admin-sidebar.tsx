@@ -19,6 +19,7 @@ type ProfileData = {
 
 const mainNav: { href: string; label: string; icon: string; id: string }[] = [
   { href: adminPaths.dashboard, label: "Dashboard", icon: "fa-chart-pie", id: "dashboard" },
+  { href: adminPaths.pos, label: "Front Desk POS", icon: "fa-cash-register", id: "pos" },
   { href: adminPaths.classes, label: "Class Schedule", icon: "fa-calendar-alt", id: "classes" },
   { href: adminPaths.members, label: "Memberships", icon: "fa-users", id: "members" },
   { href: adminPaths.reports, label: "Attendance Reports", icon: "fa-clipboard-check", id: "reports" },
@@ -61,6 +62,11 @@ export function AdminSidebar({ open = false, onClose }: Props) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
   const isSuperadmin = currentRole === "superadmin";
+
+  // POS is a staff tool; Members must never see it.
+  const filteredMainNav = mainNav.filter(
+    (item) => item.id !== "pos" || currentRole !== "member"
+  );
 
   const filteredDataNav = dataNav.filter((item) => {
     if (!isSuperadmin && (item.id === "payments" || item.id === "payment-methods")) {
@@ -124,7 +130,7 @@ export function AdminSidebar({ open = false, onClose }: Props) {
           </div>
 
           <nav className="mt-2 px-4 space-y-1 pb-4">
-            {mainNav.map((item) => (
+            {filteredMainNav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

@@ -6,6 +6,12 @@ import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import type { ApiClass } from "@/components/admin/classes/classes.types";
+import {
+  listBookingsForSchedule,
+  remainingSlotsOf,
+  type ClassBooking,
+} from "@/lib/api/classes";
+import { errorMessageOf } from "@/lib/api/http";
 
 type Props = {
   cls: ApiClass;
@@ -68,6 +74,9 @@ export function ClassDetailModal({ cls, onClose }: Props) {
   const [detail, setDetail] = useState<ApiClass | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [attendees, setAttendees] = useState<ClassBooking[]>([]);
+  const [attendeesLoading, setAttendeesLoading] = useState(true);
+  const [attendeesError, setAttendeesError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -92,7 +101,23 @@ export function ClassDetailModal({ cls, onClose }: Props) {
         if (!cancelled) setLoading(false);
       }
     }
+    async function loadAttendees() {
+      setAttendeesLoading(true);
+      setAttendeesError("");
+      try {
+        const list = await listBookingsForSchedule(cls.id);
+        if (!cancelled) setAttendees(list);
+      } catch (err) {
+        if (!cancelled) {
+          setAttendeesError(errorMessageOf(err, "Gagal memuat peserta class."));
+          setAttendees([]);
+        }
+      } finally {
+        if (!cancelled) setAttendeesLoading(false);
+      }
+    }
     void loadDetail();
+    void loadAttendees();
     return () => {
       cancelled = true;
     };
@@ -174,10 +199,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
               <div className="bg-sidebar rounded-lg border border-border px-3 py-1">
                 <Row label="Capacity" value={String(c.capacity ?? 0)} />
                 <Row label="Enrolled" value={String(enrolled)} />
-                <Row
-                  label="Remaining Slots"
-                  value={c.remainingSlots != null ? String(c.remainingSlots) : null}
-                />
+                <Row label="Available Slots" value={String(remainingSlotsOf(c))} />
               </div>
 
               {/* Status Flags */}
@@ -201,17 +223,58 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                 </>
               )}
 
-              {/* Description */}
-              {c.description && (
-                <>
-                  <SectionHeader icon="fas fa-sticky-note" label="Description" />
-                  <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap">
-                      {c.description}
-                    </p>
-                  </div>
-                </>
-              )}
+              {/* Workout / class details — the existing `description` field */}
+              <SectionHeader icon="fas fa-dumbbell" label="Workout / Class Details" />
+              <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
+                {c.description ? (
+                  <p className="text-sm text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">
+                    {c.description}
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-600">Belum ada detail workout.</p>
+                )}
+              </div>
+
+              {/* Members */}
+              <SectionHeader icon="fas fa-user-friends" label="Members" />
+              <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
+                {attendeesLoading ? (
+                  <p className="text-xs text-gray-500 py-1">Memuat peserta...</p>
+                ) : attendeesError ? (
+                  <p className="text-xs text-red-400 py-1">{attendeesError}</p>
+                ) : attendees.length === 0 ? (
+                  <p className="text-xs text-gray-600 py-1">Belum ada member yang booking.</p>
+                ) : (
+                  <ul className="divide-y divide-border/40">
+                    {attendees.map((b) => (
+                      <li
+                        key={b.id}
+                        className="flex items-center justify-between gap-3 py-1.5"
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-sm text-gray-200 truncate">
+                            {b.memberName || b.memberId}
+                          </span>
+                          {b.bookingDate && (
+                            <span className="block text-[10px] text-gray-600">
+                              Booked {new Date(b.bookingDate).toLocaleDateString("id-ID")}
+                            </span>
+                          )}
+                        </span>
+                        <span
+                          className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                            b.isCancelled
+                              ? "bg-red-500/10 text-red-400 border-red-500/30"
+                              : "bg-green-500/10 text-green-400 border-green-500/30"
+                          }`}
+                        >
+                          {b.isCancelled ? "Cancelled" : (b.bookingStatus || "Booked")}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
 
               {/* Identifiers */}
               <SectionHeader icon="fas fa-fingerprint" label="Identifiers" />

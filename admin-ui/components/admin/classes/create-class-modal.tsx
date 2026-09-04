@@ -5,6 +5,14 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { formatCountInput, parseCountInput } from "@/lib/number-input";
+import { RecurrenceFields } from "@/components/admin/classes/recurrence-fields";
+import {
+  emptyRecurrence,
+  expandRecurrence,
+  isRepeating,
+  validateRecurrence,
+  type RecurrenceRule,
+} from "@/lib/classes/recurrence";
 
 export type ClassFormValues = {
   className: string;
@@ -28,7 +36,12 @@ type Props = {
   initialValues?: Partial<ClassFormValues>;
   submitLabel?: string;
   trainerOptions: Array<{ id: string; name: string }>;
-  onSubmit: (values: ClassFormValues) => Promise<void>;
+  /**
+   * Enable the recurrence section. Only meaningful when creating: editing a
+   * single occurrence never rewrites a whole series.
+   */
+  allowRecurrence?: boolean;
+  onSubmit: (values: ClassFormValues, recurrence?: RecurrenceRule) => Promise<void>;
 };
 
 type Branch = {
@@ -50,6 +63,19 @@ type ClassFormState = {
   classType: string;
   difficultyLevel: string;
 };
+
+const WORKOUT_PLACEHOLDER = `Warm Up
+10 min mobility
+
+Strength
+4 x 10 Squats
+4 x 10 Lunges
+
+Conditioning
+10 min AMRAP
+
+Cool Down
+5 min stretching`;
 
 function emptyClassForm(): ClassFormState {
   return {
@@ -88,6 +114,7 @@ export function CreateClassModal({
   submitLabel = "Create Schedule",
   initialValues,
   trainerOptions,
+  allowRecurrence = false,
   onSubmit,
 }: Props) {
   const [submitting, setSubmitting] = useState(false);
@@ -95,6 +122,7 @@ export function CreateClassModal({
   const [form, setForm] = useState<ClassFormState>(emptyClassForm());
   const [branches, setBranches] = useState<Branch[]>([]);
   const [branchesLoading, setBranchesLoading] = useState(true);
+  const [recurrence, setRecurrence] = useState<RecurrenceRule>(emptyRecurrence());
   // Load branches
   useEffect(() => {
     async function loadBranches() {
@@ -134,6 +162,7 @@ export function CreateClassModal({
     } else {
       setForm(emptyClassForm());
     }
+    setRecurrence(emptyRecurrence());
   }, [open, initialValues]);
 
 
@@ -146,6 +175,13 @@ export function CreateClassModal({
         setError("Capacity must be at least 1");
         return;
       }
+      if (allowRecurrence) {
+        const check = validateRecurrence(recurrence, form.classDate);
+        if (!check.ok) {
+          setError(check.message);
+          return;
+        }
+      }
       setSubmitting(true);
 
       const payload: ClassFormValues = {
@@ -157,7 +193,10 @@ export function CreateClassModal({
       };
 
       try {
-        await onSubmit(payload);
+        await onSubmit(
+          payload,
+          allowRecurrence && isRepeating(recurrence) ? recurrence : undefined
+        );
         onClose();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Failed to submit";
@@ -166,7 +205,7 @@ export function CreateClassModal({
         setSubmitting(false);
       }
     },
-    [onClose, onSubmit, form]
+    [onClose, onSubmit, form, allowRecurrence, recurrence]
   );
 
   if (!open) return null;
@@ -410,21 +449,36 @@ export function CreateClassModal({
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Workout / class details — stored in the existing `description` field */}
               <div>
                 <label className="block text-gray-400 text-sm mb-1">
-                  Description
+                  Workout / Class Details
                 </label>
                 <textarea
-                  className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                  className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat font-mono text-sm leading-relaxed"
                   name="description"
                   value={form.description}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, description: e.target.value }))
                   }
-                  rows={3}
+                  rows={10}
+                  placeholder={WORKOUT_PLACEHOLDER}
                 />
+                <p className="text-[11px] text-gray-600 mt-1">
+                  Multiline didukung — tulis warm up, strength, conditioning, dan cool
+                  down. Tersimpan di field description yang sudah ada.
+                </p>
               </div>
+
+              {/* Recurrence (create only) */}
+              {allowRecurrence && (
+                <RecurrenceFields
+                  value={recurrence}
+                  onChange={setRecurrence}
+                  startDate={form.classDate}
+                  disabled={submitting}
+                />
+              )}
 
               {/* Error */}
               {error ? (
@@ -439,7 +493,11 @@ export function CreateClassModal({
                 disabled={submitting}
                 className="w-full bg-sweat text-black font-bold py-3 rounded-lg mt-4 hover:bg-yellow-400 transition disabled:opacity-70"
               >
-                {submitting ? "Submitting..." : submitLabel}
+                {submitting
+                  ? allowRecurrence && isRepeating(recurrence)
+                    ? `Membuat ${expandRecurrence(recurrence, form.classDate).length} jadwal...`
+                    : "Submitting..."
+                  : submitLabel}
               </button>
             </div>
           </form>

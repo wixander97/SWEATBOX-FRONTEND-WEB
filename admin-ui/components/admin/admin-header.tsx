@@ -25,11 +25,10 @@ export function AdminHeader({ onOpenMenu }: Props) {
     authFetch(`${API_BASE_URL}/api/v1/auth/profile`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data: ProfileData | null) => {
-        if (data) {
-          setRoleFromAuth(data.roleName ?? data.role);
-        }
+        // Always resolve: role-gated screens wait on this before rendering.
+        setRoleFromAuth(data?.roleName ?? data?.role ?? null);
       })
-      .catch(() => null);
+      .catch(() => setRoleFromAuth(null));
   }, [setRoleFromAuth]);
 
   return (

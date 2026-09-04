@@ -1,5 +1,6 @@
 export const adminPaths = {
   dashboard: "/admin/dashboard",
+  pos: "/admin/pos",
   classes: "/admin/classes",
   members: "/admin/members",
   reports: "/admin/reports",
@@ -22,6 +23,7 @@ export type AdminNavKey = keyof typeof adminPaths;
 
 export const pageTitleByPath: Record<string, string> = {
   [adminPaths.dashboard]: "Dashboard Overview",
+  [adminPaths.pos]: "Front Desk POS",
   [adminPaths.classes]: "Class Schedule",
   [adminPaths.members]: "Membership",
   [adminPaths.reports]: "Attendance Reports",

@@ -31,9 +31,12 @@ import {
 } from "@/components/admin/classes/create-class-modal";
 import { EditClassModal } from "@/components/admin/classes/edit-class-modal";
 import { ClassDetailModal } from "@/components/admin/classes/class-detail-modal";
+import { ClassCalendar } from "@/components/admin/classes/class-calendar";
 import type { ApiClass, ApiCoach, PagedResponse } from "@/components/admin/classes/classes.types";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { downloadXlsx } from "@/lib/export";
+import { createRecurringClassSchedules } from "@/lib/api/classes";
+import type { RecurrenceRule } from "@/lib/classes/recurrence";
 
 
 // Match the backend's accepted date format (ISO 8601 UTC), used elsewhere
@@ -82,6 +85,10 @@ const BRANCH_COLOR_FALLBACK = {
 };
 
 export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  /** Bumped after any mutation so the calendar refetches its own data. */
+  const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
+  const [seriesNotice, setSeriesNotice] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editClass, setEditClass] = useState<ApiClass | null>(null);
@@ -338,18 +345,41 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
     });
   }, [classes, sortKey, sortDir]);
 
-  async function createClass(values: ClassFormValues) {
-    const res = await authFetch(`${API_BASE_URL}/api/v1/class-schedules`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-    if (redirectToLoginIfUnauthorized(res.status)) return;
-    const payload = (await res.json().catch(() => ({}))) as { message?: string };
-    if (!res.ok) {
-      throw new Error(payload.message || "Create class gagal");
+  async function createClass(values: ClassFormValues, recurrence?: RecurrenceRule) {
+    setSeriesNotice("");
+
+    if (recurrence) {
+      // Every occurrence becomes a real class-schedule row, so bookings,
+      // capacity and attendance behave exactly as they do for a single class.
+      const startDate = values.classDate.slice(0, 10);
+      const result = await createRecurringClassSchedules(values, recurrence, startDate);
+      if (result.created.length === 0) {
+        throw new Error(
+          result.failed[0]?.message || "Create recurring class gagal"
+        );
+      }
+      setSeriesNotice(
+        result.failed.length === 0
+          ? `${result.created.length} jadwal berhasil dibuat.`
+          : `${result.created.length} jadwal dibuat, ${result.failed.length} gagal: ${result.failed
+              .map((f) => `${f.date} (${f.message})`)
+              .join("; ")}`
+      );
+    } else {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/class-schedules`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      if (redirectToLoginIfUnauthorized(res.status)) return;
+      const payload = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) {
+        throw new Error(payload.message || "Create class gagal");
+      }
     }
+
     setPage(1);
+    setCalendarRefreshKey((k) => k + 1);
     await loadClasses(1, keyword);
   }
 
@@ -368,6 +398,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       return;
     }
     setDeleteId(null);
+    setCalendarRefreshKey((k) => k + 1);
     await loadClasses(page, keyword);
   }
 
@@ -390,6 +421,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       return;
     }
     setCancelTarget(null);
+    setCalendarRefreshKey((k) => k + 1);
     await loadClasses(page, keyword);
   }
 
@@ -451,6 +483,62 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
 
   return (
     <>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-1">
+          {([
+            { key: "list", label: "List", icon: "fa-list" },
+            { key: "calendar", label: "Calendar", icon: "fa-calendar-alt" },
+          ] as const).map((v) => (
+            <button
+              key={v.key}
+              type="button"
+              onClick={() => setViewMode(v.key)}
+              className={`px-3 py-2 rounded-lg text-xs font-bold border transition flex items-center gap-2 ${
+                viewMode === v.key
+                  ? "bg-sweat text-black border-sweat"
+                  : "bg-sidebar border-border text-gray-400 hover:text-white"
+              }`}
+            >
+              <i className={`fas ${v.icon}`} aria-hidden />
+              {v.label}
+            </button>
+          ))}
+        </div>
+        {viewMode === "calendar" && (
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center gap-2"
+          >
+            <i className="fas fa-plus" aria-hidden />
+            Create New Class
+          </button>
+        )}
+      </div>
+
+      {seriesNotice && (
+        <p className="mb-4 text-xs text-sweat bg-sweat/10 border border-sweat/30 px-3 py-2 rounded flex items-start justify-between gap-3">
+          <span>{seriesNotice}</span>
+          <button
+            type="button"
+            onClick={() => setSeriesNotice("")}
+            className="text-gray-500 hover:text-white shrink-0"
+            aria-label="Dismiss"
+          >
+            <i className="fas fa-times" aria-hidden />
+          </button>
+        </p>
+      )}
+
+      {viewMode === "calendar" ? (
+        <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
+          <ClassCalendar
+            onSelect={(cls) => setDetailTarget(cls)}
+            refreshKey={calendarRefreshKey}
+          />
+        </div>
+      ) : (
+      <>
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         <div className="p-4 sm:p-6 border-b border-border flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div className="flex flex-col gap-3">
@@ -795,11 +883,14 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
           </button>
         </div>
       </div>
+      </>
+      )}
 
       <CreateClassModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         trainerOptions={trainers}
+        allowRecurrence
         onSubmit={createClass}
       />
       <EditClassModal
@@ -810,7 +901,10 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
           setEditClass(null);
         }}
         trainerOptions={trainers}
-        onSuccess={() => void loadClasses(page, keyword)}
+        onSuccess={() => {
+          setCalendarRefreshKey((k) => k + 1);
+          void loadClasses(page, keyword);
+        }}
       />
 
       {detailTarget && (
