@@ -484,7 +484,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-1">
+        <div className="flex gap-1" data-help-target="classes-view-toggle">
           {([
             { key: "list", label: "List", icon: "fa-list" },
             { key: "calendar", label: "Calendar", icon: "fa-calendar-alt" },
@@ -508,6 +508,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
           <button
             type="button"
             onClick={() => setModalOpen(true)}
+            data-help-target="classes-create"
             className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center gap-2"
           >
             <i className="fas fa-plus" aria-hidden />
@@ -701,6 +702,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
             <button
               type="button"
               onClick={() => setModalOpen(true)}
+              data-help-target="classes-create"
               className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <i className="fas fa-plus" aria-hidden />

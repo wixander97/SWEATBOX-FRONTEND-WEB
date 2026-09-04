@@ -404,7 +404,7 @@ export function DashboardView() {
     <>
       {/* ── Expiry Alert ─────────────────────────────────────────────────── */}
       {!loading && (expiringCount ?? 0) > 0 && (
-        <div className="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-xl mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-lg">
+        <div data-help-target="dashboard-expiry-alert" className="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-xl mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-lg">
           <div className="flex items-start sm:items-center gap-4 text-yellow-500">
             <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center shrink-0">
               <i className="fas fa-exclamation-triangle text-xl" aria-hidden />
@@ -426,7 +426,7 @@ export function DashboardView() {
       )}
 
       {/* ── Row 1: Primary KPIs ──────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+      <div data-help-target="dashboard-kpis" className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
         <StatCard
           label="Active Members"
           value={activeMembers?.toLocaleString("id-ID") ?? "—"}
@@ -517,6 +517,7 @@ export function DashboardView() {
       <div className="mb-8">
         <button
           onClick={() => setStatsBreakdownOpen(!statsBreakdownOpen)}
+          data-help-target="dashboard-breakdown-toggle"
           className="w-full flex items-center justify-between bg-card/50 rounded-lg border border-border/50 px-4 py-3 mb-3 hover:bg-card/70 transition cursor-pointer"
         >
           <span className="text-muted text-xs font-bold uppercase tracking-wide">

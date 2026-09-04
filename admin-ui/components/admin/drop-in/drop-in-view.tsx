@@ -190,6 +190,7 @@ export function DropInView() {
           <button
             type="button"
             onClick={() => void exportXlsx()}
+            data-help-target="dropin-export"
             className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition flex items-center gap-2"
           >
             <i className="fas fa-file-export" aria-hidden />

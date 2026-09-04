@@ -197,6 +197,7 @@ export function ScanCameraView() {
               <button
                 type="button"
                 onClick={() => void startCamera()}
+                data-help-target="scan-camera-start"
                 disabled={camState === "starting"}
                 className="flex-1 bg-sweat text-black py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
               >

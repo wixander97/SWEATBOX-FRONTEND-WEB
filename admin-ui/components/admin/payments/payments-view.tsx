@@ -436,7 +436,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
 
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap" data-help-target="payments-tabs">
             {tabs.map((t) => (
               <button
                 key={t.key}

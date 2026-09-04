@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { adminPaths } from "@/lib/admin-routes";
+import { HelpAssistant } from "@/components/help/help-assistant";
 
 export default function AdminLayout({
   children,
@@ -23,7 +24,12 @@ export default function AdminLayout({
   const isPos = pathname?.startsWith(adminPaths.pos) ?? false;
 
   if (isPos) {
-    return <div className="h-screen overflow-hidden bg-dark">{children}</div>;
+    return (
+      <div className="h-screen overflow-hidden bg-dark">
+        {children}
+        <HelpAssistant />
+      </div>
+    );
   }
 
   return (
@@ -35,6 +41,7 @@ export default function AdminLayout({
           {children}
         </div>
       </main>
+      <HelpAssistant />
     </div>
   );
 }

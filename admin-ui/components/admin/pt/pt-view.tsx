@@ -23,7 +23,7 @@ export function PtView() {
         </div>
       </div>
 
-      <div className="flex gap-2 border-b border-border">
+      <div data-help-target="pt-tabs" className="flex gap-2 border-b border-border">
         <button
           type="button"
           onClick={() => setTab("package")}

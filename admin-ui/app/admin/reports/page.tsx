@@ -219,6 +219,7 @@ export default function ReportsPage() {
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
             <select
+              data-help-target="reports-staff-filter"
               value={selectedStaffId}
               onChange={(e) => setSelectedStaffId(e.target.value)}
               className="bg-sidebar border border-border text-fg px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat min-w-[180px]"
@@ -234,6 +235,7 @@ export default function ReportsPage() {
               <button
                 type="button"
                 onClick={() => void loadAttendances(selectedStaffId)}
+                data-help-target="reports-refresh"
                 className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5"
               >
                 <i className="fas fa-sync-alt mr-2" aria-hidden />
@@ -251,6 +253,7 @@ export default function ReportsPage() {
               <button
                 type="button"
                 onClick={() => void exportCurrentStaffReport()}
+                data-help-target="reports-export"
                 disabled={loading || !selectedStaffId}
                 className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
               >

@@ -350,7 +350,7 @@ export function HistoryView() {
   return (
     <div className="space-y-6">
       {/* Tab Buttons */}
-      <div className="flex gap-2 border-b border-border">
+      <div data-help-target="history-tabs" className="flex gap-2 border-b border-border">
         <button
           type="button"
           onClick={() => setActiveTab("coaches")}

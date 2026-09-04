@@ -84,7 +84,7 @@ export function UsersView({ initialTab, initialActive }: UsersViewProps = {}) {
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-help-target="users-tabs">
           <button
             type="button"
             onClick={() => setTab("staff")}
@@ -105,6 +105,7 @@ export function UsersView({ initialTab, initialActive }: UsersViewProps = {}) {
         <button
           type="button"
           onClick={() => setShowCreate(true)}
+          data-help-target="users-add"
           className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 shrink-0"
         >
           <i className="fas fa-user-plus" aria-hidden />

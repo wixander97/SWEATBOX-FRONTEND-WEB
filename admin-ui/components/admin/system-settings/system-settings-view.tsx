@@ -57,7 +57,7 @@ export function SystemSettingsView() {
       ) : settings.length === 0 ? (
         <div className="p-6 text-muted">No settings found.</div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-help-target="settings-table">
           <table className="w-full min-w-[600px] text-left text-sm text-muted">
             <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
               <tr>

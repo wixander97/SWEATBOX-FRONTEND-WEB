@@ -283,7 +283,7 @@ export function ScanBarcodeView() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Scanner status banner — not an editable field. Explains to the
                 operator that the page is listening for a HID scan. */}
-            <div className="flex items-center gap-3 rounded-lg border border-dashed border-border bg-sidebar px-4 py-3">
+            <div data-help-target="scan-status" className="flex items-center gap-3 rounded-lg border border-dashed border-border bg-sidebar px-4 py-3">
               <span
                 className={`inline-block h-2.5 w-2.5 rounded-full ${bannerDot}`}
                 aria-hidden

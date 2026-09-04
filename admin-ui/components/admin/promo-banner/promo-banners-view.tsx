@@ -116,6 +116,7 @@ export function PromoBannersView() {
           <div className="flex flex-col gap-3">
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <select
+                data-help-target="banners-filter"
                 value={filterMode}
                 onChange={(e) => setFilterMode(e.target.value as FilterMode)}
                 className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
@@ -141,6 +142,7 @@ export function PromoBannersView() {
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
+            data-help-target="banners-create"
             className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 w-full sm:w-auto"
           >
             <i className="fas fa-plus" aria-hidden />

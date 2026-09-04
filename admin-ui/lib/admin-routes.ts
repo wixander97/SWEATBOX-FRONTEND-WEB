@@ -17,6 +17,7 @@ export const adminPaths = {
   systemSettings: "/admin/system-settings",
   dropIn: "/admin/drop-in",
   promoBanners: "/admin/promo-banners",
+  help: "/admin/help",
 } as const;
 
 export type AdminNavKey = keyof typeof adminPaths;
@@ -40,4 +41,5 @@ export const pageTitleByPath: Record<string, string> = {
   [adminPaths.systemSettings]: "System Settings",
   [adminPaths.dropIn]: "Drop In",
   [adminPaths.promoBanners]: "Promo Banners",
+  [adminPaths.help]: "Help & Support",
 };

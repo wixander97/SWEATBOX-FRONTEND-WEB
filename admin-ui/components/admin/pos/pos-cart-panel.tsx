@@ -69,7 +69,7 @@ export function PosCartPanel({
       : null;
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div data-help-target="pos-cart" className="flex flex-col flex-1 min-h-0">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
           Transaction {items.length > 0 && `(${items.length})`}
@@ -150,6 +150,7 @@ export function PosCartPanel({
         <button
           type="button"
           onClick={onCheckout}
+          data-help-target="pos-checkout"
           disabled={disabled || !!blockedReason}
           className="w-full bg-sweat text-black py-3 rounded-lg text-sm font-bold hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >

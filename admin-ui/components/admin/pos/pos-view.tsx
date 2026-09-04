@@ -147,6 +147,7 @@ export function PosView() {
             Branch
           </span>
           <select
+            data-help-target="pos-branch-select"
             value={branchId}
             onChange={(e) => setBranchId(e.target.value)}
             disabled={branchLoading || checkoutBusy}
@@ -227,7 +228,7 @@ export function PosView() {
           </div>
         ) : (
           <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-3 sm:gap-4">
-            <div className="bg-card rounded-xl border border-border overflow-hidden min-h-0 flex flex-col">
+            <div data-help-target="pos-catalog" className="bg-card rounded-xl border border-border overflow-hidden min-h-0 flex flex-col">
               <PosCatalog
                 onAdd={addItem}
                 customer={customer}

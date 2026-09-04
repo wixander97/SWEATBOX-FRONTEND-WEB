@@ -290,6 +290,7 @@ export function PosCustomerPanel({
           <button
             type="button"
             onClick={() => setRegisterOpen(true)}
+            data-help-target="pos-quick-register"
             className="mt-2 w-full bg-sidebar border border-dashed border-border text-fg-soft hover:text-fg hover:border-sweat py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2"
           >
             <i className="fas fa-user-plus text-xs" aria-hidden />

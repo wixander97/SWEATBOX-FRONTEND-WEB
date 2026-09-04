@@ -42,6 +42,11 @@ const dataNav: { href: string; label: string; icon: string; id: string }[] = [
 
 ];
 
+/* Help is available to every role, so it is not filtered like the lists above. */
+const supportNav: { href: string; label: string; icon: string; id: string }[] = [
+  { href: adminPaths.help, label: "Help & Support", icon: "fa-circle-question", id: "help" },
+];
+
 function navButtonClasses(active: boolean) {
   const base =
     "nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ";
@@ -148,6 +153,21 @@ export function AdminSidebar({ open = false, onClose }: Props) {
                 Data &amp; Finance
               </p>
               {filteredDataNav.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  id={`nav-${item.id}`}
+                  onClick={onClose}
+                  className={navButtonClasses(pathname === item.href)}
+                >
+                  <i className={`fas ${item.icon} w-5`} aria-hidden />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="pt-4 mt-2 border-t border-border">
+              {supportNav.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

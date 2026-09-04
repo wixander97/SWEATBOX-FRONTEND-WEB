@@ -300,7 +300,7 @@ export function MembersView() {
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="p-4 sm:p-6 border-b border-border flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4">
-        <div className="flex gap-4 overflow-x-auto">
+        <div className="flex gap-4 overflow-x-auto" data-help-target="members-tabs">
           <button
             type="button"
             onClick={() => {
@@ -407,6 +407,7 @@ export function MembersView() {
           <button
             type="button"
             onClick={() => void exportXlsx()}
+            data-help-target="members-export"
             className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5"
           >
             <i className="fas fa-file-export mr-2" aria-hidden />

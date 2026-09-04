@@ -311,6 +311,7 @@ export function MembershipPlansView() {
                                 )}
                             </div>
                             <select
+                                data-help-target="plans-filter"
                                 value={filterActive}
                                 onChange={(e) =>
                                     setFilterActive(e.target.value as "all" | "active" | "inactive")
@@ -351,6 +352,7 @@ export function MembershipPlansView() {
                                 setSelected(null);
                                 setModalOpen(true);
                             }}
+                            data-help-target="plans-create"
                             className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
                             <i className="fas fa-plus" aria-hidden />
