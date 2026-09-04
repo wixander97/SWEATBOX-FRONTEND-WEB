@@ -43,8 +43,8 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-2 mb-2 mt-4 first:mt-0">
-      <i className={`${icon} text-sweat w-4 text-sm`} aria-hidden />
-      <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+      <i className={`${icon} text-accent-ink w-4 text-sm`} aria-hidden />
+      <span className="text-xs font-bold uppercase tracking-wider text-muted">
         {label}
       </span>
     </div>
@@ -63,11 +63,11 @@ function Row({
   if (value == null) return null;
   return (
     <div className="flex justify-between items-start gap-3 py-1.5 border-b border-border/40 last:border-b-0">
-      <span className="text-xs text-gray-500 shrink-0">{label}</span>
+      <span className="text-xs text-muted shrink-0">{label}</span>
       <span
         className={`text-sm text-right break-all min-w-0 flex-1 ${highlight
-          ? "text-green-400 font-bold text-base"
-          : "text-gray-200"
+          ? "text-success font-bold text-base"
+          : "text-fg-soft"
           }`}
       >
         {value}
@@ -81,7 +81,7 @@ export function PaymentDetailModal({ payment, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.currentTarget === e.target) onClose();
       }}
@@ -91,10 +91,10 @@ export function PaymentDetailModal({ payment, onClose }: Props) {
         <div className="p-5 sm:p-6 border-b border-border">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">
+              <p className="text-xs text-muted uppercase tracking-wider font-semibold mb-1">
                 Payment Detail
               </p>
-              <p className="text-sm font-mono text-sweat font-bold">
+              <p className="text-sm font-mono text-accent-ink font-bold">
                 {payment.invoiceNo}
               </p>
             </div>
@@ -107,7 +107,7 @@ export function PaymentDetailModal({ payment, onClose }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="text-gray-400 hover:text-white text-xl leading-none"
+                className="text-muted hover:text-fg text-xl leading-none"
                 aria-label="Close"
               >
                 ×
@@ -178,7 +178,7 @@ export function PaymentDetailModal({ payment, onClose }: Props) {
             <>
               <SectionHeader icon="fas fa-sticky-note" label="Notes" />
               <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
-                <p className="text-sm text-gray-300 whitespace-pre-wrap">
+                <p className="text-sm text-fg-soft whitespace-pre-wrap">
                   {payment.notes}
                 </p>
               </div>
@@ -191,7 +191,7 @@ export function PaymentDetailModal({ payment, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="w-full bg-sidebar border border-border text-gray-300 px-4 py-2.5 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-white transition text-sm"
+            className="w-full bg-sidebar border border-border text-fg-soft px-4 py-2.5 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-fg transition text-sm"
           >
             Close
           </button>

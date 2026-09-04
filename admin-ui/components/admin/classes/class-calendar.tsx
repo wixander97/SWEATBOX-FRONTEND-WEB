@@ -75,7 +75,7 @@ function titleFor(view: CalendarView, anchor: Date): string {
 
 function eventTone(c: ApiClass): string {
   if (c.isCancelled) return "border-red-500/40 bg-red-500/10 hover:bg-red-500/15";
-  if (c.isCompleted) return "border-gray-600/50 bg-gray-500/10 hover:bg-gray-500/15";
+  if (c.isCompleted) return "border-border bg-gray-500/10 hover:bg-gray-500/15";
   return "border-sweat/40 bg-sweat/10 hover:bg-sweat/20";
 }
 
@@ -87,12 +87,12 @@ function EventChip({ c, onSelect }: { c: ApiClass; onSelect: (c: ApiClass) => vo
       className={`w-full text-left rounded-md border px-2 py-1 transition ${eventTone(c)}`}
       title={`${c.className} · ${c.coachName ?? "-"}`}
     >
-      <span className="block text-[11px] font-bold text-white leading-tight">
+      <span className="block text-[11px] font-bold text-fg leading-tight">
         {c.startTime?.slice(0, 5) ?? "--:--"}
       </span>
-      <span className="block text-[11px] text-gray-200 truncate">{c.className}</span>
-      <span className="block text-[10px] text-gray-400 truncate">{c.coachName ?? "-"}</span>
-      <span className="block text-[10px] text-sweat">
+      <span className="block text-[11px] text-fg-soft truncate">{c.className}</span>
+      <span className="block text-[10px] text-muted truncate">{c.coachName ?? "-"}</span>
+      <span className="block text-[10px] text-accent-ink">
         {bookedCountOf(c)} / {c.capacity ?? 0}
       </span>
     </button>
@@ -195,7 +195,7 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
   }
 
   const filterSelectClass =
-    "bg-sidebar border border-border text-white px-3 py-2 rounded-lg text-xs focus:outline-none focus:border-sweat";
+    "bg-sidebar border border-border text-fg px-3 py-2 rounded-lg text-xs focus:outline-none focus:border-sweat";
 
   return (
     <div className="flex flex-col gap-4">
@@ -204,7 +204,7 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
           <button
             type="button"
             onClick={() => shift(-1)}
-            className="w-9 h-9 rounded-lg bg-sidebar border border-border text-gray-300 hover:text-white"
+            className="w-9 h-9 rounded-lg bg-sidebar border border-border text-fg-soft hover:text-fg"
             aria-label="Previous"
           >
             <i className="fas fa-chevron-left" aria-hidden />
@@ -212,19 +212,19 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
           <button
             type="button"
             onClick={() => setAnchor(new Date())}
-            className="px-3 h-9 rounded-lg bg-sidebar border border-border text-xs font-bold text-gray-300 hover:text-white"
+            className="px-3 h-9 rounded-lg bg-sidebar border border-border text-xs font-bold text-fg-soft hover:text-fg"
           >
             Today
           </button>
           <button
             type="button"
             onClick={() => shift(1)}
-            className="w-9 h-9 rounded-lg bg-sidebar border border-border text-gray-300 hover:text-white"
+            className="w-9 h-9 rounded-lg bg-sidebar border border-border text-fg-soft hover:text-fg"
             aria-label="Next"
           >
             <i className="fas fa-chevron-right" aria-hidden />
           </button>
-          <h3 className="ml-2 text-base sm:text-lg font-bold font-display uppercase text-white">
+          <h3 className="ml-2 text-base sm:text-lg font-bold font-display uppercase text-fg">
             {titleFor(view, anchor)}
           </h3>
         </div>
@@ -275,7 +275,7 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
                 className={`px-3 py-2 rounded-lg text-xs font-bold border transition ${
                   view === v.key
                     ? "bg-sweat text-black border-sweat"
-                    : "bg-sidebar border-border text-gray-400 hover:text-white"
+                    : "bg-sidebar border-border text-muted hover:text-fg"
                 }`}
               >
                 {v.label}
@@ -286,7 +286,7 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
       </div>
 
       {error && (
-        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+        <p className="text-xs text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
           {error}
         </p>
       )}
@@ -294,16 +294,16 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
       {loading ? (
         <div className="py-16 text-center">
           <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-sweat border-t-transparent" />
-          <p className="text-sm text-gray-500 mt-3">Memuat kalender...</p>
+          <p className="text-sm text-muted mt-3">Memuat kalender...</p>
         </div>
       ) : view === "day" ? (
         <div className="border border-border rounded-lg overflow-hidden">
-          <div className="bg-sidebar px-4 py-2 text-xs font-bold uppercase text-gray-400">
+          <div className="bg-sidebar px-4 py-2 text-xs font-bold uppercase text-muted">
             {DAY_LABELS[days[0].getDay()]}
           </div>
           <div className="p-3 space-y-2 min-h-[240px]">
             {(byDate.get(formatDateOnly(days[0])) ?? []).length === 0 ? (
-              <p className="text-sm text-gray-600 text-center py-10">
+              <p className="text-sm text-muted text-center py-10">
                 Tidak ada class pada hari ini.
               </p>
             ) : (
@@ -320,7 +320,7 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
               {DAY_LABELS.map((label) => (
                 <div
                   key={label}
-                  className="bg-sidebar px-2 py-2 text-[11px] font-bold uppercase text-gray-400 text-center"
+                  className="bg-sidebar px-2 py-2 text-[11px] font-bold uppercase text-muted text-center"
                 >
                   {label}
                 </div>
@@ -344,13 +344,13 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
                         className={`text-[11px] font-bold ${
                           isToday
                             ? "bg-sweat text-black rounded px-1.5"
-                            : "text-gray-400"
+                            : "text-muted"
                         }`}
                       >
                         {day.getDate()}
                       </span>
                       {events.length > 0 && (
-                        <span className="text-[10px] text-gray-600">{events.length}</span>
+                        <span className="text-[10px] text-muted">{events.length}</span>
                       )}
                     </div>
                     {(view === "month" ? events.slice(0, 3) : events).map((c) => (
@@ -363,7 +363,7 @@ export function ClassCalendar({ onSelect, refreshKey = 0 }: Props) {
                           setAnchor(day);
                           setView("day");
                         }}
-                        className="w-full text-[10px] text-gray-500 hover:text-sweat text-left px-1"
+                        className="w-full text-[10px] text-muted hover:text-accent-ink text-left px-1"
                       >
                         +{events.length - 3} lainnya
                       </button>

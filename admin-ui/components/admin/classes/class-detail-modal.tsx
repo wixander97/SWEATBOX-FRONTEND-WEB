@@ -20,15 +20,15 @@ type Props = {
 
 function statusBadge(c: ApiClass): { label: string; class: string } {
   if (c.isCancelled === true) {
-    return { label: "Cancelled", class: "bg-red-500/10 text-red-400 border-red-500/30" };
+    return { label: "Cancelled", class: "bg-red-500/10 text-danger border-red-500/30" };
   }
   if (c.isCompleted === true) {
-    return { label: "Completed", class: "bg-gray-500/10 text-gray-300 border-gray-500/30" };
+    return { label: "Completed", class: "bg-gray-500/10 text-fg-soft border-gray-500/30" };
   }
   if (c.isActive === false) {
-    return { label: "Inactive", class: "bg-gray-500/10 text-gray-300 border-gray-500/30" };
+    return { label: "Inactive", class: "bg-gray-500/10 text-fg-soft border-gray-500/30" };
   }
-  return { label: "Active", class: "bg-green-500/10 text-green-400 border-green-500/30" };
+  return { label: "Active", class: "bg-green-500/10 text-success border-green-500/30" };
 }
 
 function yesNo(v: boolean | undefined | null): string {
@@ -38,8 +38,8 @@ function yesNo(v: boolean | undefined | null): string {
 function SectionHeader({ icon, label }: { icon: string; label: string }) {
   return (
     <div className="flex items-center gap-2 mb-2 mt-4 first:mt-0">
-      <i className={`${icon} text-sweat w-4 text-sm`} aria-hidden />
-      <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+      <i className={`${icon} text-accent-ink w-4 text-sm`} aria-hidden />
+      <span className="text-xs font-bold uppercase tracking-wider text-muted">
         {label}
       </span>
     </div>
@@ -58,10 +58,10 @@ function Row({
   if (value == null || value === "") return null;
   return (
     <div className="flex justify-between items-center py-1.5 border-b border-border/40 last:border-b-0">
-      <span className="text-xs text-gray-500">{label}</span>
+      <span className="text-xs text-muted">{label}</span>
       <span
         className={`text-sm text-right ${
-          highlight ? "text-white font-bold text-base" : "text-gray-200"
+          highlight ? "text-fg font-bold text-base" : "text-fg-soft"
         }`}
       >
         {value}
@@ -134,7 +134,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.currentTarget === e.target) onClose();
       }}
@@ -144,10 +144,10 @@ export function ClassDetailModal({ cls, onClose }: Props) {
         <div className="p-5 sm:p-6 border-b border-border">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">
+              <p className="text-xs text-muted uppercase tracking-wider font-semibold mb-1">
                 Class Schedule Detail
               </p>
-              <p className="text-sm font-mono text-sweat font-bold truncate">{c.id}</p>
+              <p className="text-sm font-mono text-accent-ink font-bold truncate">{c.id}</p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <span
@@ -158,7 +158,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="text-gray-400 hover:text-white text-xl leading-none"
+                className="text-muted hover:text-fg text-xl leading-none"
                 aria-label="Close"
               >
                 ×
@@ -170,9 +170,9 @@ export function ClassDetailModal({ cls, onClose }: Props) {
         {/* Body */}
         <div className="p-5 sm:p-6 space-y-1">
           {loading ? (
-            <p className="text-sm text-gray-400 py-8 text-center">Memuat detail...</p>
+            <p className="text-sm text-muted py-8 text-center">Memuat detail...</p>
           ) : error ? (
-            <p className="text-sm text-red-400 py-8 text-center">{error}</p>
+            <p className="text-sm text-danger py-8 text-center">{error}</p>
           ) : (
             <>
               {/* Schedule */}
@@ -216,7 +216,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                 <>
                   <SectionHeader icon="fas fa-ban" label="Cancellation" />
                   <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap">
+                    <p className="text-sm text-fg-soft whitespace-pre-wrap">
                       {c.cancelReason}
                     </p>
                   </div>
@@ -227,11 +227,11 @@ export function ClassDetailModal({ cls, onClose }: Props) {
               <SectionHeader icon="fas fa-dumbbell" label="Workout / Class Details" />
               <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
                 {c.description ? (
-                  <p className="text-sm text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">
+                  <p className="text-sm text-fg-soft whitespace-pre-wrap font-mono leading-relaxed">
                     {c.description}
                   </p>
                 ) : (
-                  <p className="text-xs text-gray-600">Belum ada detail workout.</p>
+                  <p className="text-xs text-muted">Belum ada detail workout.</p>
                 )}
               </div>
 
@@ -239,11 +239,11 @@ export function ClassDetailModal({ cls, onClose }: Props) {
               <SectionHeader icon="fas fa-user-friends" label="Members" />
               <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
                 {attendeesLoading ? (
-                  <p className="text-xs text-gray-500 py-1">Memuat peserta...</p>
+                  <p className="text-xs text-muted py-1">Memuat peserta...</p>
                 ) : attendeesError ? (
-                  <p className="text-xs text-red-400 py-1">{attendeesError}</p>
+                  <p className="text-xs text-danger py-1">{attendeesError}</p>
                 ) : attendees.length === 0 ? (
-                  <p className="text-xs text-gray-600 py-1">Belum ada member yang booking.</p>
+                  <p className="text-xs text-muted py-1">Belum ada member yang booking.</p>
                 ) : (
                   <ul className="divide-y divide-border/40">
                     {attendees.map((b) => (
@@ -252,11 +252,11 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                         className="flex items-center justify-between gap-3 py-1.5"
                       >
                         <span className="min-w-0">
-                          <span className="block text-sm text-gray-200 truncate">
+                          <span className="block text-sm text-fg-soft truncate">
                             {b.memberName || b.memberId}
                           </span>
                           {b.bookingDate && (
-                            <span className="block text-[10px] text-gray-600">
+                            <span className="block text-[10px] text-muted">
                               Booked {new Date(b.bookingDate).toLocaleDateString("id-ID")}
                             </span>
                           )}
@@ -264,8 +264,8 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                         <span
                           className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                             b.isCancelled
-                              ? "bg-red-500/10 text-red-400 border-red-500/30"
-                              : "bg-green-500/10 text-green-400 border-green-500/30"
+                              ? "bg-red-500/10 text-danger border-red-500/30"
+                              : "bg-green-500/10 text-success border-green-500/30"
                           }`}
                         >
                           {b.isCancelled ? "Cancelled" : (b.bookingStatus || "Booked")}
@@ -298,7 +298,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="w-full bg-sidebar border border-border text-gray-300 px-4 py-2.5 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-white transition text-sm"
+            className="w-full bg-sidebar border border-border text-fg-soft px-4 py-2.5 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-fg transition text-sm"
           >
             Close
           </button>

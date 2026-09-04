@@ -50,21 +50,21 @@ export function EditSettingModal({ setting, onClose, onSuccess }: Props) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.currentTarget === e.target && !saving) onClose();
       }}
     >
       <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-2xl p-5 sm:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold font-display uppercase text-white">
+          <h3 className="text-lg font-bold font-display uppercase text-fg">
             Edit Setting
           </h3>
           {!saving && (
             <button
               type="button"
               onClick={onClose}
-              className="text-gray-400 hover:text-white text-xl leading-none"
+              className="text-muted hover:text-fg text-xl leading-none"
               aria-label="Close"
             >
               ×
@@ -74,44 +74,44 @@ export function EditSettingModal({ setting, onClose, onSuccess }: Props) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase mb-1">
+            <label className="block text-xs font-semibold text-muted uppercase mb-1">
               Key
             </label>
             <input
               type="text"
               value={setting.key}
               readOnly
-              className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-sm text-gray-500 cursor-not-allowed"
+              className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-sm text-muted cursor-not-allowed"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase mb-1">
+            <label className="block text-xs font-semibold text-muted uppercase mb-1">
               Description
             </label>
             <input
               type="text"
               value={setting.description}
               readOnly
-              className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-sm text-gray-500 cursor-not-allowed"
+              className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-sm text-muted cursor-not-allowed"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase mb-1">
-              Value <span className="text-red-400">*</span>
+            <label className="block text-xs font-semibold text-muted uppercase mb-1">
+              Value <span className="text-danger">*</span>
             </label>
             <input
               type="text"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               required
-              className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-sweat"
             />
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-2 rounded-lg">
+            <div className="bg-red-500/10 border border-red-500/30 text-danger text-sm px-4 py-2 rounded-lg">
               {error}
             </div>
           )}
@@ -121,7 +121,7 @@ export function EditSettingModal({ setting, onClose, onSuccess }: Props) {
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="flex-1 bg-sidebar border border-border text-gray-300 px-4 py-2.5 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-white transition text-sm disabled:opacity-50"
+              className="flex-1 bg-sidebar border border-border text-fg-soft px-4 py-2.5 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-fg transition text-sm disabled:opacity-50"
             >
               Cancel
             </button>

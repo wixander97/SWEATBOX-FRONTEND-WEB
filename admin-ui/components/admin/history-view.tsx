@@ -46,7 +46,7 @@ type MemberBookingRecord = {
 function DropdownSkeleton() {
   return (
     <div className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 animate-pulse">
-      <div className="h-5 bg-gray-700/50 rounded" />
+      <div className="h-5 bg-fg/5 rounded" />
     </div>
   );
 }
@@ -55,7 +55,7 @@ function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] text-left text-sm">
-        <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+        <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
           <tr>
             <th className="px-4 py-3">Date</th>
             <th className="px-4 py-3">Class Name</th>
@@ -68,19 +68,19 @@ function TableSkeleton({ rows = 5 }: { rows?: number }) {
           {Array.from({ length: rows }).map((_, idx) => (
             <tr key={idx} className="animate-pulse">
               <td className="px-4 py-3">
-                <div className="h-4 bg-gray-700/50 rounded w-3/4" />
+                <div className="h-4 bg-fg/5 rounded w-3/4" />
               </td>
               <td className="px-4 py-3">
-                <div className="h-4 bg-gray-700/50 rounded w-2/3" />
+                <div className="h-4 bg-fg/5 rounded w-2/3" />
               </td>
               <td className="px-4 py-3">
-                <div className="h-4 bg-gray-700/50 rounded w-1/2" />
+                <div className="h-4 bg-fg/5 rounded w-1/2" />
               </td>
               <td className="px-4 py-3">
-                <div className="h-4 bg-gray-700/50 rounded w-8 mx-auto" />
+                <div className="h-4 bg-fg/5 rounded w-8 mx-auto" />
               </td>
               <td className="px-4 py-3">
-                <div className="h-6 bg-gray-700/50 rounded w-20" />
+                <div className="h-6 bg-fg/5 rounded w-20" />
               </td>
             </tr>
           ))}
@@ -94,7 +94,7 @@ function BookingTableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] text-left text-sm">
-        <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+        <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
           <tr>
             <th className="px-4 py-3">Class Name</th>
             <th className="px-4 py-3">Coach</th>
@@ -108,22 +108,22 @@ function BookingTableSkeleton({ rows = 5 }: { rows?: number }) {
           {Array.from({ length: rows }).map((_, idx) => (
             <tr key={idx} className="animate-pulse">
               <td className="px-4 py-3">
-                <div className="h-4 bg-gray-700/50 rounded w-3/4" />
+                <div className="h-4 bg-fg/5 rounded w-3/4" />
               </td>
               <td className="px-4 py-3">
-                <div className="h-4 bg-gray-700/50 rounded w-2/3" />
+                <div className="h-4 bg-fg/5 rounded w-2/3" />
               </td>
               <td className="px-4 py-3">
-                <div className="h-4 bg-gray-700/50 rounded w-1/2" />
+                <div className="h-4 bg-fg/5 rounded w-1/2" />
               </td>
               <td className="px-4 py-3">
-                <div className="h-4 bg-gray-700/50 rounded w-1/3" />
+                <div className="h-4 bg-fg/5 rounded w-1/3" />
               </td>
               <td className="px-4 py-3">
-                <div className="h-4 bg-gray-700/50 rounded w-2/3" />
+                <div className="h-4 bg-fg/5 rounded w-2/3" />
               </td>
               <td className="px-4 py-3">
-                <div className="h-6 bg-gray-700/50 rounded w-20" />
+                <div className="h-6 bg-fg/5 rounded w-20" />
               </td>
             </tr>
           ))}
@@ -355,8 +355,8 @@ export function HistoryView() {
           type="button"
           onClick={() => setActiveTab("coaches")}
           className={`px-4 py-3 text-sm font-bold transition border-b-2 ${activeTab === "coaches"
-            ? "border-sweat text-sweat"
-            : "border-transparent text-gray-500 hover:text-white"
+            ? "border-sweat text-accent-ink"
+            : "border-transparent text-muted hover:text-fg"
             }`}
         >
           Coach Attendance
@@ -365,8 +365,8 @@ export function HistoryView() {
           type="button"
           onClick={() => setActiveTab("members")}
           className={`px-4 py-3 text-sm font-bold transition border-b-2 ${activeTab === "members"
-            ? "border-sweat text-sweat"
-            : "border-transparent text-gray-500 hover:text-white"
+            ? "border-sweat text-accent-ink"
+            : "border-transparent text-muted hover:text-fg"
             }`}
         >
           Member Booking
@@ -383,7 +383,7 @@ export function HistoryView() {
               onClick={() => void exportCoachAttendanceXlsx()}
               disabled={coachExportDisabled}
               title="Export attendance history to XLSX"
-              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <i className="fas fa-file-export mr-2" aria-hidden />
               Export
@@ -392,7 +392,7 @@ export function HistoryView() {
 
           {/* Coach Selector */}
           <div className="mb-6">
-            <label className="block text-xs uppercase font-bold text-gray-500 mb-2">
+            <label className="block text-xs uppercase font-bold text-muted mb-2">
               Select Coach
             </label>
             <SearchableSelect
@@ -410,9 +410,9 @@ export function HistoryView() {
           {/* Attendance History Table */}
           {!selectedCoachId && !coachesLoading ? (
             <div className="text-center py-12">
-              <i className="fas fa-user-clock text-gray-600 text-5xl mb-4" aria-hidden />
-              <h5 className="text-lg font-bold text-gray-400 mb-2">Select a Coach</h5>
-              <p className="text-sm text-gray-500">
+              <i className="fas fa-user-clock text-muted text-5xl mb-4" aria-hidden />
+              <h5 className="text-lg font-bold text-muted mb-2">Select a Coach</h5>
+              <p className="text-sm text-muted">
                 Choose a coach from the dropdown above to view their attendance history
               </p>
             </div>
@@ -421,21 +421,21 @@ export function HistoryView() {
           ) : selectedCoachId && attendanceError ? (
             <div className="text-center py-12">
               <i className="fas fa-exclamation-triangle text-red-500 text-5xl mb-4" aria-hidden />
-              <h5 className="text-lg font-bold text-red-400 mb-2">Error Loading History</h5>
-              <p className="text-sm text-gray-500">{attendanceError}</p>
+              <h5 className="text-lg font-bold text-danger mb-2">Error Loading History</h5>
+              <p className="text-sm text-muted">{attendanceError}</p>
             </div>
           ) : selectedCoachId && attendanceHistory.length === 0 ? (
             <div className="text-center py-12">
-              <i className="fas fa-calendar-times text-gray-600 text-5xl mb-4" aria-hidden />
-              <h5 className="text-lg font-bold text-gray-400 mb-2">No Attendance History</h5>
-              <p className="text-sm text-gray-500">
+              <i className="fas fa-calendar-times text-muted text-5xl mb-4" aria-hidden />
+              <h5 className="text-lg font-bold text-muted mb-2">No Attendance History</h5>
+              <p className="text-sm text-muted">
                 This coach has no attendance records yet
               </p>
             </div>
           ) : selectedCoachId ? (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-sm text-gray-400">
-                <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+              <table className="w-full min-w-[640px] text-left text-sm text-muted">
+                <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
                   <tr>
                     <th className="px-4 py-3">Date</th>
                     <th className="px-4 py-3">Class Name</th>
@@ -446,8 +446,8 @@ export function HistoryView() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {attendanceHistory.map((record, idx) => (
-                    <tr key={idx} className="transition hover:bg-white/5">
-                      <td className="px-4 py-3 text-white">{formatDate(record.classDate)}</td>
+                    <tr key={idx} className="transition hover:bg-fg/5">
+                      <td className="px-4 py-3 text-fg">{formatDate(record.classDate)}</td>
                       <td className="px-4 py-3">{record.className}</td>
                       <td className="px-4 py-3">{record.branchName || "—"}</td>
                       <td className="px-4 py-3 text-center">
@@ -462,7 +462,7 @@ export function HistoryView() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">
+                        <span className="bg-blue-500/10 text-info px-2 py-1 rounded text-xs font-bold border border-blue-500/20">
                           {record.status}
                         </span>
                       </td>
@@ -485,7 +485,7 @@ export function HistoryView() {
               onClick={() => void exportMemberBookingXlsx()}
               disabled={memberExportDisabled}
               title="Export booking history to XLSX"
-              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <i className="fas fa-file-export mr-2" aria-hidden />
               Export
@@ -494,7 +494,7 @@ export function HistoryView() {
 
           {/* Member Selector */}
           <div className="mb-6">
-            <label className="block text-xs uppercase font-bold text-gray-500 mb-2">
+            <label className="block text-xs uppercase font-bold text-muted mb-2">
               Select Member
             </label>
             <SearchableSelect
@@ -512,9 +512,9 @@ export function HistoryView() {
           {/* Booking History Table */}
           {!selectedMemberId && !membersLoading ? (
             <div className="text-center py-12">
-              <i className="fas fa-user-clock text-gray-600 text-5xl mb-4" aria-hidden />
-              <h5 className="text-lg font-bold text-gray-400 mb-2">Select a Member</h5>
-              <p className="text-sm text-gray-500">
+              <i className="fas fa-user-clock text-muted text-5xl mb-4" aria-hidden />
+              <h5 className="text-lg font-bold text-muted mb-2">Select a Member</h5>
+              <p className="text-sm text-muted">
                 Choose a member from the dropdown above to view their booking history
               </p>
             </div>
@@ -523,21 +523,21 @@ export function HistoryView() {
           ) : selectedMemberId && bookingError ? (
             <div className="text-center py-12">
               <i className="fas fa-exclamation-triangle text-red-500 text-5xl mb-4" aria-hidden />
-              <h5 className="text-lg font-bold text-red-400 mb-2">Error Loading History</h5>
-              <p className="text-sm text-gray-500">{bookingError}</p>
+              <h5 className="text-lg font-bold text-danger mb-2">Error Loading History</h5>
+              <p className="text-sm text-muted">{bookingError}</p>
             </div>
           ) : selectedMemberId && bookingHistory.length === 0 ? (
             <div className="text-center py-12">
-              <i className="fas fa-calendar-times text-gray-600 text-5xl mb-4" aria-hidden />
-              <h5 className="text-lg font-bold text-gray-400 mb-2">No Booking History</h5>
-              <p className="text-sm text-gray-500">
+              <i className="fas fa-calendar-times text-muted text-5xl mb-4" aria-hidden />
+              <h5 className="text-lg font-bold text-muted mb-2">No Booking History</h5>
+              <p className="text-sm text-muted">
                 This member has no booking records yet
               </p>
             </div>
           ) : selectedMemberId ? (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-sm text-gray-400">
-                <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+              <table className="w-full min-w-[640px] text-left text-sm text-muted">
+                <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
                   <tr>
                     <th className="px-4 py-3">Class Name</th>
                     <th className="px-4 py-3">Coach</th>
@@ -549,23 +549,23 @@ export function HistoryView() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {bookingHistory.map((record) => (
-                    <tr key={record.id} className="transition hover:bg-white/5">
-                      <td className="px-4 py-3 text-white">{record.className}</td>
+                    <tr key={record.id} className="transition hover:bg-fg/5">
+                      <td className="px-4 py-3 text-fg">{record.className}</td>
                       <td className="px-4 py-3">{record.coachName || "—"}</td>
                       <td className="px-4 py-3">{formatClassDate(record.classDate)}</td>
                       <td className="px-4 py-3">{formatTimeRange(record.startTime, record.endTime)}</td>
-                      <td className="px-4 py-3 text-white">{formatDate(record.bookingDate)}</td>
+                      <td className="px-4 py-3 text-fg">{formatDate(record.bookingDate)}</td>
                       <td className="px-4 py-3">
                         {record.isCancelled ? (
-                          <span className="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-500/20">
+                          <span className="bg-red-500/10 text-danger px-2 py-1 rounded text-xs font-bold border border-red-500/20">
                             Cancelled
                           </span>
                         ) : record.bookingStatus === "Attended" ? (
-                          <span className="bg-green-500/10 text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-500/20">
+                          <span className="bg-green-500/10 text-success px-2 py-1 rounded text-xs font-bold border border-green-500/20">
                             {record.bookingStatus}
                           </span>
                         ) : (
-                          <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">
+                          <span className="bg-blue-500/10 text-info px-2 py-1 rounded text-xs font-bold border border-blue-500/20">
                             {record.bookingStatus}
                           </span>
                         )}

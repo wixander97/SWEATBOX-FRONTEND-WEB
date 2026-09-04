@@ -45,21 +45,21 @@ export function SystemSettingsView() {
   return (
     <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-display font-bold text-white">
+        <h2 className="text-lg font-display font-bold text-fg">
           System Settings
         </h2>
       </div>
 
       {loading ? (
-        <div className="p-6 text-gray-400">Loading...</div>
+        <div className="p-6 text-muted">Loading...</div>
       ) : error ? (
-        <div className="p-6 text-red-400">{error}</div>
+        <div className="p-6 text-danger">{error}</div>
       ) : settings.length === 0 ? (
-        <div className="p-6 text-gray-400">No settings found.</div>
+        <div className="p-6 text-muted">No settings found.</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px] text-left text-sm text-gray-400">
-            <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+          <table className="w-full min-w-[600px] text-left text-sm text-muted">
+            <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
               <tr>
                 <th className="px-6 py-4">Key</th>
                 <th className="px-6 py-4">Value</th>
@@ -69,21 +69,21 @@ export function SystemSettingsView() {
             </thead>
             <tbody className="divide-y divide-border">
               {settings.map((s) => (
-                <tr key={s.id} className="hover:bg-white/5 transition">
-                  <td className="px-6 py-4 font-mono text-xs text-sweat font-semibold">
+                <tr key={s.id} className="hover:bg-fg/5 transition">
+                  <td className="px-6 py-4 font-mono text-xs text-accent-ink font-semibold">
                     {s.key}
                   </td>
-                  <td className="px-6 py-4 font-mono text-white">
+                  <td className="px-6 py-4 font-mono text-fg">
                     {s.value}
                   </td>
-                  <td className="px-6 py-4 text-gray-400">
+                  <td className="px-6 py-4 text-muted">
                     {s.description}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
                       type="button"
                       onClick={() => setEditing(s)}
-                      className="text-xs text-gray-400 hover:text-white border border-border px-2 py-1 rounded transition"
+                      className="text-xs text-muted hover:text-fg border border-border px-2 py-1 rounded transition"
                     >
                       Edit
                     </button>

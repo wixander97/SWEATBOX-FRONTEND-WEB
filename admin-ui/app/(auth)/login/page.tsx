@@ -41,37 +41,37 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-dark text-white flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8">
+    <main className="min-h-screen bg-dark text-fg flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8">
       <section className="w-full max-w-md bg-card border border-border rounded-xl p-5 sm:p-8">
         <h1 className="font-display text-xl sm:text-2xl font-bold mb-2">Login Admin</h1>
-        <p className="text-sm text-gray-400 mb-5 sm:mb-6">
+        <p className="text-sm text-muted mb-5 sm:mb-6">
           Masuk untuk mengakses dashboard Sweatbox.
         </p>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-300 mb-2">Email</label>
+            <label className="block text-sm text-fg-soft mb-2">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-sidebar border border-border text-white px-3 sm:px-4 py-3 rounded-lg focus:outline-none focus:border-sweat text-sm sm:text-base"
+              className="w-full bg-sidebar border border-border text-fg px-3 sm:px-4 py-3 rounded-lg focus:outline-none focus:border-sweat text-sm sm:text-base"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-300 mb-2">Password</label>
+            <label className="block text-sm text-fg-soft mb-2">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-sidebar border border-border text-white px-3 sm:px-4 py-3 pr-11 rounded-lg focus:outline-none focus:border-sweat text-sm sm:text-base"
+                className="w-full bg-sidebar border border-border text-fg px-3 sm:px-4 py-3 pr-11 rounded-lg focus:outline-none focus:border-sweat text-sm sm:text-base"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white transition"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted hover:text-fg transition"
                 tabIndex={-1}
                 aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
               >
@@ -90,7 +90,7 @@ export default function LoginPage() {
           </div>
 
           {error ? (
-            <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+            <p className="text-sm text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
               {error}
             </p>
           ) : null}

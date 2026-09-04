@@ -115,7 +115,7 @@ export function CreateMembershipPlanModal({
     return (
         <div
             id="modal-overlay"
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm"
+            className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm"
             role="presentation"
             onClick={(ev) => {
                 if (ev.target === ev.currentTarget) onClose();
@@ -137,7 +137,7 @@ export function CreateMembershipPlanModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="text-gray-400 hover:text-white text-xl"
+                        className="text-muted hover:text-fg text-xl"
                         aria-label="Close"
                     >
                         ×
@@ -147,17 +147,17 @@ export function CreateMembershipPlanModal({
                     <form onSubmit={handleSubmit}>
                         <div className="space-y-4">
                             {error && (
-                                <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-200 text-sm rounded-lg">
+                                <div className="p-3 bg-red-500/10 border border-red-500/30 text-danger text-sm rounded-lg">
                                     {error}
                                 </div>
                             )}
 
                             <div>
-                                <label className="block text-gray-400 text-sm mb-1">
-                                    Branch <span className="text-red-400">*</span>
+                                <label className="block text-muted text-sm mb-1">
+                                    Branch <span className="text-danger">*</span>
                                 </label>
                                 <select
-                                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                    className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                                     name="branchId"
                                     defaultValue={initialValues?.branchId ?? ""}
                                     required
@@ -172,12 +172,12 @@ export function CreateMembershipPlanModal({
                             </div>
 
                             <div>
-                                <label className="block text-gray-400 text-sm mb-1">
-                                    Plan Name <span className="text-red-400">*</span>
+                                <label className="block text-muted text-sm mb-1">
+                                    Plan Name <span className="text-danger">*</span>
                                 </label>
                                 <input
                                     type="text"
-                                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                    className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                                     placeholder="e.g. Basic Plan, Premium Plan"
                                     name="planName"
                                     defaultValue={initialValues?.planName ?? ""}
@@ -186,11 +186,11 @@ export function CreateMembershipPlanModal({
                             </div>
 
                             <div>
-                                <label className="block text-gray-400 text-sm mb-1">
+                                <label className="block text-muted text-sm mb-1">
                                     Description
                                 </label>
                                 <textarea
-                                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat resize-none"
+                                    className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat resize-none"
                                     placeholder="Enter plan description (optional)"
                                     name="description"
                                     rows={3}
@@ -200,24 +200,24 @@ export function CreateMembershipPlanModal({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-gray-400 text-sm mb-1">
+                                    <label className="block text-muted text-sm mb-1">
                                         Plan Category
                                     </label>
                                     <input
                                         type="text"
-                                        className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                                         placeholder="e.g. Monthly, Annual"
                                         name="planCategory"
                                         defaultValue={initialValues?.planCategory ?? ""}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-gray-400 text-sm mb-1">
-                                        Validity (Days) <span className="text-red-400">*</span>
+                                    <label className="block text-muted text-sm mb-1">
+                                        Validity (Days) <span className="text-danger">*</span>
                                     </label>
                                     <input
                                         type="number"
-                                        className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                                         placeholder="30"
                                         name="validityDays"
                                         defaultValue={initialValues?.validityDays ?? 30}
@@ -230,13 +230,13 @@ export function CreateMembershipPlanModal({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-gray-400 text-sm mb-1">
-                                        Price <span className="text-red-400">*</span>
+                                    <label className="block text-muted text-sm mb-1">
+                                        Price <span className="text-danger">*</span>
                                     </label>
                                     <input
                                         type="text"
                                         inputMode="decimal"
-                                        className="w-full bg-sidebar border border-border text-white pl-4 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        className="w-full bg-sidebar border border-border text-fg pl-4 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                                         placeholder="0"
                                         value={formatCurrencyInput(price)}
                                         onChange={(e) => setPrice(parseCurrencyInput(e.target.value))}
@@ -244,13 +244,13 @@ export function CreateMembershipPlanModal({
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-gray-400 text-sm mb-1">
+                                    <label className="block text-muted text-sm mb-1">
                                         Registration Fee
                                     </label>
                                     <input
                                         type="text"
                                         inputMode="decimal"
-                                        className="w-full bg-sidebar border border-border text-white pl-4 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        className="w-full bg-sidebar border border-border text-fg pl-4 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                                         placeholder="0"
                                         value={formatCurrencyInput(registrationFee)}
                                         onChange={(e) => setRegistrationFee(parseCurrencyInput(e.target.value))}
@@ -260,12 +260,12 @@ export function CreateMembershipPlanModal({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-gray-400 text-sm mb-1">
+                                    <label className="block text-muted text-sm mb-1">
                                         Credits
                                     </label>
                                     <input
                                         type="number"
-                                        className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                                         placeholder="0"
                                         name="credits"
                                         defaultValue={initialValues?.credits ?? 10}
@@ -274,12 +274,12 @@ export function CreateMembershipPlanModal({
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-gray-400 text-sm mb-1">
+                                    <label className="block text-muted text-sm mb-1">
                                         PT Sessions
                                     </label>
                                     <input
                                         type="number"
-                                        className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                                        className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                                         placeholder="0"
                                         name="ptSessions"
                                         defaultValue={initialValues?.ptSessions ?? 0}
@@ -298,7 +298,7 @@ export function CreateMembershipPlanModal({
                                         defaultChecked={initialValues?.isUnlimitedClasses ?? false}
                                         className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
                                     />
-                                    <label htmlFor="isUnlimitedClasses" className="text-gray-300 text-sm cursor-pointer">
+                                    <label htmlFor="isUnlimitedClasses" className="text-fg-soft text-sm cursor-pointer">
                                         Unlimited Classes
                                     </label>
                                 </div>
@@ -311,7 +311,7 @@ export function CreateMembershipPlanModal({
                                         defaultChecked={initialValues?.isPtIncluded ?? false}
                                         className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
                                     />
-                                    <label htmlFor="isPtIncluded" className="text-gray-300 text-sm cursor-pointer">
+                                    <label htmlFor="isPtIncluded" className="text-fg-soft text-sm cursor-pointer">
                                         PT Sessions Included
                                     </label>
                                 </div>
@@ -324,7 +324,7 @@ export function CreateMembershipPlanModal({
                                         defaultChecked={initialValues?.isPopular ?? false}
                                         className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
                                     />
-                                    <label htmlFor="isPopular" className="text-gray-300 text-sm cursor-pointer">
+                                    <label htmlFor="isPopular" className="text-fg-soft text-sm cursor-pointer">
                                         Mark as Popular Plan
                                     </label>
                                 </div>
@@ -337,7 +337,7 @@ export function CreateMembershipPlanModal({
                                         defaultChecked={initialValues?.allowMultiBranchAccess ?? false}
                                         className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
                                     />
-                                    <label htmlFor="allowMultiBranchAccess" className="text-gray-300 text-sm cursor-pointer">
+                                    <label htmlFor="allowMultiBranchAccess" className="text-fg-soft text-sm cursor-pointer">
                                         Allow Multi-Branch Access
                                     </label>
                                 </div>
@@ -350,7 +350,7 @@ export function CreateMembershipPlanModal({
                                         defaultChecked={initialValues?.isActive ?? true}
                                         className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
                                     />
-                                    <label htmlFor="isActive" className="text-gray-300 text-sm cursor-pointer">
+                                    <label htmlFor="isActive" className="text-fg-soft text-sm cursor-pointer">
                                         Active (visible to users)
                                     </label>
                                 </div>
@@ -361,7 +361,7 @@ export function CreateMembershipPlanModal({
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="flex-1 bg-sidebar border border-border text-gray-300 px-4 py-3 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-white transition"
+                                className="flex-1 bg-sidebar border border-border text-fg-soft px-4 py-3 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-fg transition"
                             >
                                 Cancel
                             </button>

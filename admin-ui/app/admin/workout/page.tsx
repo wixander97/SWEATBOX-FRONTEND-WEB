@@ -1,11 +1,11 @@
 export default function WorkoutPage() {
   return (
     <div className="bg-card rounded-xl border border-border p-8 text-center">
-      <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-sweat text-3xl">
+      <div className="w-20 h-20 bg-fg/5 rounded-full flex items-center justify-center mx-auto mb-4 text-accent-ink text-3xl">
         <i className="fas fa-running" aria-hidden />
       </div>
-      <h3 className="text-2xl font-bold text-white mb-2">Workout Database</h3>
-      <p className="text-gray-400 max-w-md mx-auto mb-6">
+      <h3 className="text-2xl font-bold text-fg mb-2">Workout Database</h3>
+      <p className="text-muted max-w-md mx-auto mb-6">
         Modul untuk menambahkan referensi gerakan workout, link video YouTube,
         dan program latihan untuk aplikasi member.
       </p>

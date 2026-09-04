@@ -168,7 +168,7 @@ export function ScanCameraView() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold font-display uppercase">Webcam Scanner</h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-muted mt-1">
           Arahkan kamera ke QR code coach / member / PT session. Nilai yang
           ter-decode dikirim lewat scan pipeline yang sama dengan manual scanner.
         </p>
@@ -182,7 +182,7 @@ export function ScanCameraView() {
               className="w-full rounded-lg overflow-hidden bg-black border border-border min-h-[240px]"
             />
             {camState !== "running" && (
-              <div className="mt-2 text-center text-sm text-gray-400 min-h-[1.25rem]">
+              <div className="mt-2 text-center text-sm text-muted min-h-[1.25rem]">
                 {camState === "error"
                   ? camError
                   : camState === "starting"
@@ -206,14 +206,14 @@ export function ScanCameraView() {
               <button
                 type="button"
                 onClick={() => void stopCamera()}
-                className="flex-1 px-4 py-2 rounded-lg text-sm border border-border text-gray-300 hover:text-white"
+                className="flex-1 px-4 py-2 rounded-lg text-sm border border-border text-fg-soft hover:text-fg"
               >
                 Stop camera
               </button>
             )}
           </div>
 
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-muted leading-relaxed">
             Camera needs a secure context: serve over <code className="font-mono">https://</code> or
             open from <code className="font-mono">http://localhost</code>. Coach, member, dan PT
             session QR yang ditahan depan kamera hanya dikirim satu kali
@@ -222,7 +222,7 @@ export function ScanCameraView() {
         </div>
 
         <div className="bg-card rounded-xl border border-border p-5">
-          <h2 className="text-sm uppercase font-bold text-gray-500 mb-4">Last scan</h2>
+          <h2 className="text-sm uppercase font-bold text-muted mb-4">Last scan</h2>
           <ScanResultPanel result={result} />
         </div>
       </div>

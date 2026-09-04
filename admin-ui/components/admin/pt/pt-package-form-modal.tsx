@@ -142,14 +142,14 @@ export function PtPackageFormModal({
   );
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+    <div className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm p-4">
       <div className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold font-display uppercase text-white">{title}</h3>
+          <h3 className="text-xl font-bold font-display uppercase text-fg">{title}</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl"
+            className="text-muted hover:text-fg text-xl"
             aria-label="Close"
           >
             <i className="fas fa-times" aria-hidden />
@@ -157,15 +157,15 @@ export function PtPackageFormModal({
         </div>
 
         {error && (
-          <div className="mb-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-2 rounded-lg">
+          <div className="mb-3 bg-red-500/10 border border-red-500/30 text-danger text-sm px-4 py-2 rounded-lg">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-              Member <span className="text-red-400">*</span>
+            <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+              Member <span className="text-danger">*</span>
             </label>
             <SearchableSelect
               options={memberOptions}
@@ -179,26 +179,26 @@ export function PtPackageFormModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-              Name <span className="text-red-400">*</span>
+            <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+              Name <span className="text-danger">*</span>
             </label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-              Coach <span className="text-red-400">*</span>
+            <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+              Coach <span className="text-danger">*</span>
             </label>
             <select
               value={form.coachId}
               onChange={(e) => setForm((f) => ({ ...f, coachId: e.target.value }))}
-              className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
               required
             >
               <option value="">Pilih coach...</option>
@@ -211,13 +211,13 @@ export function PtPackageFormModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-              Branch <span className="text-red-400">*</span>
+            <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+              Branch <span className="text-danger">*</span>
             </label>
             <select
               value={form.branchId}
               onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
-              className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
               required
             >
               <option value="">Pilih branch...</option>
@@ -231,8 +231,8 @@ export function PtPackageFormModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-                Session Count <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+                Session Count <span className="text-danger">*</span>
               </label>
               <input
                 type="text"
@@ -241,13 +241,13 @@ export function PtPackageFormModal({
                 onChange={(e) =>
                   setForm((f) => ({ ...f, sessionCount: parseCountInput(e.target.value) }))
                 }
-                className="w-full bg-sidebar border border-border text-white pl-4 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg pl-4 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-                Price <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+                Price <span className="text-danger">*</span>
               </label>
               <input
                 type="text"
@@ -257,7 +257,7 @@ export function PtPackageFormModal({
                   const num = parseCurrencyInput(e.target.value);
                   setForm((f) => ({ ...f, price: num }));
                 }}
-                className="w-full bg-sidebar border border-border text-white pl-4 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg pl-4 pr-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               />
             </div>
@@ -271,18 +271,18 @@ export function PtPackageFormModal({
                 onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
                 className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
               />
-              <span className="text-sm text-gray-300">Active</span>
+              <span className="text-sm text-fg-soft">Active</span>
             </label>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-              Description <span className="text-red-400">*</span>
+            <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+              Description <span className="text-danger">*</span>
             </label>
             <textarea
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat resize-none"
+              className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat resize-none"
               rows={3}
               required
             />
@@ -292,7 +292,7 @@ export function PtPackageFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-sidebar border border-border text-gray-300 px-4 py-3 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-white transition"
+              className="flex-1 bg-sidebar border border-border text-fg-soft px-4 py-3 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-fg transition"
             >
               Cancel
             </button>

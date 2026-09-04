@@ -210,9 +210,9 @@ export default function ReportsPage() {
       <div className="bg-card rounded-xl border border-border overflow-hidden mb-6">
         <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
-            <h4 className="font-bold text-lg text-white">Staff Attendance Log</h4>
+            <h4 className="font-bold text-lg text-fg">Staff Attendance Log</h4>
             {!loading && (
-              <span className="text-sm text-gray-400">
+              <span className="text-sm text-muted">
                 Total: {presentCount} Clock-in
               </span>
             )}
@@ -221,7 +221,7 @@ export default function ReportsPage() {
             <select
               value={selectedStaffId}
               onChange={(e) => setSelectedStaffId(e.target.value)}
-              className="bg-sidebar border border-border text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat min-w-[180px]"
+              className="bg-sidebar border border-border text-fg px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat min-w-[180px]"
             >
               <option value="">All Staff</option>
               {staffList.map((s) => (
@@ -234,7 +234,7 @@ export default function ReportsPage() {
               <button
                 type="button"
                 onClick={() => void loadAttendances(selectedStaffId)}
-                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
+                className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5"
               >
                 <i className="fas fa-sync-alt mr-2" aria-hidden />
                 Refresh
@@ -243,7 +243,7 @@ export default function ReportsPage() {
                 type="button"
                 onClick={() => void exportAllReport()}
                 disabled={loading}
-                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 disabled:opacity-50"
+                className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 disabled:opacity-50"
               >
                 <i className="fas fa-file-export mr-2" aria-hidden />
                 Export report (all)
@@ -262,8 +262,8 @@ export default function ReportsPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] text-left text-sm text-gray-400">
-            <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+          <table className="w-full min-w-[860px] text-left text-sm text-muted">
+            <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
               <tr>
                 {(
                   [
@@ -279,16 +279,16 @@ export default function ReportsPage() {
                     <button
                       type="button"
                       onClick={() => toggleSort(key)}
-                      className="flex items-center gap-1.5 hover:text-white transition group"
+                      className="flex items-center gap-1.5 hover:text-fg transition group"
                     >
                       {label}
                       <span className="flex flex-col leading-none text-[10px]">
                         <i
-                          className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`}
+                          className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-accent-ink" : "text-muted group-hover:text-muted"}`}
                           aria-hidden
                         />
                         <i
-                          className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`}
+                          className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-accent-ink" : "text-muted group-hover:text-muted"}`}
                           aria-hidden
                         />
                       </span>
@@ -301,48 +301,48 @@ export default function ReportsPage() {
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td className="px-6 py-6 text-gray-400" colSpan={7}>
+                  <td className="px-6 py-6 text-muted" colSpan={7}>
                     Loading...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td className="px-6 py-6 text-red-400" colSpan={7}>
+                  <td className="px-6 py-6 text-danger" colSpan={7}>
                     {error}
                   </td>
                 </tr>
               ) : sortedRows.length === 0 ? (
                 <tr>
-                  <td className="px-6 py-6 text-gray-400" colSpan={7}>
+                  <td className="px-6 py-6 text-muted" colSpan={7}>
                     Tidak ada data attendance.
                   </td>
                 </tr>
               ) : (
                 sortedRows.map((s) => (
                   <tr key={s.id} className="table-row transition">
-                    <td className="px-6 py-4 font-mono text-xs text-white">
+                    <td className="px-6 py-4 font-mono text-xs text-fg">
                       {formatDate(s.attendanceDate ?? s.clockInTime)}
                     </td>
-                    <td className="px-6 py-4 font-bold text-white">
+                    <td className="px-6 py-4 font-bold text-fg">
                       {s.staffName || "-"}
                     </td>
                     <td className="px-6 py-4">
                       <span className="flex items-center gap-2">
-                        <i className="fas fa-map-marker-alt text-xs text-sweat" aria-hidden />
+                        <i className="fas fa-map-marker-alt text-xs text-accent-ink" aria-hidden />
                         {s.branchName || "-"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-mono text-green-400">
+                    <td className="px-6 py-4 font-mono text-success">
                       {formatTime(s.clockInTime)}
                     </td>
-                    <td className="px-6 py-4 font-mono text-yellow-400">
+                    <td className="px-6 py-4 font-mono text-warning">
                       {formatTime(s.clockOutTime)}
                     </td>
                     <td className="px-6 py-4">
                       {s.status ? (
                         <span
                           className={`px-2 py-1 rounded text-xs font-bold ${s.status.toLowerCase().includes("late")
-                            ? "bg-red-500/10 text-red-400"
+                            ? "bg-red-500/10 text-danger"
                             : "bg-green-500/10 text-green-500 border border-green-500/20"
                             }`}
                         >
@@ -358,12 +358,12 @@ export default function ReportsPage() {
                           href={s.selfieImageUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-blue-400 underline hover:text-blue-300"
+                          className="text-xs text-info underline hover:text-info"
                         >
                           View Photo
                         </a>
                       ) : (
-                        <span className="text-gray-600 text-xs">-</span>
+                        <span className="text-muted text-xs">-</span>
                       )}
                     </td>
                   </tr>

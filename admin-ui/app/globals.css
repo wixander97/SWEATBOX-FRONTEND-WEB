@@ -4,12 +4,12 @@
 /*
  * Surface + ink tokens.
  *
- * The admin portal is dark and stays dark: these :root values are exactly the
- * palette it has always used, so nothing outside the POS changes. The POS is the
- * only surface that offers a light mode, and it does so by re-declaring these
- * same variables on its own subtree (see [data-pos-theme="light"] below) — which
- * works because @theme inline emits `var(--sb-*)` into every utility instead of
- * resolving the colour at build time.
+ * These :root values are the dark palette the portal has always used, so dark
+ * mode is byte-for-byte what it was. Light mode re-declares the same variables
+ * on <html data-theme="light">, which works because @theme inline emits
+ * `var(--sb-*)` into every utility instead of resolving the colour at build
+ * time. The attribute is on the document element, not a wrapper, so portals
+ * mounted on <body> (the printed receipt) are themed too.
  */
 :root {
   --sb-sweat: #ffd700;
@@ -23,9 +23,17 @@
   --sb-fg-soft: #e5e5e5;
   --sb-muted: #8a8a8a;
   --sb-overlay: rgb(0 0 0 / 0.8);
+  /* Status inks. The dark values are the Tailwind shades the portal already
+     used (red-400 / green-400 / yellow-400 / blue-400), so dark mode is
+     unchanged; light mode darkens them below because those shades are washed
+     out on a near-white surface. */
+  --sb-danger: #f87171;
+  --sb-success: #4ade80;
+  --sb-warning: #facc15;
+  --sb-info: #60a5fa;
 }
 
-[data-pos-theme="light"] {
+[data-theme="light"] {
   --sb-sweat: #ffd700;
   --sb-accent-ink: #7a5d00;
   --sb-dark: #f1f2f4;
@@ -36,6 +44,10 @@
   --sb-fg-soft: #3f4148;
   --sb-muted: #6b6d76;
   --sb-overlay: rgb(23 24 27 / 0.45);
+  --sb-danger: #dc2626;
+  --sb-success: #15803d;
+  --sb-warning: #a16207;
+  --sb-info: #1d4ed8;
 }
 
 @theme inline {
@@ -49,6 +61,10 @@
   --color-fg-soft: var(--sb-fg-soft);
   --color-muted: var(--sb-muted);
   --color-overlay: var(--sb-overlay);
+  --color-danger: var(--sb-danger);
+  --color-success: var(--sb-success);
+  --color-warning: var(--sb-warning);
+  --color-info: var(--sb-info);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-oswald), ui-sans-serif, system-ui, sans-serif;
 }
@@ -66,16 +82,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #111;
+  background: var(--sb-sidebar);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--sb-border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #ffd700;
+  background: var(--sb-sweat);
 }
 
 .nav-item.active {
@@ -83,6 +99,20 @@ body {
   color: black;
   font-weight: 700;
 }
+
+/*
+ * Class-type badge inks.
+ *
+ * Unlike the status colours these carry no shared meaning — the hue *is* the
+ * class type — so they keep their own families instead of collapsing into a
+ * token. Only the lightness moves, and only in light mode, where a -200 shade
+ * on a 15% tint is barely darker than the card behind it.
+ */
+[data-theme="light"] .text-emerald-200 { color: #047857; }
+[data-theme="light"] .text-sky-200 { color: #0369a1; }
+[data-theme="light"] .text-rose-200 { color: #be123c; }
+[data-theme="light"] .text-violet-200 { color: #6d28d9; }
+[data-theme="light"] .text-purple-400 { color: #7e22ce; }
 
 .fade-in {
   animation: fadeIn 0.3s ease-out;
@@ -101,7 +131,8 @@ body {
 }
 
 .table-row:hover {
-  background-color: #252525;
+  /* Lifts off the card in both themes: white film on dark, ink film on light. */
+  background-color: color-mix(in srgb, var(--sb-fg) 6%, transparent);
 }
 
 .font-display {
@@ -114,13 +145,13 @@ select {
 }
 
 /*
- * Inside a light POS the native widgets have to flip too, otherwise the option
- * list, the caret and the date picker all render dark on a white panel.
+ * In light mode the native widgets have to flip too, otherwise the option list,
+ * the caret and the date picker all render dark on a white panel.
  */
-[data-pos-theme="light"],
-[data-pos-theme="light"] select,
-[data-pos-theme="light"] input,
-[data-pos-theme="light"] textarea {
+[data-theme="light"],
+[data-theme="light"] select,
+[data-theme="light"] input,
+[data-theme="light"] textarea {
   color-scheme: light;
 }
 
@@ -154,15 +185,23 @@ input[type="week"] {
   color-scheme: dark;
 }
 
+[data-theme="light"] input[type="date"],
+[data-theme="light"] input[type="datetime-local"],
+[data-theme="light"] input[type="time"],
+[data-theme="light"] input[type="month"],
+[data-theme="light"] input[type="week"] {
+  color-scheme: light;
+}
+
 select option {
-  background-color: #1a1a1a;
-  color: #ffffff;
+  background-color: var(--sb-card);
+  color: var(--sb-fg);
   padding: 6px 8px;
 }
 
 select option:disabled {
-  color: #9ca3af;
-  background-color: #0f0f0f;
+  color: var(--sb-muted);
+  background-color: var(--sb-dark);
 }
 
 select option:checked {
@@ -171,21 +210,17 @@ select option:checked {
   color: #000000 !important;
 }
 
-/* Force Branch select options to always be white text */
-select[name="branchId"] {
-  color-scheme: dark;
-}
-
+/* Branch options are the one list staff read under pressure: pin the contrast. */
 select[name="branchId"] option {
-  color: #ffffff !important;
-  background-color: #1a1a1a !important;
+  color: var(--sb-fg) !important;
+  background-color: var(--sb-card) !important;
   padding: 8px 10px;
   line-height: 1.5;
 }
 
 select[name="branchId"] option:disabled {
-  color: #9ca3af !important;
-  background-color: #0f0f0f !important;
+  color: var(--sb-muted) !important;
+  background-color: var(--sb-dark) !important;
 }
 
 select[name="branchId"] option:checked {

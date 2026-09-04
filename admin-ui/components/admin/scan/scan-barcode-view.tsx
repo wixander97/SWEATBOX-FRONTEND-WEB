@@ -271,7 +271,7 @@ export function ScanBarcodeView() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold font-display uppercase">Barcode Scanner</h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-muted mt-1">
           Arahkan scanner QR ke kode anggota/pelatih/sesi PT. Hasil scan terdeteksi
           otomatis dan mengisi kolom di bawah. Untuk input manual, ketik langsung di
           kolom yang tersedia lalu klik &quot;Send scan&quot;.
@@ -289,8 +289,8 @@ export function ScanBarcodeView() {
                 aria-hidden
               />
               <div className="min-w-0">
-                <p className="text-sm font-bold text-white">{bannerTitle}</p>
-                <p className="text-xs text-gray-400 truncate">{bannerHint}</p>
+                <p className="text-sm font-bold text-fg">{bannerTitle}</p>
+                <p className="text-xs text-muted truncate">{bannerHint}</p>
               </div>
             </div>
 
@@ -315,7 +315,7 @@ export function ScanBarcodeView() {
             {/* Coach / Member / PT toggle — reflects the auto-detected mode and
                 is still manually switchable. Authoritative for the dispatch. */}
             <div>
-              <span className="text-gray-500 text-xs uppercase font-bold">Mode</span>
+              <span className="text-muted text-xs uppercase font-bold">Mode</span>
               <div className="mt-1 inline-flex rounded-lg border border-border overflow-hidden">
                 <button
                   type="button"
@@ -323,7 +323,7 @@ export function ScanBarcodeView() {
                   onClick={() => setMode("coach")}
                   className={`px-4 py-2 text-sm font-bold transition ${mode === "coach"
                     ? "bg-sweat text-black"
-                    : "bg-sidebar text-gray-400 hover:text-white"
+                    : "bg-sidebar text-muted hover:text-fg"
                     }`}
                 >
                   Coach
@@ -334,7 +334,7 @@ export function ScanBarcodeView() {
                   onClick={() => setMode("member")}
                   className={`px-4 py-2 text-sm font-bold transition ${mode === "member"
                     ? "bg-sweat text-black"
-                    : "bg-sidebar text-gray-400 hover:text-white"
+                    : "bg-sidebar text-muted hover:text-fg"
                     }`}
                 >
                   Member
@@ -345,7 +345,7 @@ export function ScanBarcodeView() {
                   onClick={() => setMode("pt")}
                   className={`px-4 py-2 text-sm font-bold transition ${mode === "pt"
                     ? "bg-sweat text-black"
-                    : "bg-sidebar text-gray-400 hover:text-white"
+                    : "bg-sidebar text-muted hover:text-fg"
                     }`}
                 >
                   PT
@@ -355,17 +355,17 @@ export function ScanBarcodeView() {
 
             {/* Type — reflects the detected/mode (authoritative). */}
             <div>
-              <span className="text-gray-500 text-xs uppercase font-bold">
+              <span className="text-muted text-xs uppercase font-bold">
                 Type
               </span>
-              <p className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white font-mono text-sm">
+              <p className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg font-mono text-sm">
                 {displayTypeShown}
               </p>
             </div>
 
             {/* Editable scan-value column — auto-filled by scan, manual-typable. */}
             <div>
-              <span className="text-gray-500 text-xs uppercase font-bold">
+              <span className="text-muted text-xs uppercase font-bold">
                 {mode === "coach" ? "Coach ID" : mode === "pt" ? "Member ID" : "Member code"}
               </span>
               <input
@@ -374,14 +374,14 @@ export function ScanBarcodeView() {
                 onBlur={refocusCapture}
                 autoComplete="off"
                 aria-label="Scan value"
-                className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-sweat"
+                className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg font-mono text-sm focus:outline-none focus:border-sweat"
               />
             </div>
 
             {/* Class schedule ID — editable (Coach / Member only). */}
             {mode !== "pt" && (
               <div>
-                <span className="text-gray-500 text-xs uppercase font-bold">
+                <span className="text-muted text-xs uppercase font-bold">
                   Class schedule ID
                 </span>
                 <input
@@ -390,7 +390,7 @@ export function ScanBarcodeView() {
                   onBlur={refocusCapture}
                   autoComplete="off"
                   aria-label="Class schedule ID"
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-sweat"
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg font-mono text-sm focus:outline-none focus:border-sweat"
                 />
               </div>
             )}
@@ -398,7 +398,7 @@ export function ScanBarcodeView() {
             {/* PT session ID — editable (PT mode only). */}
             {mode === "pt" && (
               <div>
-                <span className="text-gray-500 text-xs uppercase font-bold">
+                <span className="text-muted text-xs uppercase font-bold">
                   PT session ID
                 </span>
                 <input
@@ -407,7 +407,7 @@ export function ScanBarcodeView() {
                   onBlur={refocusCapture}
                   autoComplete="off"
                   aria-label="PT session ID"
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-sweat"
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg font-mono text-sm focus:outline-none focus:border-sweat"
                 />
               </div>
             )}
@@ -415,7 +415,7 @@ export function ScanBarcodeView() {
             {/* Branch — Member mode only. */}
             {mode === "member" && (
               <div>
-                <span className="text-gray-500 text-xs uppercase font-bold">
+                <span className="text-muted text-xs uppercase font-bold">
                   Branch
                 </span>
                 <div className="mt-1">
@@ -437,7 +437,7 @@ export function ScanBarcodeView() {
                 type="button"
                 onMouseDown={keepFocus}
                 onClick={handleClear}
-                className="px-4 py-2 rounded-lg text-sm border border-border text-gray-300 hover:text-white"
+                className="px-4 py-2 rounded-lg text-sm border border-border text-fg-soft hover:text-fg"
               >
                 Clear
               </button>
@@ -446,7 +446,7 @@ export function ScanBarcodeView() {
         </div>
 
         <div className="bg-card rounded-xl border border-border p-5">
-          <h2 className="text-sm uppercase font-bold text-gray-500 mb-4">Last scan</h2>
+          <h2 className="text-sm uppercase font-bold text-muted mb-4">Last scan</h2>
           <ScanResultPanel result={result} />
         </div>
       </div>

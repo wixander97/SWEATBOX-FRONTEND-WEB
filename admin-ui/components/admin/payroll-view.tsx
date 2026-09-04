@@ -94,16 +94,16 @@ export function PayrollView() {
     return (
       <div className="bg-card rounded-xl border border-dashed border-red-500 p-6 sm:p-12 text-center">
         <i className="fas fa-lock text-red-500 text-5xl mb-4" aria-hidden />
-        <h3 className="text-2xl font-bold text-white mb-2">Access Denied</h3>
-        <p className="text-gray-400">
+        <h3 className="text-2xl font-bold text-fg mb-2">Access Denied</h3>
+        <p className="text-muted">
           Anda tidak memiliki izin untuk melihat halaman Keuangan &amp; Payroll.
         </p>
       </div>
     );
   }
 
-  if (loading) return <div className="text-gray-400">Loading payroll data...</div>;
-  if (error) return <div className="text-red-400">{error}</div>;
+  if (loading) return <div className="text-muted">Loading payroll data...</div>;
+  if (error) return <div className="text-danger">{error}</div>;
 
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -111,15 +111,15 @@ export function PayrollView() {
         <h4 className="font-bold text-lg">Coach Payroll Overview</h4>
         <button
           type="button"
-          className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
+          className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5"
         >
           <i className="fas fa-download mr-2" aria-hidden />
           Export Report
         </button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-left text-sm text-gray-400">
-          <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+        <table className="w-full min-w-[720px] text-left text-sm text-muted">
+          <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
             <tr>
               {(
                 [
@@ -135,12 +135,12 @@ export function PayrollView() {
                     <button
                       type="button"
                       onClick={() => toggleSort(key)}
-                      className="flex items-center gap-1.5 hover:text-white transition group"
+                      className="flex items-center gap-1.5 hover:text-fg transition group"
                     >
                       {label}
                       <span className="flex flex-col leading-none text-[10px]">
-                        <i className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`} aria-hidden />
-                        <i className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`} aria-hidden />
+                        <i className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-accent-ink" : "text-muted group-hover:text-muted"}`} aria-hidden />
+                        <i className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-accent-ink" : "text-muted group-hover:text-muted"}`} aria-hidden />
                       </span>
                     </button>
                   ) : label}
@@ -150,12 +150,12 @@ export function PayrollView() {
                 <button
                   type="button"
                   onClick={() => toggleSort("status")}
-                  className="flex items-center gap-1.5 hover:text-white transition group ml-auto"
+                  className="flex items-center gap-1.5 hover:text-fg transition group ml-auto"
                 >
                   Status
                   <span className="flex flex-col leading-none text-[10px]">
-                    <i className={`fas fa-caret-up ${sortKey === "status" && sortDir === "asc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`} aria-hidden />
-                    <i className={`fas fa-caret-down ${sortKey === "status" && sortDir === "desc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`} aria-hidden />
+                    <i className={`fas fa-caret-up ${sortKey === "status" && sortDir === "asc" ? "text-accent-ink" : "text-muted group-hover:text-muted"}`} aria-hidden />
+                    <i className={`fas fa-caret-down ${sortKey === "status" && sortDir === "desc" ? "text-accent-ink" : "text-muted group-hover:text-muted"}`} aria-hidden />
                   </span>
                 </button>
               </th>
@@ -164,12 +164,12 @@ export function PayrollView() {
           <tbody className="divide-y divide-border">
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-6 text-center text-gray-500">No data available</td>
+                <td colSpan={6} className="px-6 py-6 text-center text-muted">No data available</td>
               </tr>
             ) : (
               sorted.map((r, i) => (
                 <tr key={r.coachId ?? i} className="table-row transition">
-                  <td className="px-6 py-4 font-bold text-white">{r.coachName}</td>
+                  <td className="px-6 py-4 font-bold text-fg">{r.coachName}</td>
                   <td className="px-6 py-4">{r.totalClasses ?? 0}</td>
                   <td className="px-6 py-4">{r.totalMembers ?? 0}</td>
                   <td className="px-6 py-4 capitalize">{r.payrollType ?? "—"}</td>

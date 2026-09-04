@@ -145,7 +145,9 @@ function wrongAccountMessage(payment: Payment, customer: ApiMember): string | nu
 export function usePosCheckout(
   items: CartItem[],
   customer: ApiMember | null,
-  branchName?: string
+  branchName?: string,
+  /** Branch the till is selling from, used when the plan names none. */
+  branchId?: string
 ) {
   const payables = useMemo(() => payableItems(items), [items]);
 
@@ -210,7 +212,12 @@ export function usePosCheckout(
                 paymentCategory: PaymentCategory.Membership,
                 paymentMethod,
                 paymentProvider: providerFor(selected),
-                branchId: item.plan.branchId,
+                // The plan's own branch wins — a PIK2 plan is a PIK2 sale
+                // wherever it is rung up. Plans that predate the branch column
+                // carry none, and sending nothing would leave the backend to
+                // guess which branch merchant settles it, so the branch the
+                // till is open on is the fallback.
+                branchId: item.plan.branchId || branchId,
                 // Staff notes win. The default is what a finance report needs
                 // to read months later: where it was sold and what was sold —
                 // not the literal word "POS" followed by a plan name, which is
@@ -285,7 +292,7 @@ export function usePosCheckout(
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [payables, customer, branchName, updateStep]
+    [payables, customer, branchName, branchId, updateStep]
   );
 
   /** Poll until the backend says the payment settled. Backend is the truth. */

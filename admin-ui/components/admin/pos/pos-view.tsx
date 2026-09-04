@@ -9,7 +9,7 @@ import { authFetch } from "@/lib/auth/client-fetch";
 import type { ApiMember } from "@/lib/api/members";
 import { formatRupiah, hasPackage, type CartItem } from "@/lib/pos/cart";
 import { branchLabel, usePosBranch } from "@/lib/pos/branch-context";
-import { usePosTheme } from "@/lib/pos/pos-theme";
+import { useTheme } from "@/lib/theme";
 import { PosCatalog } from "./pos-catalog";
 import { PosCartPanel } from "./pos-cart-panel";
 import { PosCustomerPanel } from "./pos-customer-panel";
@@ -35,7 +35,7 @@ export function PosView() {
   const router = useRouter();
   const { branches, branch, branchId, setBranchId, loading: branchLoading, error: branchError } =
     usePosBranch();
-  const { theme, toggleTheme } = usePosTheme();
+  const { theme, toggleTheme } = useTheme();
 
   const [customer, setCustomer] = useState<ApiMember | null>(null);
   const [items, setItems] = useState<CartItem[]>([]);
@@ -91,8 +91,18 @@ export function PosView() {
     setItems((current) => current.filter((i) => i.lineId !== lineId));
   }, []);
 
+  /*
+   * A settled sale ends the transaction, customer included.
+   *
+   * The next person in the queue is a different person: leaving the previous
+   * customer selected means staff either sell to the wrong account or have to
+   * clear the panel by hand before every sale. The context version is still
+   * bumped so a customer re-selected straight after (a second purchase for the
+   * same member) is read back fresh rather than from the pre-sale snapshot.
+   */
   const resetTransaction = useCallback(() => {
     setItems([]);
+    setCustomer(null);
     setCheckoutOpen(false);
     setCheckoutBusy(false);
     setDrawerOpen(false);
@@ -308,6 +318,7 @@ export function PosView() {
         <PosCheckoutModal
           items={items}
           customer={customer}
+          branchId={branchId}
           branchName={branch ? branchLabel(branch) : ""}
           onClose={() => {
             setCheckoutOpen(false);

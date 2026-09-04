@@ -48,7 +48,7 @@ function navButtonClasses(active: boolean) {
   if (active) {
     return base + "bg-sweat text-black font-bold";
   }
-  return base + "hover:bg-white/10 text-gray-400 hover:text-white";
+  return base + "hover:bg-fg/10 text-muted hover:text-fg";
 }
 
 type Props = {
@@ -103,7 +103,7 @@ export function AdminSidebar({ open = false, onClose }: Props) {
         type="button"
         aria-label="Close sidebar overlay"
         onClick={onClose}
-        className={`fixed inset-0 z-30 bg-black/50 transition-opacity lg:hidden ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        className={`fixed inset-0 z-30 bg-overlay transition-opacity lg:hidden ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           }`}
       />
       <aside
@@ -116,14 +116,14 @@ export function AdminSidebar({ open = false, onClose }: Props) {
               <div className="w-8 h-8 bg-sweat rounded flex items-center justify-center font-bold text-black font-display text-lg">
                 S
               </div>
-              <h1 className="font-display text-xl font-bold tracking-wider text-white">
-                SWEATBOX <span className="text-sweat text-xs align-top">ADMIN</span>
+              <h1 className="font-display text-xl font-bold tracking-wider text-fg">
+                SWEATBOX <span className="text-accent-ink text-xs align-top">ADMIN</span>
               </h1>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="lg:hidden text-gray-400 hover:text-white text-xl"
+              className="lg:hidden text-muted hover:text-fg text-xl"
               aria-label="Close menu"
             >
             </button>
@@ -143,8 +143,8 @@ export function AdminSidebar({ open = false, onClose }: Props) {
               </Link>
             ))}
 
-            <div className="pt-4 mt-2 border-t border-gray-800">
-              <p className="px-4 text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">
+            <div className="pt-4 mt-2 border-t border-border">
+              <p className="px-4 text-[10px] text-muted font-bold uppercase tracking-wider mb-2">
                 Data &amp; Finance
               </p>
               {filteredDataNav.map((item) => (
@@ -174,10 +174,10 @@ export function AdminSidebar({ open = false, onClose }: Props) {
               unoptimized
             />
             <div>
-              <p className="text-sm font-bold text-white" id="logged-in-name">
+              <p className="text-sm font-bold text-fg" id="logged-in-name">
                 {name}
               </p>
-              <p className="text-xs text-gray-500" id="logged-in-role">
+              <p className="text-xs text-muted" id="logged-in-role">
                 {role}
               </p>
             </div>
@@ -185,7 +185,7 @@ export function AdminSidebar({ open = false, onClose }: Props) {
           <button
             type="button"
             onClick={logout}
-            className="mt-3 w-full bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg text-sm border border-border transition"
+            className="mt-3 w-full bg-fg/5 hover:bg-fg/10 text-fg py-2 rounded-lg text-sm border border-border transition"
           >
             <i className="fas fa-sign-out-alt mr-2" aria-hidden />
             Logout

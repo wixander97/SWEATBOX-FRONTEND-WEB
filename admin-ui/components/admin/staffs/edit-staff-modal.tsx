@@ -101,12 +101,12 @@ export function EditStaffModal({
   );
 
   const inputCls =
-    "bg-sidebar border border-border text-white px-3 py-2 rounded-lg text-sm w-full focus:outline-none focus:border-sweat";
-  const labelCls = "block text-gray-500 text-xs uppercase font-bold mb-1";
+    "bg-sidebar border border-border text-fg px-3 py-2 rounded-lg text-sm w-full focus:outline-none focus:border-sweat";
+  const labelCls = "block text-muted text-xs uppercase font-bold mb-1";
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.currentTarget === e.target) onClose();
       }}
@@ -117,7 +117,7 @@ export function EditStaffModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl"
+            className="text-muted hover:text-fg text-xl"
             aria-label="Close"
           >
             ×
@@ -126,9 +126,9 @@ export function EditStaffModal({
 
         <div className="p-4 sm:p-6">
           {loading ? (
-            <p className="text-gray-400">Loading detail...</p>
+            <p className="text-muted">Loading detail...</p>
           ) : error ? (
-            <p className="text-red-400">{error}</p>
+            <p className="text-danger">{error}</p>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -211,7 +211,7 @@ export function EditStaffModal({
                 </div>
               </div>
 
-              <label className="flex items-center gap-2 text-sm text-gray-300">
+              <label className="flex items-center gap-2 text-sm text-fg-soft">
                 <input
                   type="checkbox"
                   checked={form.isActive}
@@ -221,7 +221,7 @@ export function EditStaffModal({
                 Active
               </label>
 
-              {saveError && <p className="text-red-400 text-sm">{saveError}</p>}
+              {saveError && <p className="text-danger text-sm">{saveError}</p>}
 
               <div className="flex gap-3 pt-2 border-t border-border">
                 <button
@@ -234,7 +234,7 @@ export function EditStaffModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm transition"
+                  className="flex-1 bg-sidebar border border-border text-fg py-2 rounded-lg text-sm transition"
                 >
                   Cancel
                 </button>

@@ -332,22 +332,22 @@ export function PtPackageTab() {
   return (
     <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h2 className="text-lg font-display font-bold text-white">PT Packages</h2>
+        <h2 className="text-lg font-display font-bold text-fg">PT Packages</h2>
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
           <div className="relative sm:w-56">
-            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
             <input
               type="text"
               placeholder="Cari package..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm pl-9 focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm pl-9 focus:outline-none focus:border-sweat"
             />
           </div>
           <button
             type="button"
             onClick={() => void exportXlsx()}
-            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center justify-center gap-2 w-full sm:w-auto"
+            className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition flex items-center justify-center gap-2 w-full sm:w-auto"
           >
             <i className="fas fa-file-export" aria-hidden />
             Export
@@ -363,21 +363,21 @@ export function PtPackageTab() {
       </div>
 
       {error && (
-        <div className="mb-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-2 rounded-lg">
+        <div className="mb-3 bg-red-500/10 border border-red-500/30 text-danger text-sm px-4 py-2 rounded-lg">
           {error}
         </div>
       )}
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[860px] text-left text-sm">
-          <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+          <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
             <tr>
               <th className="px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort("name")}>
-                <span className="flex items-center gap-1.5 hover:text-white transition">
+                <span className="flex items-center gap-1.5 hover:text-fg transition">
                   Name
                   <span className="flex flex-col -space-y-1.5">
-                    <i className={`fas fa-caret-up text-[10px] ${sortKey === "name" && sortDir === "asc" ? "text-sweat" : "text-gray-600"}`} aria-hidden />
-                    <i className={`fas fa-caret-down text-[10px] ${sortKey === "name" && sortDir === "desc" ? "text-sweat" : "text-gray-600"}`} aria-hidden />
+                    <i className={`fas fa-caret-up text-[10px] ${sortKey === "name" && sortDir === "asc" ? "text-accent-ink" : "text-muted"}`} aria-hidden />
+                    <i className={`fas fa-caret-down text-[10px] ${sortKey === "name" && sortDir === "desc" ? "text-accent-ink" : "text-muted"}`} aria-hidden />
                   </span>
                 </span>
               </th>
@@ -385,20 +385,20 @@ export function PtPackageTab() {
               <th className="px-4 py-3">Coach</th>
               <th className="px-4 py-3">Branch</th>
               <th className="px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort("sessionCount")}>
-                <span className="flex items-center gap-1.5 hover:text-white transition">
+                <span className="flex items-center gap-1.5 hover:text-fg transition">
                   Sessions
                   <span className="flex flex-col -space-y-1.5">
-                    <i className={`fas fa-caret-up text-[10px] ${sortKey === "sessionCount" && sortDir === "asc" ? "text-sweat" : "text-gray-600"}`} aria-hidden />
-                    <i className={`fas fa-caret-down text-[10px] ${sortKey === "sessionCount" && sortDir === "desc" ? "text-sweat" : "text-gray-600"}`} aria-hidden />
+                    <i className={`fas fa-caret-up text-[10px] ${sortKey === "sessionCount" && sortDir === "asc" ? "text-accent-ink" : "text-muted"}`} aria-hidden />
+                    <i className={`fas fa-caret-down text-[10px] ${sortKey === "sessionCount" && sortDir === "desc" ? "text-accent-ink" : "text-muted"}`} aria-hidden />
                   </span>
                 </span>
               </th>
               <th className="px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort("price")}>
-                <span className="flex items-center gap-1.5 hover:text-white transition">
+                <span className="flex items-center gap-1.5 hover:text-fg transition">
                   Price
                   <span className="flex flex-col -space-y-1.5">
-                    <i className={`fas fa-caret-up text-[10px] ${sortKey === "price" && sortDir === "asc" ? "text-sweat" : "text-gray-600"}`} aria-hidden />
-                    <i className={`fas fa-caret-down text-[10px] ${sortKey === "price" && sortDir === "desc" ? "text-sweat" : "text-gray-600"}`} aria-hidden />
+                    <i className={`fas fa-caret-up text-[10px] ${sortKey === "price" && sortDir === "asc" ? "text-accent-ink" : "text-muted"}`} aria-hidden />
+                    <i className={`fas fa-caret-down text-[10px] ${sortKey === "price" && sortDir === "desc" ? "text-accent-ink" : "text-muted"}`} aria-hidden />
                   </span>
                 </span>
               </th>
@@ -410,44 +410,44 @@ export function PtPackageTab() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-muted">
                   Memuat...
                 </td>
               </tr>
             ) : visiblePackages.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-muted">
                   {search.trim() ? "Tidak ditemukan." : "Tidak ada PT package."}
                 </td>
               </tr>
             ) : (
               visiblePackages.map((pkg) => (
-                <tr key={pkg.id} className="hover:bg-white/5 transition">
-                  <td className="px-4 py-3 font-semibold text-white">{pkg.name}</td>
-                  <td className="px-4 py-3 text-gray-300">
+                <tr key={pkg.id} className="hover:bg-fg/5 transition">
+                  <td className="px-4 py-3 font-semibold text-fg">{pkg.name}</td>
+                  <td className="px-4 py-3 text-fg-soft">
                     {pkg.memberName || memberName(pkg.memberId)}
                   </td>
-                  <td className="px-4 py-3 text-gray-300">
+                  <td className="px-4 py-3 text-fg-soft">
                     {pkg.coachName || coachName(pkg.coachId)}
                   </td>
-                  <td className="px-4 py-3 text-gray-300">
+                  <td className="px-4 py-3 text-fg-soft">
                     {pkg.branchName || branchName(pkg.branchId)}
                   </td>
-                  <td className="px-4 py-3 text-gray-300">{pkg.sessionCount ?? 0}</td>
-                  <td className="px-4 py-3 text-gray-300">
+                  <td className="px-4 py-3 text-fg-soft">{pkg.sessionCount ?? 0}</td>
+                  <td className="px-4 py-3 text-fg-soft">
                     {pkg.price != null ? Number(pkg.price).toLocaleString() : "-"}
                   </td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${pkg.isActive
-                        ? "bg-green-500/15 text-green-400"
-                        : "bg-gray-500/15 text-gray-400"
+                        ? "bg-green-500/15 text-success"
+                        : "bg-gray-500/15 text-muted"
                         }`}
                     >
                       {pkg.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-400 max-w-xs truncate" title={pkg.description ?? ""}>
+                  <td className="px-4 py-3 text-muted max-w-xs truncate" title={pkg.description ?? ""}>
                     {pkg.description || "-"}
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
@@ -455,7 +455,7 @@ export function PtPackageTab() {
                       type="button"
                       title="Edit"
                       onClick={() => setEditTarget(pkg)}
-                      className="text-gray-400 hover:text-white mx-1"
+                      className="text-muted hover:text-fg mx-1"
                     >
                       <i className="fas fa-edit" aria-hidden />
                     </button>
@@ -463,7 +463,7 @@ export function PtPackageTab() {
                       type="button"
                       title="Delete"
                       onClick={() => void handleDelete(pkg)}
-                      className="text-red-500 hover:text-red-400 mx-1"
+                      className="text-red-500 hover:text-danger mx-1"
                     >
                       <i className="fas fa-trash" aria-hidden />
                     </button>
@@ -477,7 +477,7 @@ export function PtPackageTab() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-muted">
             Total {totalItems} item
           </span>
           <div className="flex gap-2">
@@ -485,18 +485,18 @@ export function PtPackageTab() {
               type="button"
               onClick={() => { setSearch(""); setPage((p) => Math.max(1, p - 1)); }}
               disabled={page <= 1}
-              className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="bg-sidebar border border-border text-muted px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Prev
             </button>
-            <span className="text-xs text-gray-400 px-2 py-1">
+            <span className="text-xs text-muted px-2 py-1">
               {page} / {totalPages}
             </span>
             <button
               type="button"
               onClick={() => { setSearch(""); setPage((p) => Math.min(totalPages, p + 1)); }}
               disabled={page >= totalPages}
-              className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="bg-sidebar border border-border text-muted px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Next
             </button>

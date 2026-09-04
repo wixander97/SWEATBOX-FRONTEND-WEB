@@ -31,8 +31,8 @@ function formatDate(iso: string | null | undefined): string {
 function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
     <div className="flex justify-between items-center py-1.5 border-b border-border/40 last:border-b-0 gap-3">
-      <span className="text-xs text-gray-500 shrink-0">{label}</span>
-      <span className="text-sm text-gray-200 text-right break-words">{String(value ?? "—")}</span>
+      <span className="text-xs text-muted shrink-0">{label}</span>
+      <span className="text-sm text-fg-soft text-right break-words">{String(value ?? "—")}</span>
     </div>
   );
 }
@@ -77,7 +77,7 @@ export function PromoBannerDetailModal({ bannerId, onClose }: Props) {
   return (
     <div
       id="modal-overlay"
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm p-4"
       role="presentation"
       onClick={(ev) => {
         if (ev.target === ev.currentTarget) onClose();
@@ -96,7 +96,7 @@ export function PromoBannerDetailModal({ bannerId, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl leading-none shrink-0"
+            className="text-muted hover:text-fg text-xl leading-none shrink-0"
             aria-label="Close modal"
           >
             <i className="fas fa-times" aria-hidden />
@@ -104,13 +104,13 @@ export function PromoBannerDetailModal({ bannerId, onClose }: Props) {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-200 text-sm rounded-lg">
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-danger text-sm rounded-lg">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="py-10 text-center text-gray-400 text-sm">
+          <div className="py-10 text-center text-muted text-sm">
             <i className="fas fa-spinner fa-spin mr-2" aria-hidden />
             Loading...
           </div>
@@ -146,7 +146,7 @@ export function PromoBannerDetailModal({ bannerId, onClose }: Props) {
         <button
           type="button"
           onClick={onClose}
-          className="mt-5 w-full bg-sidebar border border-border text-gray-300 px-4 py-2.5 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-white transition text-sm"
+          className="mt-5 w-full bg-sidebar border border-border text-fg-soft px-4 py-2.5 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-fg transition text-sm"
         >
           Close
         </button>

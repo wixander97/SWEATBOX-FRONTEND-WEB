@@ -78,7 +78,7 @@ export function UsersView({ initialTab, initialActive }: UsersViewProps = {}) {
     `px-4 py-2 rounded-lg text-sm font-bold border transition ${
       active
         ? "bg-sweat text-black border-sweat"
-        : "bg-sidebar text-gray-400 border-border hover:text-white hover:border-gray-500"
+        : "bg-sidebar text-muted border-border hover:text-fg hover:border-muted"
     }`;
 
   return (
@@ -122,7 +122,7 @@ export function UsersView({ initialTab, initialActive }: UsersViewProps = {}) {
 
       {showCreate && (
         <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+          className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setShowCreate(false); }}
         >
           <UserCreateForm

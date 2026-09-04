@@ -327,7 +327,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
       <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
           <div className="relative w-full sm:w-72">
-          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
           <input
             type="text"
             placeholder="Cari coach..."
@@ -341,7 +341,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                 setPage(1);
               }
             }}
-            className="w-full bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+            className="w-full bg-sidebar border border-border text-fg pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
           />
           {searchInput && (
             <button
@@ -351,7 +351,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                 setKeyword("");
                 setPage(1);
               }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-fg"
               aria-label="Clear search"
             >
               <i className="fas fa-times" aria-hidden />
@@ -364,7 +364,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
               setIsActiveFilter(e.target.value as ActiveFilter);
               setPage(1);
             }}
-            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat w-full sm:w-36"
+            className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat w-full sm:w-36"
           >
             <option value="all">All Status</option>
             <option value="true">Active</option>
@@ -376,7 +376,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
             onClick={() => void exportXlsx()}
             disabled={exporting}
             title="Export semua data coach (tanpa filter)"
-            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50"
+            className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition disabled:opacity-50"
           >
             {exporting ? (
               <i className="fas fa-spinner fa-spin mr-2" aria-hidden />
@@ -386,21 +386,21 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
             Export
           </button>
           {exportError && (
-            <p className="text-red-400 text-sm">{exportError}</p>
+            <p className="text-danger text-sm">{exportError}</p>
           )}
         </div>
       </div>
       {loading ? (
-        <div className="text-gray-400">Loading coaches...</div>
+        <div className="text-muted">Loading coaches...</div>
       ) : error ? (
-        <div className="text-red-400">{error}</div>
+        <div className="text-danger">{error}</div>
       ) : coaches.length === 0 ? (
-        <div className="text-gray-400">No coaches found.</div>
+        <div className="text-muted">No coaches found.</div>
       ) : (
         <>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-gray-500 uppercase font-bold">Sort by:</span>
+              <span className="text-xs text-muted uppercase font-bold">Sort by:</span>
               {(
                 [
                   { label: "Name", key: "fullName" },
@@ -415,8 +415,8 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                   type="button"
                   onClick={() => toggleSort(key)}
                   className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-medium border transition ${sortKey === key
-                    ? "bg-sweat/10 border-sweat text-sweat"
-                    : "bg-sidebar border-border text-gray-400 hover:text-white hover:border-gray-500"
+                    ? "bg-sweat/10 border-sweat text-accent-ink"
+                    : "bg-sidebar border-border text-muted hover:text-fg hover:border-muted"
                     }`}
                 >
                   {label}
@@ -429,18 +429,18 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
           </div>
 
           {/* Legend: explain power toggle button */}
-          <div className="bg-card/50 border border-border/50 rounded-lg px-4 py-3 mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-gray-400">
-            <span className="font-bold uppercase tracking-wide text-gray-400">Status Coach</span>
-            <span className="text-gray-500">
+          <div className="bg-card/50 border border-border/50 rounded-lg px-4 py-3 mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-muted">
+            <span className="font-bold uppercase tracking-wide text-muted">Status Coach</span>
+            <span className="text-muted">
               Tombol power digunakan untuk mengaktifkan (on) atau menonaktifkan (off) status coach.
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <i className="fas fa-power-off text-green-400" aria-hidden />
-              <span className="text-green-400">Active (On)</span>
+              <i className="fas fa-power-off text-success" aria-hidden />
+              <span className="text-success">Active (On)</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <i className="fas fa-power-off text-yellow-400" aria-hidden />
-              <span className="text-yellow-400">Inactive (Off)</span>
+              <i className="fas fa-power-off text-warning" aria-hidden />
+              <span className="text-warning">Inactive (Off)</span>
             </span>
           </div>
           {/* Legend end: keep in sync with the card badge + power button colors (state-based). */}
@@ -451,7 +451,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                 key={coach.id}
                 className="bg-card rounded-xl border border-border p-6 text-center group hover:border-sweat transition"
               >
-                <div className="w-24 h-24 bg-gray-700 rounded-full mx-auto mb-4 overflow-hidden border-2 border-transparent group-hover:border-sweat transition">
+                <div className="w-24 h-24 bg-fg/10 rounded-full mx-auto mb-4 overflow-hidden border-2 border-transparent group-hover:border-sweat transition">
                   <Image
                     src={coach.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(coach.fullName || "Coach")}&background=random`}
                     alt=""
@@ -461,32 +461,32 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                     unoptimized
                   />
                 </div>
-                <h3 className="font-bold text-xl text-white">{coach.fullName ?? "—"}</h3>
+                <h3 className="font-bold text-xl text-fg">{coach.fullName ?? "—"}</h3>
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${coach.isActive
-                    ? "bg-green-500/10 text-green-400 border-green-500/20"
-                    : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                    ? "bg-green-500/10 text-success border-green-500/20"
+                    : "bg-yellow-500/10 text-warning border-yellow-500/20"
                   }`}
                 >
                   <i className={coach.isActive ? "fas fa-check-circle" : "fas fa-pause-circle"} aria-hidden />
                   {coach.isActive ? "Active" : "Inactive"}
                 </span>
-                <p className="text-gray-400 text-sm mb-1 mt-2">{coach.specialization ?? "No specialization"}</p>
+                <p className="text-muted text-sm mb-1 mt-2">{coach.specialization ?? "No specialization"}</p>
                 {coach.branchName && (
-                  <p className="text-xs text-gray-500 mb-3">
+                  <p className="text-xs text-muted mb-3">
                     <i className="fas fa-map-marker-alt mr-1" aria-hidden /> {coach.branchName}
                   </p>
                 )}
                 <div className="grid grid-cols-2 gap-4 border-t border-border pt-4 text-left">
                   <div>
-                    <p className="text-xs text-gray-500 uppercase">Total Classes</p>
-                    <p className="font-bold text-lg text-white">
+                    <p className="text-xs text-muted uppercase">Total Classes</p>
+                    <p className="font-bold text-lg text-fg">
                       {coach.totalClasses ?? 0} <span className="text-xs font-normal">/mo</span>
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase">Rating</p>
-                    <p className="font-bold text-lg text-sweat">
+                    <p className="text-xs text-muted uppercase">Rating</p>
+                    <p className="font-bold text-lg text-accent-ink">
                       {coach.rating ?? 0} <i className="fas fa-star text-xs" aria-hidden />
                     </p>
                   </div>
@@ -495,7 +495,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                   <button
                     type="button"
                     onClick={() => void openDetail(coach.id)}
-                    className="flex-1 bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg text-sm border border-border transition"
+                    className="flex-1 bg-fg/5 hover:bg-fg/10 text-fg py-2 rounded-lg text-sm border border-border transition"
                   >
                     View / Edit
                   </button>
@@ -505,8 +505,8 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                     disabled={statusLoading === coach.id}
                     title={coach.isActive ? "Deactivate" : "Activate"}
                     className={`px-3 py-2 rounded-lg text-sm border transition disabled:opacity-50 ${coach.isActive
-                      ? "text-green-400 border-green-500/20 hover:bg-green-500/10"
-                      : "text-yellow-400 border-yellow-500/20 hover:bg-yellow-500/10"
+                      ? "text-success border-green-500/20 hover:bg-green-500/10"
+                      : "text-warning border-yellow-500/20 hover:bg-yellow-500/10"
                       }`}
                   >
                     <i className="fas fa-power-off" aria-hidden />
@@ -515,7 +515,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                     type="button"
                     onClick={() => setDeleteId(coach.id)}
                     title="Delete"
-                    className="px-3 py-2 rounded-lg text-sm border border-red-500/20 text-red-400 hover:bg-red-500/10 transition"
+                    className="px-3 py-2 rounded-lg text-sm border border-red-500/20 text-danger hover:bg-red-500/10 transition"
                   >
                     <i className="fas fa-trash" aria-hidden />
                   </button>
@@ -525,7 +525,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
           </div>
 
           <div className="mt-4 px-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted">
               Page {page} of {Math.max(1, totalPages)} • {totalItems} data
             </p>
             <div className="flex items-center gap-2">
@@ -533,7 +533,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                 type="button"
                 disabled={page <= 1 || loading}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+                className="bg-sidebar border border-border text-fg px-3 py-1.5 rounded text-xs disabled:opacity-50"
               >
                 Prev
               </button>
@@ -541,7 +541,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                 type="button"
                 disabled={page >= totalPages || loading}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+                className="bg-sidebar border border-border text-fg px-3 py-1.5 rounded text-xs disabled:opacity-50"
               >
                 Next
               </button>
@@ -552,7 +552,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
 
       {selected && (
         <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm"
+          className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm"
           onClick={(e) => {
             if (e.currentTarget === e.target) { setSelected(null); setDetailError(""); setDetailLoading(false); }
           }}
@@ -563,7 +563,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
               <button
                 type="button"
                 onClick={() => { setSelected(null); setDetailError(""); setDetailLoading(false); }}
-                className="text-gray-400 hover:text-white text-xl"
+                className="text-muted hover:text-fg text-xl"
               >
                 ×
               </button>
@@ -575,8 +575,8 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                 type="button"
                 onClick={() => setDetailTab("info")}
                 className={`px-4 py-2 text-sm font-bold transition border-b-2 ${detailTab === "info"
-                    ? "border-sweat text-sweat"
-                    : "border-transparent text-gray-500 hover:text-white"
+                    ? "border-sweat text-accent-ink"
+                    : "border-transparent text-muted hover:text-fg"
                   }`}
               >
                 Info
@@ -590,8 +590,8 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                   }
                 }}
                 className={`px-4 py-2 text-sm font-bold transition border-b-2 ${detailTab === "history"
-                    ? "border-sweat text-sweat"
-                    : "border-transparent text-gray-500 hover:text-white"
+                    ? "border-sweat text-accent-ink"
+                    : "border-transparent text-muted hover:text-fg"
                   }`}
               >
                 History
@@ -599,11 +599,11 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
             </div>
 
             {detailLoading ? (
-              <p className="text-gray-400">Loading detail...</p>
+              <p className="text-muted">Loading detail...</p>
             ) : detailError ? (
-              <p className="text-red-400">{detailError}</p>
+              <p className="text-danger">{detailError}</p>
             ) : detailTab === "info" ? (
-              <div className="space-y-2 text-sm text-gray-300">
+              <div className="space-y-2 text-sm text-fg-soft">
                 {[
                   ["Name", selected.fullName],
                   ["Email", selected.email],
@@ -623,7 +623,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                 ].map(([label, val]) =>
                   val != null ? (
                     <p key={String(label)}>
-                      <span className="text-gray-500">{label}:</span> {String(val)}
+                      <span className="text-muted">{label}:</span> {String(val)}
                     </p>
                   ) : null
                 )}
@@ -631,7 +631,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                   <button
                     type="button"
                     onClick={() => setSelected(null)}
-                    className="bg-sweat/10 border border-sweat/30 text-sweat px-4 py-2 rounded-lg text-sm font-bold hover:bg-sweat/20 transition mr-2"
+                    className="bg-sweat/10 border border-sweat/30 text-accent-ink px-4 py-2 rounded-lg text-sm font-bold hover:bg-sweat/20 transition mr-2"
                   >
                     <i className="fas fa-edit mr-2" aria-hidden />
                     Edit Coach
@@ -641,15 +641,15 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
             ) : (
               <div>
                 {attendanceLoading ? (
-                  <p className="text-gray-400 text-center py-8">Loading attendance history...</p>
+                  <p className="text-muted text-center py-8">Loading attendance history...</p>
                 ) : attendanceError ? (
-                  <p className="text-red-400 text-center py-8">{attendanceError}</p>
+                  <p className="text-danger text-center py-8">{attendanceError}</p>
                 ) : attendanceHistory.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No attendance history found</p>
+                  <p className="text-muted text-center py-8">No attendance history found</p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-gray-400">
-                      <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+                    <table className="w-full text-left text-sm text-muted">
+                      <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
                         <tr>
                           <th className="px-3 py-2">Date</th>
                           <th className="px-3 py-2">Class</th>
@@ -660,8 +660,8 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                       </thead>
                       <tbody className="divide-y divide-border">
                         {attendanceHistory.map((record, idx) => (
-                          <tr key={idx} className="transition hover:bg-white/5">
-                            <td className="px-3 py-2 text-white text-xs">
+                          <tr key={idx} className="transition hover:bg-fg/5">
+                            <td className="px-3 py-2 text-fg text-xs">
                               {new Date(record.classDate).toLocaleDateString("id-ID", {
                                 day: "2-digit",
                                 month: "short",
@@ -682,7 +682,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                               )}
                             </td>
                             <td className="px-3 py-2">
-                              <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">
+                              <span className="bg-blue-500/10 text-info px-2 py-1 rounded text-xs font-bold border border-blue-500/20">
                                 {record.status}
                               </span>
                             </td>
@@ -708,10 +708,10 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
       )}
 
       {deleteId && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-card w-full max-w-sm rounded-2xl border border-red-500/30 shadow-2xl p-6">
             <h3 className="text-lg font-bold mb-2">Delete Coach?</h3>
-            <p className="text-gray-400 text-sm mb-4">This action cannot be undone.</p>
+            <p className="text-muted text-sm mb-4">This action cannot be undone.</p>
             <div className="flex gap-3">
               <button
                 type="button"
@@ -724,7 +724,7 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
               <button
                 type="button"
                 onClick={() => setDeleteId(null)}
-                className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm transition"
+                className="flex-1 bg-sidebar border border-border text-fg py-2 rounded-lg text-sm transition"
               >
                 Cancel
               </button>

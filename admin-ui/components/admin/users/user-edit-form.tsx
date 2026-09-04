@@ -66,7 +66,7 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
         <button
           type="button"
           onClick={onCancel}
-          className="text-gray-400 hover:text-white text-xl leading-none"
+          className="text-muted hover:text-fg text-xl leading-none"
           aria-label="Close"
         >
           ×
@@ -75,31 +75,31 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
       <form onSubmit={handleSubmit}>
         <div className="space-y-3 text-sm">
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Full Name <span className="text-red-400"> *</span></span>
+            <span className="text-muted text-xs uppercase font-bold">Full Name <span className="text-danger"> *</span></span>
             <input
               value={form.fullName}
               onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
               required
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Email <span className="text-red-400"> *</span></span>
+            <span className="text-muted text-xs uppercase font-bold">Email <span className="text-danger"> *</span></span>
             <input
               type="email"
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
               required
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Role <span className="text-red-400"> *</span></span>
+            <span className="text-muted text-xs uppercase font-bold">Role <span className="text-danger"> *</span></span>
             <select
               value={form.roleId}
               onChange={(e) => setForm((f) => ({ ...f, roleId: e.target.value }))}
               required
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             >
               <option value="">— Pilih role —</option>
               {roles.map((r) => (
@@ -108,7 +108,7 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
             </select>
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Phone <span className="text-red-400"> *</span></span>
+            <span className="text-muted text-xs uppercase font-bold">Phone <span className="text-danger"> *</span></span>
             <input
               value={form.phoneNumber}
               onChange={(e) => setForm((f) => ({ ...f, phoneNumber: e.target.value.replace(/\D/g, "").slice(0, 13) }))}
@@ -116,31 +116,31 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
               inputMode="numeric"
               pattern="\d{1,13}"
               required
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Position</span>
+            <span className="text-muted text-xs uppercase font-bold">Position</span>
             <input
               value={form.position}
               onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Department</span>
+            <span className="text-muted text-xs uppercase font-bold">Department</span>
             <input
               value={form.department}
               onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Branch</span>
+            <span className="text-muted text-xs uppercase font-bold">Branch</span>
             <select
               value={form.branchId}
               onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             >
               <option value="">— Pilih branch —</option>
               {branches.map((b) => (
@@ -149,43 +149,43 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
             </select>
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Specialization</span>
+            <span className="text-muted text-xs uppercase font-bold">Specialization</span>
             <input
               value={form.specialization}
               onChange={(e) => setForm((f) => ({ ...f, specialization: e.target.value }))}
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Notes</span>
+            <span className="text-muted text-xs uppercase font-bold">Notes</span>
             <textarea
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
               rows={2}
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-none"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat resize-none"
             />
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Bio</span>
+            <span className="text-muted text-xs uppercase font-bold">Bio</span>
             <textarea
               value={form.bio}
               onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
               rows={2}
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat resize-none"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat resize-none"
             />
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Payroll Type</span>
+            <span className="text-muted text-xs uppercase font-bold">Payroll Type</span>
             <input
               type="text"
               value={form.payrollType}
               onChange={(e) => setForm((f) => ({ ...f, payrollType: e.target.value }))}
               placeholder="e.g. Hourly, Daily, Monthly"
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
+            <span className="text-muted text-xs uppercase font-bold">Payroll Rate</span>
             <input
               type="text"
               inputMode="decimal"
@@ -195,11 +195,11 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
                 setForm((f) => ({ ...f, payrollRate: /[0-9]/.test(e.target.value) ? String(num) : "" }));
               }}
               placeholder="0"
-              className="w-full bg-sidebar border border-border rounded-lg pl-3 pr-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border rounded-lg pl-3 pr-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Salary</span>
+            <span className="text-muted text-xs uppercase font-bold">Salary</span>
             <input
               type="text"
               inputMode="decimal"
@@ -209,7 +209,7 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
                 setForm((f) => ({ ...f, salary: /[0-9]/.test(e.target.value) ? String(num) : "" }));
               }}
               placeholder="0"
-              className="w-full bg-sidebar border border-border rounded-lg pl-3 pr-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border rounded-lg pl-3 pr-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
@@ -219,10 +219,10 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
               onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
               className="rounded border-border"
             />
-            <span className="text-gray-300">Active</span>
+            <span className="text-fg-soft">Active</span>
           </label>
         </div>
-        {msg && <p className="mt-3 text-xs text-red-400">{msg}</p>}
+        {msg && <p className="mt-3 text-xs text-danger">{msg}</p>}
         <div className="mt-6 flex gap-2">
           <button
             type="submit"
@@ -234,7 +234,7 @@ export function UserEditForm({ userId, initialForm, roles, branches, currentUser
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg text-sm border border-border text-gray-300 hover:text-white"
+            className="px-4 py-2 rounded-lg text-sm border border-border text-fg-soft hover:text-fg"
           >
             Batal
           </button>

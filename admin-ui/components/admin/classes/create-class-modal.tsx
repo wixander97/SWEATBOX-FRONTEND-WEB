@@ -213,7 +213,7 @@ export function CreateClassModal({
   return (
     <div
       id="modal-overlay"
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm"
       role="presentation"
       onClick={(ev) => {
         if (ev.target === ev.currentTarget) onClose();
@@ -232,7 +232,7 @@ export function CreateClassModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl"
+            className="text-muted hover:text-fg text-xl"
             aria-label="Close"
           >
             ×
@@ -243,12 +243,12 @@ export function CreateClassModal({
             <div className="space-y-4">
               {/* Class Name */}
               <div>
-                <label className="block text-gray-400 text-sm mb-1">
-                  Class Name <span className="text-red-400">*</span>
+                <label className="block text-muted text-sm mb-1">
+                  Class Name <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
-                  className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                  className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                   placeholder="e.g. Boxing 101"
                   name="className"
                   value={form.className}
@@ -262,11 +262,11 @@ export function CreateClassModal({
               {/* Trainer + Capacity */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">
-                    Trainer <span className="text-red-400">*</span>
+                  <label className="block text-muted text-sm mb-1">
+                    Trainer <span className="text-danger">*</span>
                   </label>
                   <select
-                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                    className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                     name="coachId"
                     value={form.coachId}
                     onChange={(e) =>
@@ -285,13 +285,13 @@ export function CreateClassModal({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">
-                    Capacity <span className="text-red-400">*</span>
+                  <label className="block text-muted text-sm mb-1">
+                    Capacity <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
                     inputMode="numeric"
-                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                    className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                     name="capacity"
                     value={formatCountInput(form.capacity)}
                     onChange={(e) =>
@@ -308,12 +308,12 @@ export function CreateClassModal({
               {/* Class Date + Start Time */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">
-                    Class Date <span className="text-red-400">*</span>
+                  <label className="block text-muted text-sm mb-1">
+                    Class Date <span className="text-danger">*</span>
                   </label>
                   <input
                     type="date"
-                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                    className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                     style={{ colorScheme: 'dark' }}
                     name="classDate"
                     value={form.classDate}
@@ -324,12 +324,12 @@ export function CreateClassModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">
-                    Start Time <span className="text-red-400">*</span>
+                  <label className="block text-muted text-sm mb-1">
+                    Start Time <span className="text-danger">*</span>
                   </label>
                   <input
                     type="time"
-                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                    className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                     style={{ colorScheme: 'dark' }}
                     name="startTime"
                     value={form.startTime}
@@ -344,12 +344,12 @@ export function CreateClassModal({
               {/* End Time + Branch */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">
-                    End Time <span className="text-red-400">*</span>
+                  <label className="block text-muted text-sm mb-1">
+                    End Time <span className="text-danger">*</span>
                   </label>
                   <input
                     type="time"
-                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                    className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                     style={{ colorScheme: 'dark' }}
                     name="endTime"
                     value={form.endTime}
@@ -360,14 +360,14 @@ export function CreateClassModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">
-                    Branch <span className="text-red-400">*</span>
+                  <label className="block text-muted text-sm mb-1">
+                    Branch <span className="text-danger">*</span>
                   </label>
                   <select
                     value={form.branchId}
                     onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
                     disabled={branchesLoading}
-                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat disabled:opacity-50"
+                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat disabled:opacity-50"
                   >
                     <option value="">{branchesLoading ? "Memuat branch..." : "Pilih Branch..."}</option>
 
@@ -394,12 +394,12 @@ export function CreateClassModal({
 
               {/* Room */}
               <div>
-                <label className="block text-gray-400 text-sm mb-1">
-                  Room <span className="text-red-400">*</span>
+                <label className="block text-muted text-sm mb-1">
+                  Room <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
-                  className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                  className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                   name="roomName"
                   value={form.roomName}
                   onChange={(e) =>
@@ -413,12 +413,12 @@ export function CreateClassModal({
               {/* Class Type + Difficulty */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">
-                    Class Type <span className="text-red-400">*</span>
+                  <label className="block text-muted text-sm mb-1">
+                    Class Type <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
-                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                    className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                     name="classType"
                     value={form.classType}
                     onChange={(e) =>
@@ -429,12 +429,12 @@ export function CreateClassModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">
-                    Difficulty <span className="text-red-400">*</span>
+                  <label className="block text-muted text-sm mb-1">
+                    Difficulty <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
-                    className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                    className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                     name="difficultyLevel"
                     value={form.difficultyLevel}
                     onChange={(e) =>
@@ -451,11 +451,11 @@ export function CreateClassModal({
 
               {/* Workout / class details — stored in the existing `description` field */}
               <div>
-                <label className="block text-gray-400 text-sm mb-1">
+                <label className="block text-muted text-sm mb-1">
                   Workout / Class Details
                 </label>
                 <textarea
-                  className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat font-mono text-sm leading-relaxed"
+                  className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat font-mono text-sm leading-relaxed"
                   name="description"
                   value={form.description}
                   onChange={(e) =>
@@ -464,7 +464,7 @@ export function CreateClassModal({
                   rows={10}
                   placeholder={WORKOUT_PLACEHOLDER}
                 />
-                <p className="text-[11px] text-gray-600 mt-1">
+                <p className="text-[11px] text-muted mt-1">
                   Multiline didukung — tulis warm up, strength, conditioning, dan cool
                   down. Tersimpan di field description yang sudah ada.
                 </p>
@@ -482,7 +482,7 @@ export function CreateClassModal({
 
               {/* Error */}
               {error ? (
-                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+                <p className="text-sm text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
                   {error}
                 </p>
               ) : null}

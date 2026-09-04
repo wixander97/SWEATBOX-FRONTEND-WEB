@@ -23,13 +23,13 @@ export function ParticipantList({
   status: ParticipantsStatus;
 }) {
   if (status === "loading" && participants.length === 0) {
-    return <p className="text-xs text-gray-400 py-2">Memuat peserta...</p>;
+    return <p className="text-xs text-muted py-2">Memuat peserta...</p>;
   }
   if (status === "error" && participants.length === 0) {
-    return <p className="text-xs text-red-400 py-2">Gagal memuat peserta.</p>;
+    return <p className="text-xs text-danger py-2">Gagal memuat peserta.</p>;
   }
   if (participants.length === 0) {
-    return <p className="text-xs text-gray-500 py-2">Belum ada peserta.</p>;
+    return <p className="text-xs text-muted py-2">Belum ada peserta.</p>;
   }
 
   return (
@@ -39,23 +39,23 @@ export function ParticipantList({
         return (
           <li
             key={p.memberId ?? i}
-            className="text-sm text-gray-200 flex items-center gap-2 flex-wrap"
+            className="text-sm text-fg-soft flex items-center gap-2 flex-wrap"
           >
-            <i className="fas fa-user text-gray-500 text-xs" aria-hidden />
+            <i className="fas fa-user text-muted text-xs" aria-hidden />
             <span>{participantName(p)}</span>
             {p.memberCode && (
-              <span className="text-xs text-gray-500">({p.memberCode})</span>
+              <span className="text-xs text-muted">({p.memberCode})</span>
             )}
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                 attended
-                  ? "bg-green-500/15 text-green-400"
-                  : "bg-gray-500/15 text-gray-300"
+                  ? "bg-green-500/15 text-success"
+                  : "bg-gray-500/15 text-fg-soft"
               }`}
             >
               {attended ? "Attended" : "Pending"}
             </span>
-            <span className="text-xs text-gray-500 ml-auto">
+            <span className="text-xs text-muted ml-auto">
               {p.checkInTime ? formatDateTime(p.checkInTime) : "—"}
             </span>
           </li>

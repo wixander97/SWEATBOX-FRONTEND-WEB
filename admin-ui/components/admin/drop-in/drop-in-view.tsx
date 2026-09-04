@@ -156,11 +156,11 @@ export function DropInView() {
   return (
     <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h2 className="text-lg font-display font-bold text-white">Drop In</h2>
+        <h2 className="text-lg font-display font-bold text-fg">Drop In</h2>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative">
             <i
-              className={`fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs ${searchInput ? "text-sweat" : "text-gray-500"}`}
+              className={`fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs ${searchInput ? "text-accent-ink" : "text-muted"}`}
               aria-hidden
             />
             <input
@@ -168,7 +168,7 @@ export function DropInView() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search member / code / branch..."
-              className="w-full sm:w-64 bg-sidebar border border-border text-white text-sm rounded-lg pl-9 pr-9 py-2 focus:outline-none focus:border-sweat transition placeholder:text-gray-500"
+              className="w-full sm:w-64 bg-sidebar border border-border text-fg text-sm rounded-lg pl-9 pr-9 py-2 focus:outline-none focus:border-sweat transition placeholder:text-muted"
             />
             {searchInput && (
               <button
@@ -178,7 +178,7 @@ export function DropInView() {
                   setSearch("");
                   setPage(1);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-fg transition"
                 aria-label="Clear search"
                 title="Clear search"
               >
@@ -189,7 +189,7 @@ export function DropInView() {
           <button
             type="button"
             onClick={() => void exportXlsx()}
-            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center gap-2"
+            className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition flex items-center gap-2"
           >
             <i className="fas fa-file-export" aria-hidden />
             Export
@@ -198,18 +198,18 @@ export function DropInView() {
       </div>
 
       {loading ? (
-        <div className="p-6 text-gray-400">Loading...</div>
+        <div className="p-6 text-muted">Loading...</div>
       ) : error ? (
-        <div className="p-6 text-red-400">{error}</div>
+        <div className="p-6 text-danger">{error}</div>
       ) : passes.length === 0 ? (
-        <div className="p-6 text-gray-400">
+        <div className="p-6 text-muted">
           No drop-in passes found{search ? ` for "${search}"` : ""}.
         </div>
       ) : (
         <>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] text-left text-sm text-gray-400">
-              <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+            <table className="w-full min-w-[800px] text-left text-sm text-muted">
+              <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
                 <tr>
                   <th className="px-6 py-4">Member Name</th>
                   <th className="px-6 py-4">Member Code</th>
@@ -224,33 +224,33 @@ export function DropInView() {
               </thead>
               <tbody className="divide-y divide-border">
                 {passes.map((p) => (
-                  <tr key={p.id} className="hover:bg-white/5 transition">
-                    <td className="px-6 py-4 font-medium text-white">
+                  <tr key={p.id} className="hover:bg-fg/5 transition">
+                    <td className="px-6 py-4 font-medium text-fg">
                       {p.member?.fullName ?? "—"}
                     </td>
-                    <td className="px-6 py-4 font-mono text-xs text-sweat">
+                    <td className="px-6 py-4 font-mono text-xs text-accent-ink">
                       {p.member?.memberCode ?? "—"}
                     </td>
-                    <td className="px-6 py-4 text-white">
+                    <td className="px-6 py-4 text-fg">
                       {p.branch?.branchName ?? "—"}
                     </td>
-                    <td className="px-6 py-4 text-center text-white">
+                    <td className="px-6 py-4 text-center text-fg">
                       {p.totalVisits}
                     </td>
-                    <td className="px-6 py-4 text-center font-mono text-sweat font-semibold">
+                    <td className="px-6 py-4 text-center font-mono text-accent-ink font-semibold">
                       {p.remainingVisits}
                     </td>
-                    <td className="px-6 py-4 text-gray-400">
+                    <td className="px-6 py-4 text-muted">
                       {formatDate(p.purchasedAt)}
                     </td>
-                    <td className="px-6 py-4 text-gray-400">
+                    <td className="px-6 py-4 text-muted">
                       {formatDate(p.expiredAt)}
                     </td>
                     <td className="px-6 py-4">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${p.isActive
-                          ? "bg-green-500/10 text-green-400 border-green-500/30"
-                          : "bg-red-500/10 text-red-400 border-red-500/30"
+                          ? "bg-green-500/10 text-success border-green-500/30"
+                          : "bg-red-500/10 text-danger border-red-500/30"
                           }`}
                       >
                         {p.isActive ? "Active" : "Expired"}
@@ -263,7 +263,7 @@ export function DropInView() {
                           setDetailMemberId(p.memberId);
                           setDetailMemberName(p.member?.fullName ?? "");
                         }}
-                        className="text-xs text-gray-400 hover:text-white border border-border px-2 py-1 rounded transition"
+                        className="text-xs text-muted hover:text-fg border border-border px-2 py-1 rounded transition"
                       >
                         Detail
                       </button>
@@ -276,24 +276,24 @@ export function DropInView() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
-              <span className="text-xs text-gray-500">Total {totalItems} item</span>
+              <span className="text-xs text-muted">Total {totalItems} item</span>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="bg-sidebar border border-border text-muted px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   Prev
                 </button>
-                <span className="text-xs text-gray-400 px-2 py-1">
+                <span className="text-xs text-muted px-2 py-1">
                   {page} / {totalPages}
                 </span>
                 <button
                   type="button"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="bg-sidebar border border-border text-muted px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   Next
                 </button>

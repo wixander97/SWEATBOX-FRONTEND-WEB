@@ -58,11 +58,11 @@ function statusBadgeClass(status: string) {
     case "Completed":
       return "bg-emerald-500/15 text-emerald-200 border border-emerald-500/35";
     case "Cancelled":
-      return "bg-red-500/15 text-red-200 border border-red-500/35";
+      return "bg-red-500/15 text-danger border border-red-500/35";
     case "Active":
-      return "bg-sweat/15 text-sweat border border-sweat/35";
+      return "bg-sweat/15 text-accent-ink border border-sweat/35";
     default:
-      return "bg-gray-800 text-gray-300 border border-border";
+      return "bg-fg/5 text-fg-soft border border-border";
   }
 }
 
@@ -81,7 +81,7 @@ const BRANCH_COLOR_PALETTE: Array<{ dot: string; badge: string }> = [
 
 const BRANCH_COLOR_FALLBACK = {
   dot: "bg-gray-500",
-  badge: "bg-gray-800 text-gray-300 border border-border",
+  badge: "bg-fg/5 text-fg-soft border border-border",
 };
 
 export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
@@ -496,7 +496,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
               className={`px-3 py-2 rounded-lg text-xs font-bold border transition flex items-center gap-2 ${
                 viewMode === v.key
                   ? "bg-sweat text-black border-sweat"
-                  : "bg-sidebar border-border text-gray-400 hover:text-white"
+                  : "bg-sidebar border-border text-muted hover:text-fg"
               }`}
             >
               <i className={`fas ${v.icon}`} aria-hidden />
@@ -517,12 +517,12 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       </div>
 
       {seriesNotice && (
-        <p className="mb-4 text-xs text-sweat bg-sweat/10 border border-sweat/30 px-3 py-2 rounded flex items-start justify-between gap-3">
+        <p className="mb-4 text-xs text-accent-ink bg-sweat/10 border border-sweat/30 px-3 py-2 rounded flex items-start justify-between gap-3">
           <span>{seriesNotice}</span>
           <button
             type="button"
             onClick={() => setSeriesNotice("")}
-            className="text-gray-500 hover:text-white shrink-0"
+            className="text-muted hover:text-fg shrink-0"
             aria-label="Dismiss"
           >
             <i className="fas fa-times" aria-hidden />
@@ -561,7 +561,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${statusTab === t.key
                     ? "bg-sweat text-black border-sweat"
-                    : "bg-sidebar border-border text-gray-400 hover:text-white"
+                    : "bg-sidebar border-border text-muted hover:text-fg"
                     } ${keywordActive ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {t.label}
@@ -569,7 +569,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
               ))}
             </div>
             <div className="relative w-full sm:w-72">
-              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
               <input
                 type="text"
                 placeholder="Cari class schedule..."
@@ -583,7 +583,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                     setPage(1);
                   }
                 }}
-                className="w-full bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
               />
               {searchInput && (
                 <button
@@ -593,7 +593,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                     setKeyword("");
                     setPage(1);
                   }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-fg"
                   aria-label="Clear search"
                 >
                   <i className="fas fa-times" aria-hidden />
@@ -604,7 +604,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
               {/* Date filter */}
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-xs uppercase font-bold text-gray-400">
+                  <label className="flex items-center gap-1.5 text-xs uppercase font-bold text-muted">
                     <i className="fas fa-calendar" aria-hidden />
                     Date
                   </label>
@@ -616,7 +616,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         setPage(1);
                       }}
                       title="Clear date"
-                      className="text-gray-500 hover:text-white"
+                      className="text-muted hover:text-fg"
                       aria-label="Clear date"
                     >
                       <i className="fas fa-times" aria-hidden />
@@ -631,7 +631,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                     setPage(1);
                   }}
                   disabled={statusTab !== "all" || keywordActive}
-                  className={`[color-scheme:dark] bg-sidebar border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat disabled:opacity-50 ${filterDate && statusTab === "all" && !keywordActive ? "border-sweat" : "border-border"
+                  className={`[color-scheme:dark] bg-sidebar border text-fg px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat disabled:opacity-50 ${filterDate && statusTab === "all" && !keywordActive ? "border-sweat" : "border-border"
                     }`}
                 />
               </div>
@@ -639,7 +639,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
               {/* Location filter */}
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-xs uppercase font-bold text-gray-400">
+                  <label className="flex items-center gap-1.5 text-xs uppercase font-bold text-muted">
                     <i className="fas fa-map-marker-alt" aria-hidden />
                     Location
                   </label>
@@ -651,7 +651,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         setPage(1);
                       }}
                       title="Clear location"
-                      className="text-gray-500 hover:text-white"
+                      className="text-muted hover:text-fg"
                       aria-label="Clear location"
                     >
                       <i className="fas fa-times" aria-hidden />
@@ -665,7 +665,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                     setPage(1);
                   }}
                   disabled={statusTab !== "all" || keywordActive}
-                  className={`bg-sidebar border text-white px-4 py-2      
+                  className={`bg-sidebar border text-fg px-4 py-2      
                   rounded-lg text-sm focus:outline-none focus:border-sweat disabled:opacity-50   
                   ${filterLocation && statusTab === "all" && !keywordActive ? "border-sweat" : "border-border"
                     }`}
@@ -679,8 +679,8 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                 </select>
               </div>
             </div>
-            <p className="text-[11px] text-white flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="font-bold uppercase tracking-wide text-gray-400">Lokasi</span>
+            <p className="text-[11px] text-fg flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="font-bold uppercase tracking-wide text-muted">Lokasi</span>
               {sortedBranches.map((b, i) => (
                 <span key={b.id} className="inline-flex items-center gap-1.5">
                   <span className={"w-2 h-2 rounded-full " + branchDotClass(i)} aria-hidden />
@@ -693,7 +693,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
             <button
               type="button"
               onClick={() => void exportXlsx()}
-              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center justify-center gap-2 w-full sm:w-auto"
+              className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <i className="fas fa-file-export" aria-hidden />
               Export
@@ -709,8 +709,8 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-sm text-gray-400">
-            <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+          <table className="w-full min-w-[760px] text-left text-sm text-muted">
+            <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
               <tr>
                 {(
                   [
@@ -727,16 +727,16 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                     <button
                       type="button"
                       onClick={() => toggleSort(key)}
-                      className="flex items-center gap-1.5 hover:text-white transition group"
+                      className="flex items-center gap-1.5 hover:text-fg transition group"
                     >
                       {label}
                       <span className="flex flex-col leading-none text-[10px]">
                         <i
-                          className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-sweat" : "text-gray-400 group-hover:text-gray-200"}`}
+                          className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-accent-ink" : "text-muted group-hover:text-fg-soft"}`}
                           aria-hidden
                         />
                         <i
-                          className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-sweat" : "text-gray-400 group-hover:text-gray-200"}`}
+                          className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-accent-ink" : "text-muted group-hover:text-fg-soft"}`}
                           aria-hidden
                         />
                       </span>
@@ -749,19 +749,19 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td className="px-6 py-6 text-gray-400" colSpan={8}>
+                  <td className="px-6 py-6 text-muted" colSpan={8}>
                     Loading...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td className="px-6 py-6 text-red-400" colSpan={8}>
+                  <td className="px-6 py-6 text-danger" colSpan={8}>
                     {error}
                   </td>
                 </tr>
               ) : mappedRows.length === 0 ? (
                 <tr>
-                  <td className="px-6 py-6 text-gray-400" colSpan={8}>
+                  <td className="px-6 py-6 text-muted" colSpan={8}>
                     Belum ada data class.,
                   </td>
                 </tr>
@@ -770,14 +770,14 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                   const pct = c.capacity > 0 ? (c.enrolled / c.capacity) * 100 : 0;
                   return (
                     <tr key={c.id} className="table-row transition">
-                      <td className="px-6 py-4 text-gray-300">
+                      <td className="px-6 py-4 text-fg-soft">
                         {c.classDate ? new Date(c.classDate).toLocaleDateString("id-ID") : "-"}
                       </td>
-                      <td className="px-6 py-4 font-bold text-white">{c.time}</td>
-                      <td className="px-6 py-4 font-medium text-white">{c.className}</td>
+                      <td className="px-6 py-4 font-bold text-fg">{c.time}</td>
+                      <td className="px-6 py-4 font-medium text-fg">{c.className}</td>
                       <td className="px-6 py-4">
                         <span className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-gray-700 shrink-0" />
+                          <span className="w-6 h-6 rounded-full bg-fg/10 shrink-0" />
                           {c.trainer}
                         </span>
                       </td>
@@ -789,7 +789,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="bg-gray-700 h-2 rounded-full overflow-hidden w-24">
+                        <div className="bg-fg/10 h-2 rounded-full overflow-hidden w-24">
                           <div
                             className="bg-sweat h-full"
                             style={{ width: `${pct}%` }}
@@ -811,14 +811,14 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                           type="button"
                           title="View Detail"
                           onClick={() => setDetailTarget(c)}
-                          className="text-gray-400 hover:text-white mx-1"
+                          className="text-muted hover:text-fg mx-1"
                           aria-label="View Detail"
                         >
                           <i className="fas fa-eye" aria-hidden />
                         </button>
                         <button
                           type="button"
-                          className="text-white hover:text-sweat mx-1"
+                          className="text-fg hover:text-accent-ink mx-1"
                           aria-label="Edit"
                           onClick={() => {
                             setEditClass(c);
@@ -830,7 +830,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         {statusTab !== "cancelled" && !c.isCancelled && (
                           <button
                             type="button"
-                            className="text-yellow-500 hover:text-yellow-400 mx-1"
+                            className="text-yellow-500 hover:text-warning mx-1"
                             aria-label="Cancel Class"
                             title="Cancel Class"
                             onClick={() => {
@@ -843,7 +843,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         )}
                         <button
                           type="button"
-                          className="text-red-500 hover:text-red-400 mx-1"
+                          className="text-red-500 hover:text-danger mx-1"
                           aria-label="Delete"
                           onClick={() => {
                             setDeleteId(c.id);
@@ -861,7 +861,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
         </div>
       </div>
       <div className="px-4 sm:px-6 py-4 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted">
           Page {page} of {Math.max(1, totalPages)} • {totalItems} data
         </p>
         <div className="flex items-center gap-2">
@@ -869,7 +869,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
             type="button"
             disabled={page <= 1 || loading}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+            className="bg-sidebar border border-border text-fg px-3 py-1.5 rounded text-xs disabled:opacity-50"
           >
             Prev
           </button>
@@ -877,7 +877,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
             type="button"
             disabled={page >= totalPages || loading}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+            className="bg-sidebar border border-border text-fg px-3 py-1.5 rounded text-xs disabled:opacity-50"
           >
             Next
           </button>
@@ -915,12 +915,12 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       )}
 
       {deleteId && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-card w-full max-w-sm rounded-2xl border border-red-500/30 shadow-2xl p-6">
             <h3 className="text-lg font-bold mb-2">Delete Class?</h3>
-            <p className="text-gray-400 text-sm mb-4">This action cannot be undone.</p>
+            <p className="text-muted text-sm mb-4">This action cannot be undone.</p>
             {deleteError && (
-              <p className="text-red-400 text-sm mb-3">{deleteError}</p>
+              <p className="text-danger text-sm mb-3">{deleteError}</p>
             )}
             <div className="flex gap-3">
               <button
@@ -934,7 +934,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
               <button
                 type="button"
                 onClick={() => setDeleteId(null)}
-                className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm transition"
+                className="flex-1 bg-sidebar border border-border text-fg py-2 rounded-lg text-sm transition"
               >
                 Cancel
               </button>
@@ -944,12 +944,12 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       )}
 
       {cancelTarget && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-card w-full max-w-sm rounded-2xl border border-yellow-500/30 shadow-2xl p-6">
             <h3 className="text-lg font-bold mb-2">Cancel Class?</h3>
-            <p className="text-gray-400 text-sm mb-4">This will cancel the class schedule.</p>
+            <p className="text-muted text-sm mb-4">This will cancel the class schedule.</p>
             {cancelError && (
-              <p className="text-red-400 text-sm mb-3">{cancelError}</p>
+              <p className="text-danger text-sm mb-3">{cancelError}</p>
             )}
             <div className="flex gap-3">
               <button
@@ -966,7 +966,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                   setCancelTarget(null);
                   setCancelError("");
                 }}
-                className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm transition"
+                className="flex-1 bg-sidebar border border-border text-fg py-2 rounded-lg text-sm transition"
               >
                 Close
               </button>

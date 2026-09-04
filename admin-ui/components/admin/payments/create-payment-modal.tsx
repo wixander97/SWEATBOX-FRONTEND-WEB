@@ -244,7 +244,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm"
       onClick={(e) => {
         if (e.currentTarget === e.target && !polling) onClose();
       }}
@@ -256,7 +256,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
             <button
               type="button"
               onClick={onClose}
-              className="text-gray-400 hover:text-white text-xl"
+              className="text-muted hover:text-fg text-xl"
             >
               ×
             </button>
@@ -272,7 +272,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
                   <div>
                     <p className="text-blue-500 font-semibold text-sm">Waiting for payment...</p>
-                    <p className="text-gray-400 text-xs mt-1">Please complete payment in the AsteriPay tab</p>
+                    <p className="text-muted text-xs mt-1">Please complete payment in the AsteriPay tab</p>
                   </div>
                 </div>
               </div>
@@ -284,7 +284,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
                   <div className="text-green-500 text-2xl">✓</div>
                   <div>
                     <p className="text-green-500 font-semibold text-sm">Payment successful!</p>
-                    <p className="text-gray-400 text-xs mt-1">This window will close automatically...</p>
+                    <p className="text-muted text-xs mt-1">This window will close automatically...</p>
                   </div>
                 </div>
               </div>
@@ -296,7 +296,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
                   <div className="text-red-500 text-2xl">✗</div>
                   <div>
                     <p className="text-red-500 font-semibold text-sm">Payment failed</p>
-                    <p className="text-gray-400 text-xs mt-1">This window will close automatically...</p>
+                    <p className="text-muted text-xs mt-1">This window will close automatically...</p>
                   </div>
                 </div>
               </div>
@@ -308,7 +308,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
                   <div className="text-yellow-500 text-2xl">⏱</div>
                   <div>
                     <p className="text-yellow-500 font-semibold text-sm">Payment timeout</p>
-                    <p className="text-gray-400 text-xs mt-1">Please check payment status manually in the payment list</p>
+                    <p className="text-muted text-xs mt-1">Please check payment status manually in the payment list</p>
                   </div>
                 </div>
               </div>
@@ -321,12 +321,12 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
           <div className="space-y-3">
             {/* Membership Plan Selection */}
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Membership Plan <span className="text-red-400">*</span></label>
+              <label className="block text-xs text-muted mb-1">Membership Plan <span className="text-danger">*</span></label>
               <select
                 value={form.membershipPlanId}
                 onChange={(e) => setForm((f) => ({ ...f, membershipPlanId: e.target.value }))}
                 disabled={plansLoading}
-                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat disabled:opacity-50"
+                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-fg focus:outline-none focus:border-sweat disabled:opacity-50"
               >
                 <option value="">{plansLoading ? "Loading plans..." : "Select a plan"}</option>
                 {plans.map((p) => (
@@ -340,11 +340,11 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
 
             {/* Payment Method Selection */}
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Payment Method <span className="text-red-400">*</span></label>
+              <label className="block text-xs text-muted mb-1">Payment Method <span className="text-danger">*</span></label>
               <select
                 value={form.paymentMethod}
                 onChange={(e) => setForm((f) => ({ ...f, paymentMethod: e.target.value }))}
-                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-fg focus:outline-none focus:border-sweat"
               >
                 <option value="">Select payment method</option>
                 {PAYMENT_METHODS.map((pm) => (
@@ -357,12 +357,12 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
 
             {/* Notes */}
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Notes (Optional)</label>
+              <label className="block text-xs text-muted mb-1">Notes (Optional)</label>
               <textarea
                 value={form.notes}
                 onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                 rows={3}
-                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-fg focus:outline-none focus:border-sweat"
                 placeholder="Add any notes about this payment..."
               />
             </div>
@@ -387,7 +387,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm"
+                className="flex-1 bg-sidebar border border-border text-fg py-2 rounded-lg text-sm"
               >
                 Cancel
               </button>

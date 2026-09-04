@@ -427,22 +427,22 @@ export function PtSessionTab() {
   return (
     <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h2 className="text-lg font-display font-bold text-white">PT Sessions</h2>
+        <h2 className="text-lg font-display font-bold text-fg">PT Sessions</h2>
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
           <div className="relative sm:w-56">
-            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
             <input
               type="text"
               placeholder="Cari session..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm pl-9 focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm pl-9 focus:outline-none focus:border-sweat"
             />
           </div>
           <button
             type="button"
             onClick={() => void exportXlsx()}
-            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center justify-center gap-2 w-full sm:w-auto"
+            className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition flex items-center justify-center gap-2 w-full sm:w-auto"
           >
             <i className="fas fa-file-export" aria-hidden />
             Export
@@ -458,14 +458,14 @@ export function PtSessionTab() {
       </div>
 
       {error && (
-        <div className="mb-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-2 rounded-lg">
+        <div className="mb-3 bg-red-500/10 border border-red-500/30 text-danger text-sm px-4 py-2 rounded-lg">
           {error}
         </div>
       )}
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1040px] text-left text-sm">
-          <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+          <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
             <tr>
               <th className="px-4 py-3">Coach</th>
               <th className="px-4 py-3">Branch</th>
@@ -481,41 +481,41 @@ export function PtSessionTab() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-muted">
                   Memuat...
                 </td>
               </tr>
             ) : visibleSessions.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-muted">
                   {search.trim() ? "Tidak ditemukan." : "Tidak ada PT session."}
                 </td>
               </tr>
             ) : (
               visibleSessions.map((s) => (
                 <Fragment key={s.id}>
-                  <tr className={expandedId === s.id ? "bg-white/5" : "hover:bg-white/5 transition"}>
-                    <td className="px-4 py-3 text-gray-300">
+                  <tr className={expandedId === s.id ? "bg-fg/5" : "hover:bg-fg/5 transition"}>
+                    <td className="px-4 py-3 text-fg-soft">
                       {s.coachName || coachName(s.coachId)}
                     </td>
-                    <td className="px-4 py-3 text-gray-300">
+                    <td className="px-4 py-3 text-fg-soft">
                       {s.branchName || branchName(s.branchId)}
                     </td>
-                    <td className="px-4 py-3 text-gray-300">{formatDateTime(s.sessionDate)}</td>
-                    <td className="px-4 py-3 text-gray-300">
+                    <td className="px-4 py-3 text-fg-soft">{formatDateTime(s.sessionDate)}</td>
+                    <td className="px-4 py-3 text-fg-soft">
                       {formatTime(s.startTime)} - {formatTime(s.endTime)}
                     </td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isGroup(s)
-                          ? "bg-blue-500/15 text-blue-400"
+                          ? "bg-blue-500/15 text-info"
                           : "bg-purple-500/15 text-purple-400"
                           }`}
                       >
                         {s.trainingType || "-"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center text-gray-300">
+                    <td className="px-4 py-3 text-center text-fg-soft">
                       {s.maxParticipants ?? 0}
                     </td>
                     <td className="px-4 py-3">
@@ -523,10 +523,10 @@ export function PtSessionTab() {
                         const label = statusLabel(s);
                         const cls =
                           label === "Cancelled"
-                            ? "bg-red-500/15 text-red-400"
+                            ? "bg-red-500/15 text-danger"
                             : label === "Completed"
-                              ? "bg-gray-500/15 text-gray-300"
-                              : "bg-green-500/15 text-green-400";
+                              ? "bg-gray-500/15 text-fg-soft"
+                              : "bg-green-500/15 text-success";
                         return (
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cls}`}
@@ -536,7 +536,7 @@ export function PtSessionTab() {
                         );
                       })()}
                     </td>
-                    <td className="px-4 py-3 text-gray-300">
+                    <td className="px-4 py-3 text-fg-soft">
                       <span className="block max-w-[14rem] truncate" title={s.notes || ""}>
                         {s.notes || "-"}
                       </span>
@@ -547,7 +547,7 @@ export function PtSessionTab() {
                         title={expandedId === s.id ? "Tutup peserta" : "Lihat peserta"}
                         aria-label="Lihat peserta"
                         onClick={() => toggleExpand(s)}
-                        className="text-gray-400 hover:text-white mx-1"
+                        className="text-muted hover:text-fg mx-1"
                       >
                         <i
                           className={`fas fa-chevron-${expandedId === s.id ? "up" : "down"}`}
@@ -558,7 +558,7 @@ export function PtSessionTab() {
                         type="button"
                         title="View Detail"
                         onClick={() => setDetailTarget(s)}
-                        className="text-gray-400 hover:text-white mx-1"
+                        className="text-muted hover:text-fg mx-1"
                       >
                         <i className="fas fa-eye" aria-hidden />
                       </button>
@@ -567,7 +567,7 @@ export function PtSessionTab() {
                           type="button"
                           title="Add Member"
                           onClick={() => setAddMemberTarget(s)}
-                          className="text-gray-400 hover:text-white mx-1"
+                          className="text-muted hover:text-fg mx-1"
                         >
                           <i className="fas fa-user-plus" aria-hidden />
                         </button>
@@ -577,7 +577,7 @@ export function PtSessionTab() {
                           type="button"
                           title="Cancel Session"
                           onClick={() => setCancelTarget(s)}
-                          className="text-red-500 hover:text-red-400 mx-1"
+                          className="text-red-500 hover:text-danger mx-1"
                         >
                           <i className="fas fa-ban" aria-hidden />
                         </button>
@@ -588,14 +588,14 @@ export function PtSessionTab() {
                     <tr className="bg-sidebar/30">
                       <td colSpan={9} className="px-4 py-3">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                          <span className="text-xs font-bold uppercase tracking-wider text-muted">
                             Participants
                           </span>
                           <button
                             type="button"
                             onClick={() => loadParticipants(s.id, { force: true })}
                             disabled={participantsStatus[s.id] === "loading"}
-                            className="text-gray-400 hover:text-white text-xs disabled:opacity-50"
+                            className="text-muted hover:text-fg text-xs disabled:opacity-50"
                             aria-label="Refresh peserta"
                             title="Refresh peserta"
                           >
@@ -620,24 +620,24 @@ export function PtSessionTab() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <span className="text-xs text-gray-500">Total {totalItems} item</span>
+          <span className="text-xs text-muted">Total {totalItems} item</span>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => { setSearch(""); setPage((p) => Math.max(1, p - 1)); }}
               disabled={page <= 1}
-              className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="bg-sidebar border border-border text-muted px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Prev
             </button>
-            <span className="text-xs text-gray-400 px-2 py-1">
+            <span className="text-xs text-muted px-2 py-1">
               {page} / {totalPages}
             </span>
             <button
               type="button"
               onClick={() => { setSearch(""); setPage((p) => Math.min(totalPages, p + 1)); }}
               disabled={page >= totalPages}
-              className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="bg-sidebar border border-border text-muted px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Next
             </button>

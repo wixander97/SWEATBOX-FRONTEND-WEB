@@ -161,8 +161,8 @@ export function MembershipPlansView() {
             priceDisplay: p.price ? p.price.toLocaleString("id-ID") : "-",
             validityDisplay: `${p.validityDays} hari`,
             statusBadge: p.isActive
-                ? "bg-green-500/15 text-green-200 border border-green-500/35"
-                : "bg-red-500/15 text-red-200 border border-red-500/35",
+                ? "bg-green-500/15 text-success border border-green-500/35"
+                : "bg-red-500/15 text-danger border border-red-500/35",
             statusText: p.isActive ? "Active" : "Inactive",
         }));
         if (!sortKey) return rows;
@@ -279,7 +279,7 @@ export function MembershipPlansView() {
                     <div className="flex flex-col gap-3">
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                             <div className="relative w-full sm:w-72">
-                                <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+                                <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
                                 <input
                                     type="text"
                                     placeholder="Cari membership plan..."
@@ -293,7 +293,7 @@ export function MembershipPlansView() {
                                             setPage(1);
                                         }
                                     }}
-                                    className="w-full bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+                                    className="w-full bg-sidebar border border-border text-fg pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
                                 />
                                 {searchInput && (
                                     <button
@@ -303,7 +303,7 @@ export function MembershipPlansView() {
                                             setKeyword("");
                                             setPage(1);
                                         }}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-fg"
                                         aria-label="Clear search"
                                     >
                                         <i className="fas fa-times" aria-hidden />
@@ -315,15 +315,15 @@ export function MembershipPlansView() {
                                 onChange={(e) =>
                                     setFilterActive(e.target.value as "all" | "active" | "inactive")
                                 }
-                                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat w-full sm:w-40"
+                                className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat w-full sm:w-40"
                             >
                                 <option value="all">All Plans</option>
                                 <option value="active">Active Plans</option>
                                 <option value="inactive">Inactive Plans</option>
                             </select>
                         </div>
-                        <p className="text-[11px] text-gray-500 flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <span className="font-bold uppercase tracking-wide text-gray-400">
+                        <p className="text-[11px] text-muted flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <span className="font-bold uppercase tracking-wide text-muted">
                                 Status
                             </span>
                             <span className="inline-flex items-center gap-1.5">
@@ -340,7 +340,7 @@ export function MembershipPlansView() {
                         <button
                             type="button"
                             onClick={() => void exportXlsx()}
-                            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center justify-center gap-2 w-full sm:w-auto"
+                            className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
                             <i className="fas fa-file-export" aria-hidden />
                             Export
@@ -359,13 +359,13 @@ export function MembershipPlansView() {
                     </div>
                 </div>
                 {error && (
-                    <div className="p-4 sm:p-6 bg-red-500/10 border-b border-red-500/30 text-red-200 text-sm">
+                    <div className="p-4 sm:p-6 bg-red-500/10 border-b border-red-500/30 text-danger text-sm">
                         {error}
                     </div>
                 )}
                 <div className="overflow-x-auto">
-                    <table className="w-full min-w-[900px] text-left text-sm text-gray-400">
-                        <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+                    <table className="w-full min-w-[900px] text-left text-sm text-muted">
+                        <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
                             <tr>
                                 {(
                                     [
@@ -380,21 +380,21 @@ export function MembershipPlansView() {
                                         <button
                                             type="button"
                                             onClick={() => toggleSort(key)}
-                                            className="flex items-center gap-1.5 hover:text-white transition group"
+                                            className="flex items-center gap-1.5 hover:text-fg transition group"
                                         >
                                             {label}
                                             <span className="flex flex-col leading-none text-[10px]">
                                                 <i
                                                     className={`fas fa-caret-up ${sortKey === key && sortDir === "asc"
-                                                        ? "text-sweat"
-                                                        : "text-gray-600 group-hover:text-gray-400"
+                                                        ? "text-accent-ink"
+                                                        : "text-muted group-hover:text-muted"
                                                         }`}
                                                     aria-hidden
                                                 />
                                                 <i
                                                     className={`fas fa-caret-down ${sortKey === key && sortDir === "desc"
-                                                        ? "text-sweat"
-                                                        : "text-gray-600 group-hover:text-gray-400"
+                                                        ? "text-accent-ink"
+                                                        : "text-muted group-hover:text-muted"
                                                         }`}
                                                     aria-hidden
                                                 />
@@ -414,14 +414,14 @@ export function MembershipPlansView() {
                                 </tr>
                             ) : mappedRows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-muted">
                                         No membership plans found
                                     </td>
                                 </tr>
                             ) : (
                                 mappedRows.map((plan) => (
                                     <tr key={plan.id} className="hover:bg-sidebar/50 transition">
-                                        <td className="px-6 py-4 font-semibold text-white">
+                                        <td className="px-6 py-4 font-semibold text-fg">
                                             {plan.planName}
                                         </td>
                                         <td className="px-6 py-4">{plan.credits}</td>
@@ -437,7 +437,7 @@ export function MembershipPlansView() {
                                         <td className="px-6 py-4 text-right">
                                             <button
                                                 type="button"
-                                                className="text-gray-400 hover:text-white mx-1"
+                                                className="text-muted hover:text-fg mx-1"
                                                 aria-label="Edit"
                                                 onClick={() => {
                                                     setSelected(plan);
@@ -448,7 +448,7 @@ export function MembershipPlansView() {
                                             </button>
                                             <button
                                                 type="button"
-                                                className="text-red-500 hover:text-red-400 mx-1"
+                                                className="text-red-500 hover:text-danger mx-1"
                                                 aria-label="Delete"
                                                 onClick={() => void deletePlan(plan.id)}
                                             >
@@ -463,7 +463,7 @@ export function MembershipPlansView() {
                 </div>
                 {totalPages > 1 && (
                     <div className="p-4 sm:p-6 border-t border-border flex items-center justify-between">
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted">
                             Page {page} of {totalPages} • {totalItems} total plans
                         </div>
                         <div className="flex items-center gap-2">
@@ -471,7 +471,7 @@ export function MembershipPlansView() {
                                 type="button"
                                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                                 disabled={page === 1}
-                                className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                className="bg-sidebar border border-border text-muted px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed transition"
                             >
                                 <i className="fas fa-chevron-left" aria-hidden />
                             </button>
@@ -479,7 +479,7 @@ export function MembershipPlansView() {
                                 type="button"
                                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
-                                className="bg-sidebar border border-border text-gray-400 px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                className="bg-sidebar border border-border text-muted px-3 py-1 rounded text-xs font-semibold hover:border-sweat hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed transition"
                             >
                                 <i className="fas fa-chevron-right" aria-hidden />
                             </button>

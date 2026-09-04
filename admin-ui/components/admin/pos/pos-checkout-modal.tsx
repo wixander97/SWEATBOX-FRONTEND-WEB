@@ -16,6 +16,8 @@ import { PosReceiptModal } from "./pos-receipt-modal";
 type Props = {
   items: CartItem[];
   customer: ApiMember;
+  /** Active POS branch — decides which merchant a payment settles against. */
+  branchId?: string;
   /** Active POS branch, stamped onto the payment note. */
   branchName?: string;
   onClose: () => void;
@@ -52,12 +54,13 @@ function StatusPill({ label, tone }: { label: string; tone: "wait" | "ok" | "bad
 export function PosCheckoutModal({
   items,
   customer,
+  branchId,
   branchName,
   onClose,
   onCompleted,
   onBusyChange,
 }: Props) {
-  const checkout = usePosCheckout(items, customer, branchName);
+  const checkout = usePosCheckout(items, customer, branchName, branchId);
   const [selected, setSelected] = useState<PosPaymentChoice>("qris");
   const [notes, setNotes] = useState("");
   /** EDC slip reference per payment line — never carried between payments. */

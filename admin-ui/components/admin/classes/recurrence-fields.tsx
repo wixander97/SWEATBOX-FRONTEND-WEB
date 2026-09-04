@@ -49,8 +49,8 @@ export function RecurrenceFields({ value, onChange, startDate, disabled }: Props
   return (
     <div className="border border-border rounded-lg p-3 space-y-3 bg-sidebar/40">
       <div className="flex items-center gap-2">
-        <i className="fas fa-repeat text-sweat text-sm" aria-hidden />
-        <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+        <i className="fas fa-repeat text-accent-ink text-sm" aria-hidden />
+        <span className="text-xs font-bold uppercase tracking-wider text-muted">
           Recurrence
         </span>
       </div>
@@ -59,7 +59,7 @@ export function RecurrenceFields({ value, onChange, startDate, disabled }: Props
         value={value.frequency}
         onChange={(e) => setFrequency(e.target.value as RecurrenceFrequency)}
         disabled={disabled}
-        className="w-full bg-sidebar border border-border text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-sweat disabled:opacity-50"
+        className="w-full bg-sidebar border border-border text-fg px-4 py-2.5 rounded-lg focus:outline-none focus:border-sweat disabled:opacity-50"
       >
         {FREQUENCIES.map((f) => (
           <option key={f.value} value={f.value}>
@@ -70,7 +70,7 @@ export function RecurrenceFields({ value, onChange, startDate, disabled }: Props
 
       {showDays && (
         <div>
-          <p className="text-gray-400 text-xs mb-1.5">Repeat on</p>
+          <p className="text-muted text-xs mb-1.5">Repeat on</p>
           <div className="flex flex-wrap gap-1.5">
             {WEEKDAYS.map((d) => {
               const active = value.daysOfWeek.includes(d.value);
@@ -85,7 +85,7 @@ export function RecurrenceFields({ value, onChange, startDate, disabled }: Props
                   className={`w-11 py-1.5 rounded-lg text-xs font-bold border transition disabled:opacity-50 ${
                     active
                       ? "bg-sweat text-black border-sweat"
-                      : "bg-sidebar border-border text-gray-400 hover:text-white"
+                      : "bg-sidebar border-border text-muted hover:text-fg"
                   }`}
                 >
                   {d.short}
@@ -98,8 +98,8 @@ export function RecurrenceFields({ value, onChange, startDate, disabled }: Props
 
       {repeating && (
         <div>
-          <label className="block text-gray-400 text-xs mb-1">
-            Repeat until <span className="text-red-400">*</span>
+          <label className="block text-muted text-xs mb-1">
+            Repeat until <span className="text-danger">*</span>
           </label>
           <input
             type="date"
@@ -108,17 +108,17 @@ export function RecurrenceFields({ value, onChange, startDate, disabled }: Props
             onChange={(e) => onChange({ ...value, until: e.target.value })}
             disabled={disabled}
             style={{ colorScheme: "dark" }}
-            className="w-full bg-sidebar border border-border text-white px-4 py-2.5 rounded-lg focus:outline-none focus:border-sweat disabled:opacity-50"
+            className="w-full bg-sidebar border border-border text-fg px-4 py-2.5 rounded-lg focus:outline-none focus:border-sweat disabled:opacity-50"
           />
         </div>
       )}
 
       {repeating && startDate && (
-        <p className="text-[11px] text-gray-400">
-          <i className="fas fa-info-circle mr-1.5 text-sweat" aria-hidden />
+        <p className="text-[11px] text-muted">
+          <i className="fas fa-info-circle mr-1.5 text-accent-ink" aria-hidden />
           {describeRecurrence(value, startDate)}
           {preview.length > 0 && (
-            <span className="block text-gray-600 mt-1">
+            <span className="block text-muted mt-1">
               Mulai {new Date(`${preview[0]}T00:00:00`).toLocaleDateString("id-ID")}
               {preview.length > 1 &&
                 ` · terakhir ${new Date(

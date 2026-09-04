@@ -111,30 +111,30 @@ export function PaymentMethodsView() {
     <div className="bg-card rounded-xl border border-border overflow-hidden flex flex-col gap-4 p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-display uppercase text-white">
+          <h1 className="text-2xl font-bold font-display uppercase text-fg">
             Payment Methods
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             Kelola daftar payment method yang tersedia.
           </p>
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-2 rounded-lg">
+        <div className="bg-red-500/10 border border-red-500/30 text-danger text-sm px-4 py-2 rounded-lg">
           {error}
         </div>
       )}
 
       {statusError && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-2 rounded-lg">
+        <div className="bg-red-500/10 border border-red-500/30 text-danger text-sm px-4 py-2 rounded-lg">
           {statusError}
         </div>
       )}
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] text-left text-sm text-gray-400">
-          <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+        <table className="w-full min-w-[640px] text-left text-sm text-muted">
+          <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
             <tr>
               <th className="px-6 py-4">Provider</th>
               <th className="px-6 py-4">Payment Method</th>
@@ -144,20 +144,20 @@ export function PaymentMethodsView() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={3}>
+                <td className="px-6 py-6 text-muted" colSpan={3}>
                   Loading...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={3}>
+                <td className="px-6 py-6 text-muted" colSpan={3}>
                   Tidak ada data payment method.
                 </td>
               </tr>
             ) : (
               rows.map((r) => (
                 <tr key={r.id} className="table-row transition">
-                  <td className="px-6 py-4 font-bold text-white">{r.providerName}</td>
+                  <td className="px-6 py-4 font-bold text-fg">{r.providerName}</td>
                   <td className="px-6 py-4">{r.paymentMethodName}</td>
                   <td className="px-6 py-4 text-right">
                     <button
@@ -167,7 +167,7 @@ export function PaymentMethodsView() {
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed ${
                         r.isActive
                           ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/35 hover:bg-emerald-500/25"
-                          : "bg-gray-800 text-gray-300 border border-border hover:bg-gray-700"
+                          : "bg-fg/5 text-fg-soft border border-border hover:bg-fg/10"
                       }`}
                       aria-pressed={r.isActive}
                       title={r.isActive ? "Set Inactive" : "Set Active"}

@@ -118,14 +118,14 @@ export function PromoBannersView() {
               <select
                 value={filterMode}
                 onChange={(e) => setFilterMode(e.target.value as FilterMode)}
-                className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
+                className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat"
               >
                 <option value="all">All Banners</option>
                 <option value="active">Active Banners</option>
               </select>
             </div>
-            <p className="text-[11px] text-gray-500 flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="font-bold uppercase tracking-wide text-gray-400">
+            <p className="text-[11px] text-muted flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="font-bold uppercase tracking-wide text-muted">
                 Status
               </span>
               <span className="inline-flex items-center gap-1.5">
@@ -149,19 +149,19 @@ export function PromoBannersView() {
         </div>
 
         {error && (
-          <div className="p-4 sm:p-6 bg-red-500/10 border-b border-red-500/30 text-red-200 text-sm">
+          <div className="p-4 sm:p-6 bg-red-500/10 border-b border-red-500/30 text-danger text-sm">
             {error}
           </div>
         )}
 
         <div className="p-4 sm:p-6">
           {loading ? (
-            <div className="py-10 text-center text-gray-400 text-sm">
+            <div className="py-10 text-center text-muted text-sm">
               <i className="fas fa-spinner fa-spin mr-2" aria-hidden />
               Loading...
             </div>
           ) : banners.length === 0 ? (
-            <div className="py-10 text-center text-gray-500 text-sm">
+            <div className="py-10 text-center text-muted text-sm">
               No promo banners found.
             </div>
           ) : (
@@ -171,7 +171,7 @@ export function PromoBannersView() {
                   key={b.id}
                   className="bg-sidebar border border-border rounded-xl overflow-hidden flex flex-col"
                 >
-                  <div className="relative w-full aspect-[16/9] bg-black/30">
+                  <div className="relative w-full aspect-[16/9] bg-overlay">
                     {b.imageUrl ? (
                       <Image
                         src={b.imageUrl}
@@ -182,37 +182,37 @@ export function PromoBannersView() {
                         unoptimized
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-gray-600">
+                      <div className="absolute inset-0 flex items-center justify-center text-muted">
                         <i className="fas fa-image text-3xl" aria-hidden />
                       </div>
                     )}
                   </div>
                   <div className="p-4 flex flex-col gap-2 grow">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-sm font-bold text-white leading-tight line-clamp-2">
+                      <h3 className="text-sm font-bold text-fg leading-tight line-clamp-2">
                         {b.title || "—"}
                       </h3>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${
                           b.isActive
-                            ? "bg-green-500/15 text-green-200 border border-green-500/35"
-                            : "bg-red-500/15 text-red-200 border border-red-500/35"
+                            ? "bg-green-500/15 text-success border border-green-500/35"
+                            : "bg-red-500/15 text-danger border border-red-500/35"
                         }`}
                       >
                         {b.isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
                     {b.description && (
-                      <p className="text-xs text-gray-400 line-clamp-2">
+                      <p className="text-xs text-muted line-clamp-2">
                         {b.description}
                       </p>
                     )}
                     <div className="flex flex-wrap gap-2 mt-1">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-card border border-border text-gray-300">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-card border border-border text-fg-soft">
                         <i className="fas fa-directions mr-1" aria-hidden />
                         {redirectTypeLabel(b.redirectType)}
                       </span>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-card border border-border text-gray-300">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-card border border-border text-fg-soft">
                         Order: {b.displayOrder ?? 0}
                       </span>
                     </div>
@@ -220,7 +220,7 @@ export function PromoBannersView() {
                       <button
                         type="button"
                         onClick={() => setDetailId(b.id)}
-                        className="flex-1 text-xs py-1.5 rounded text-gray-300 hover:text-white hover:bg-white/5 transition"
+                        className="flex-1 text-xs py-1.5 rounded text-fg-soft hover:text-fg hover:bg-fg/5 transition"
                       >
                         <i className="fas fa-eye mr-1" aria-hidden />
                         Detail
@@ -228,7 +228,7 @@ export function PromoBannersView() {
                       <button
                         type="button"
                         onClick={() => openEdit(b)}
-                        className="flex-1 text-xs py-1.5 rounded text-gray-300 hover:text-white hover:bg-white/5 transition"
+                        className="flex-1 text-xs py-1.5 rounded text-fg-soft hover:text-fg hover:bg-fg/5 transition"
                       >
                         <i className="fas fa-pen mr-1" aria-hidden />
                         Edit
@@ -236,7 +236,7 @@ export function PromoBannersView() {
                       <button
                         type="button"
                         onClick={() => void deleteBanner(b.id)}
-                        className="flex-1 text-xs py-1.5 rounded text-red-400 hover:text-red-300 hover:bg-white/5 transition"
+                        className="flex-1 text-xs py-1.5 rounded text-danger hover:text-danger hover:bg-fg/5 transition"
                       >
                         <i className="fas fa-trash mr-1" aria-hidden />
                         Delete

@@ -150,7 +150,7 @@ function calculateClassOccupancy(classes: TodayClass[]): number | null {
 }
 
 function Skeleton({ w = "w-16" }: { w?: string }) {
-  return <span className={`inline-block ${w} h-8 bg-gray-700 rounded animate-pulse`} />;
+  return <span className={`inline-block ${w} h-8 bg-fg/10 rounded animate-pulse`} />;
 }
 
 // ── Enhanced StatCard with growth, target, showAvg props ────────────────────
@@ -181,19 +181,19 @@ function StatCard({
   const inner = (
     <div className="bg-card p-5 rounded-xl border border-border hover:border-sweat/40 transition cursor-default group h-full flex flex-col justify-between">
       <div className="flex items-start justify-between mb-3">
-        <p className="text-gray-400 text-xs font-bold uppercase tracking-wide leading-tight">{label}</p>
-        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-sweat/10 transition">
-          <i className={`fas ${icon} text-gray-500 group-hover:text-sweat text-sm transition`} aria-hidden />
+        <p className="text-muted text-xs font-bold uppercase tracking-wide leading-tight">{label}</p>
+        <div className="w-8 h-8 rounded-lg bg-fg/5 flex items-center justify-center group-hover:bg-sweat/10 transition">
+          <i className={`fas ${icon} text-muted group-hover:text-accent-ink text-sm transition`} aria-hidden />
         </div>
       </div>
       <div>
         <div className="flex items-baseline gap-2">
-          <p className={`text-2xl font-bold ${accent ?? "text-white"}`}>
+          <p className={`text-2xl font-bold ${accent ?? "text-fg"}`}>
             {loading ? <Skeleton /> : value}
           </p>
           {/* Growth indicator - green ▲ with percentage */}
           {!loading && growth != null && (
-            <span className="text-green-400 text-sm font-bold flex items-center">
+            <span className="text-success text-sm font-bold flex items-center">
               ▲ {growth}%
             </span>
           )}
@@ -202,11 +202,11 @@ function StatCard({
         {!loading && (
           <div className="mt-1">
             {target != null ? (
-              <p className="text-xs text-gray-500">of {formatRupiah(target)}</p>
+              <p className="text-xs text-muted">of {formatRupiah(target)}</p>
             ) : showAvg ? (
-              <p className="text-xs text-gray-500">Avg</p>
+              <p className="text-xs text-muted">Avg</p>
             ) : sub ? (
-              <p className="text-xs text-gray-500">{sub}</p>
+              <p className="text-xs text-muted">{sub}</p>
             ) : null}
           </div>
         )}
@@ -237,10 +237,10 @@ function CompactStatCard({
   const inner = (
     <div className="bg-card/50 p-3 rounded-lg border border-border/50 hover:border-sweat/30 transition cursor-default group">
       <div className="flex items-center gap-2">
-        <i className={`fas ${icon} text-gray-500 group-hover:text-sweat text-xs transition`} aria-hidden />
-        <span className="text-gray-400 text-[10px] uppercase tracking-wide font-bold">{label}</span>
+        <i className={`fas ${icon} text-muted group-hover:text-accent-ink text-xs transition`} aria-hidden />
+        <span className="text-muted text-[10px] uppercase tracking-wide font-bold">{label}</span>
       </div>
-      <p className={`text-lg font-bold ${accent ?? "text-white"} mt-1`}>
+      <p className={`text-lg font-bold ${accent ?? "text-fg"} mt-1`}>
         {loading ? <Skeleton w="w-10" /> : value}
       </p>
     </div>
@@ -440,23 +440,23 @@ export function DashboardView() {
           <StatCard
             label="Total Revenue" // FR-003: Changed from "Revenue Total" to "Revenue Monthly"
             value={totalRevenue != null ? formatRupiah(totalRevenue) : "—"}
-            accent="text-sweat"
+            accent="text-accent-ink"
             icon="fa-wallet"
             loading={loading}
             href={adminPaths.payments}
             target={targetPlaceholder} // FR-003: Target comparison
           />
         ) : (
-          <div className="bg-card p-5 rounded-xl border border-dashed border-gray-700 flex flex-col items-center justify-center opacity-60">
-            <i className="fas fa-lock text-gray-500 text-xl mb-2" aria-hidden />
-            <p className="text-gray-500 text-xs font-bold uppercase text-center">Revenue</p>
-            <p className="text-[10px] text-gray-600 mt-1">Owner Only</p>
+          <div className="bg-card p-5 rounded-xl border border-dashed border-border flex flex-col items-center justify-center opacity-60">
+            <i className="fas fa-lock text-muted text-xl mb-2" aria-hidden />
+            <p className="text-muted text-xs font-bold uppercase text-center">Revenue</p>
+            <p className="text-[10px] text-muted mt-1">Owner Only</p>
           </div>
         )}
         <StatCard
           label="Class Occupancy"
           value={classOccupancy != null ? `${Math.round(classOccupancy)}%` : "—"}
-          accent="text-yellow-400"
+          accent="text-warning"
           icon="fa-calendar-alt"
           loading={loading}
           href={adminPaths.classes}
@@ -477,7 +477,7 @@ export function DashboardView() {
         <CompactStatCard
           label="Expiring Soon"
           value={expiringCount ?? "—"}
-          accent={(expiringCount ?? 0) > 0 ? "text-yellow-400" : "text-white"}
+          accent={(expiringCount ?? 0) > 0 ? "text-warning" : "text-fg"}
           icon="fa-clock"
           loading={loading}
           href={adminPaths.members}
@@ -493,15 +493,15 @@ export function DashboardView() {
           <CompactStatCard
             label="Pending Payments"
             value={pendingCount ?? "—"}
-            accent={(pendingCount ?? 0) > 0 ? "text-yellow-400" : "text-white"}
+            accent={(pendingCount ?? 0) > 0 ? "text-warning" : "text-fg"}
             icon="fa-hourglass-half"
             loading={loading}
             href={`${adminPaths.payments}?status=pending`}
           />
         ) : (
-          <div className="bg-card/50 p-3 rounded-lg border border-dashed border-gray-700/50 flex items-center justify-center opacity-40">
-            <i className="fas fa-lock text-gray-600 text-xs" aria-hidden />
-            <span className="text-gray-600 text-[10px] uppercase ml-2 font-bold">Payments</span>
+          <div className="bg-card/50 p-3 rounded-lg border border-dashed border-border flex items-center justify-center opacity-40">
+            <i className="fas fa-lock text-muted text-xs" aria-hidden />
+            <span className="text-muted text-[10px] uppercase ml-2 font-bold">Payments</span>
           </div>
         )}
         <CompactStatCard
@@ -519,10 +519,10 @@ export function DashboardView() {
           onClick={() => setStatsBreakdownOpen(!statsBreakdownOpen)}
           className="w-full flex items-center justify-between bg-card/50 rounded-lg border border-border/50 px-4 py-3 mb-3 hover:bg-card/70 transition cursor-pointer"
         >
-          <span className="text-gray-400 text-xs font-bold uppercase tracking-wide">
+          <span className="text-muted text-xs font-bold uppercase tracking-wide">
             Quick Stats
           </span>
-          <i className={`fas fa-chevron-${statsBreakdownOpen ? "up" : "down"} text-gray-500 text-xs transition-transform`} aria-hidden />
+          <i className={`fas fa-chevron-${statsBreakdownOpen ? "up" : "down"} text-muted text-xs transition-transform`} aria-hidden />
         </button>
 
         {statsBreakdownOpen && (
@@ -530,23 +530,23 @@ export function DashboardView() {
             {/* Member Breakdown */}
             <div className="bg-card rounded-xl border border-border p-4">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="font-bold text-xs uppercase tracking-wide text-gray-300">Member Status</h4>
-                <Link href={adminPaths.members} className="text-[10px] text-sweat hover:underline">Lihat</Link>
+                <h4 className="font-bold text-xs uppercase tracking-wide text-fg-soft">Member Status</h4>
+                <Link href={adminPaths.members} className="text-[10px] text-accent-ink hover:underline">Lihat</Link>
               </div>
               <div className="space-y-2">
                 {loading ? (
                   [1, 2, 3].map((i) => (
                     <div key={i} className="flex justify-between items-center">
-                      <span className="w-20 h-3 bg-gray-700 rounded animate-pulse" />
-                      <span className="w-6 h-3 bg-gray-700 rounded animate-pulse" />
+                      <span className="w-20 h-3 bg-fg/10 rounded animate-pulse" />
+                      <span className="w-6 h-3 bg-fg/10 rounded animate-pulse" />
                     </div>
                   ))
                 ) : (
                   <>
-                    <QuickStatRow label="Active" value={activeMembers} accent="text-green-400" />
-                    <QuickStatRow label="Expiring Soon" value={expiringCount} accent="text-yellow-400" />
-                    <QuickStatRow label="Expired" value={expiredMembers} accent="text-red-400" />
-                    <QuickStatRow label="Frozen" value={frozenCount} accent="text-blue-400" />
+                    <QuickStatRow label="Active" value={activeMembers} accent="text-success" />
+                    <QuickStatRow label="Expiring Soon" value={expiringCount} accent="text-warning" />
+                    <QuickStatRow label="Expired" value={expiredMembers} accent="text-danger" />
+                    <QuickStatRow label="Frozen" value={frozenCount} accent="text-info" />
                   </>
                 )}
               </div>
@@ -555,26 +555,26 @@ export function DashboardView() {
             {/* Attendance Breakdown */}
             <div className="bg-card rounded-xl border border-border p-4">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="font-bold text-xs uppercase tracking-wide text-gray-300">Staff Attendance</h4>
-                <Link href={adminPaths.reports} className="text-[10px] text-sweat hover:underline">Lihat</Link>
+                <h4 className="font-bold text-xs uppercase tracking-wide text-fg-soft">Staff Attendance</h4>
+                <Link href={adminPaths.reports} className="text-[10px] text-accent-ink hover:underline">Lihat</Link>
               </div>
               <div className="space-y-2">
                 {loading ? (
                   [1, 2, 3].map((i) => (
                     <div key={i} className="flex justify-between items-center">
-                      <span className="w-16 h-3 bg-gray-700 rounded animate-pulse" />
-                      <span className="w-6 h-3 bg-gray-700 rounded animate-pulse" />
+                      <span className="w-16 h-3 bg-fg/10 rounded animate-pulse" />
+                      <span className="w-6 h-3 bg-fg/10 rounded animate-pulse" />
                     </div>
                   ))
                 ) : (
                   <>
-                    <AttendanceRow label="On Time" value={onTimeCount} color="text-green-400" icon="fa-check-circle" />
-                    <AttendanceRow label="Late" value={lateCount} color="text-yellow-400" icon="fa-exclamation-circle" />
-                    <AttendanceRow label="Absent" value={absentCount} color="text-red-400" icon="fa-times-circle" />
+                    <AttendanceRow label="On Time" value={onTimeCount} color="text-success" icon="fa-check-circle" />
+                    <AttendanceRow label="Late" value={lateCount} color="text-warning" icon="fa-exclamation-circle" />
+                    <AttendanceRow label="Absent" value={absentCount} color="text-danger" icon="fa-times-circle" />
                     {checkedIn != null && (
-                      <div className="pt-2 border-t border-border/50 flex justify-between items-center text-[10px] text-gray-400">
+                      <div className="pt-2 border-t border-border/50 flex justify-between items-center text-[10px] text-muted">
                         <span className="font-bold">Checked In</span>
-                        <span className="font-bold text-white">{checkedIn}{staffDisplay != null ? `/${staffDisplay}` : ""}</span>
+                        <span className="font-bold text-fg">{checkedIn}{staffDisplay != null ? `/${staffDisplay}` : ""}</span>
                       </div>
                     )}
                   </>
@@ -585,24 +585,24 @@ export function DashboardView() {
             {/* Class & Coach Stats */}
             <div className="bg-card rounded-xl border border-border p-4">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="font-bold text-xs uppercase tracking-wide text-gray-300">Kelas &amp; Coach</h4>
-                <Link href={adminPaths.classes} className="text-[10px] text-sweat hover:underline">Lihat</Link>
+                <h4 className="font-bold text-xs uppercase tracking-wide text-fg-soft">Kelas &amp; Coach</h4>
+                <Link href={adminPaths.classes} className="text-[10px] text-accent-ink hover:underline">Lihat</Link>
               </div>
               <div className="space-y-2">
                 {loading ? (
                   [1, 2, 3].map((i) => (
                     <div key={i} className="flex justify-between items-center">
-                      <span className="w-20 h-3 bg-gray-700 rounded animate-pulse" />
-                      <span className="w-6 h-3 bg-gray-700 rounded animate-pulse" />
+                      <span className="w-20 h-3 bg-fg/10 rounded animate-pulse" />
+                      <span className="w-6 h-3 bg-fg/10 rounded animate-pulse" />
                     </div>
                   ))
                 ) : (
                   <>
                     <QuickStatRow label="Total Kelas" value={totalClasses} />
-                    <QuickStatRow label="Cancelled" value={cancelledClasses} accent="text-red-400" />
-                    <QuickStatRow label="Completed" value={completedClasses} accent="text-gray-400" />
+                    <QuickStatRow label="Cancelled" value={cancelledClasses} accent="text-danger" />
+                    <QuickStatRow label="Completed" value={completedClasses} accent="text-muted" />
                     {avgRating != null && (
-                      <QuickStatRow label="Avg Rating" value={`${avgRating.toFixed(1)} ★`} accent="text-sweat" />
+                      <QuickStatRow label="Avg Rating" value={`${avgRating.toFixed(1)} ★`} accent="text-accent-ink" />
                     )}
                   </>
                 )}
@@ -618,13 +618,13 @@ export function DashboardView() {
           <div className="bg-card rounded-xl border border-border overflow-hidden">
             <div className="p-5 border-b border-border flex justify-between items-center">
               <h4 className="font-bold text-lg">Recent Transactions</h4>
-              <Link href={adminPaths.payments} className="text-xs text-sweat hover:underline">
+              <Link href={adminPaths.payments} className="text-xs text-accent-ink hover:underline">
                 View All
               </Link>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[460px] text-left text-sm text-gray-400">
-                <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+              <table className="w-full min-w-[460px] text-left text-sm text-muted">
+                <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
                   <tr>
                     <th className="px-5 py-3">Member</th>
                     <th className="px-5 py-3">Plan</th>
@@ -635,11 +635,11 @@ export function DashboardView() {
                 <tbody className="divide-y divide-border">
                   {loading ? (
                     <tr>
-                      <td colSpan={4} className="px-5 py-6 text-center text-gray-500">Loading...</td>
+                      <td colSpan={4} className="px-5 py-6 text-center text-muted">Loading...</td>
                     </tr>
                   ) : recentPayments.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-5 py-6 text-center text-gray-500">No recent transactions</td>
+                      <td colSpan={4} className="px-5 py-6 text-center text-muted">No recent transactions</td>
                     </tr>
                   ) : (
                     recentPayments.map((p) => {
@@ -648,15 +648,15 @@ export function DashboardView() {
                         p.paymentStatus === 1
                           ? "bg-green-500/10 text-green-500"
                           : p.paymentStatus === 0
-                            ? "bg-yellow-500/10 text-yellow-400"
-                            : "bg-red-500/10 text-red-400";
+                            ? "bg-yellow-500/10 text-warning"
+                            : "bg-red-500/10 text-danger";
                       return (
                         <tr key={p.id} className="table-row transition">
-                          <td className="px-5 py-3 font-medium text-white">
+                          <td className="px-5 py-3 font-medium text-fg">
                             {p.invoiceNo}
                           </td>
                           <td className="px-5 py-3">{p.membershipPlanName ?? "—"}</td>
-                          <td className="px-5 py-3 text-green-400 font-mono text-xs">
+                          <td className="px-5 py-3 text-success font-mono text-xs">
                             {formatRupiah(p.finalAmount)}
                           </td>
                           <td className="px-5 py-3">
@@ -684,11 +684,11 @@ export function DashboardView() {
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-[72px] bg-gray-800 rounded-lg animate-pulse" />
+                <div key={i} className="h-[72px] bg-fg/5 rounded-lg animate-pulse" />
               ))}
             </div>
           ) : todayClasses.length === 0 ? (
-            <p className="text-gray-500 text-sm">No classes scheduled for today.</p>
+            <p className="text-muted text-sm">No classes scheduled for today.</p>
           ) : (
             <div className="space-y-3">
               {todayClasses.map((c) => {
@@ -700,34 +700,34 @@ export function DashboardView() {
                     key={c.id}
                     className={`flex items-center gap-3 p-3 rounded-lg border transition ${isCancelled
                       ? "border-red-500/20 opacity-50"
-                      : "border-border hover:bg-white/5"
+                      : "border-border hover:bg-fg/5"
                       }`}
                   >
-                    <div className="w-14 h-14 bg-gray-800 rounded-lg flex flex-col items-center justify-center text-center shrink-0">
-                      <span className="text-[9px] text-gray-500 uppercase">Time</span>
-                      <span className="text-base font-bold text-white leading-tight">
+                    <div className="w-14 h-14 bg-fg/5 rounded-lg flex flex-col items-center justify-center text-center shrink-0">
+                      <span className="text-[9px] text-muted uppercase">Time</span>
+                      <span className="text-base font-bold text-fg leading-tight">
                         {(c.startTime ?? c.time ?? "—").substring(0, 5)}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h5 className="font-bold text-white text-sm truncate">
+                      <h5 className="font-bold text-fg text-sm truncate">
                         {c.className ?? c.name ?? "—"}
                         {isCancelled && (
-                          <span className="ml-2 text-[10px] text-red-400 font-normal">CANCELLED</span>
+                          <span className="ml-2 text-[10px] text-danger font-normal">CANCELLED</span>
                         )}
                       </h5>
                       {/* FR-005: "Coach" prefix before coach name */}
-                      <p className="text-xs text-gray-400 truncate">
+                      <p className="text-xs text-muted truncate">
                         Coach {c.coachName ?? "—"} · {c.branchName ?? c.location ?? "—"}
                       </p>
                     </div>
                     {/* FR-006: "X/Y Booked" with yellow styling */}
                     <div className="text-right shrink-0">
-                      <p className="text-xl font-bold text-sweat leading-none">
+                      <p className="text-xl font-bold text-accent-ink leading-none">
                         {bookedCount}
-                        <span className="text-xs text-gray-500 font-normal">/{capacity}</span>
+                        <span className="text-xs text-muted font-normal">/{capacity}</span>
                       </p>
-                      <p className="text-[10px] text-gray-500">Booked</p>
+                      <p className="text-[10px] text-muted">Booked</p>
                     </div>
                   </div>
                 );
@@ -756,7 +756,7 @@ function AttendanceRow({
   if (value == null) return null;
   return (
     <div className="flex justify-between items-center text-xs">
-      <span className="flex items-center gap-2 text-gray-400">
+      <span className="flex items-center gap-2 text-muted">
         <i className={`fas ${icon} text-[10px] ${color}`} aria-hidden />
         {label}
       </span>
@@ -777,8 +777,8 @@ function QuickStatRow({
   if (value == null) return null;
   return (
     <div className="flex justify-between items-center text-xs">
-      <span className="text-gray-400">{label}</span>
-      <span className={`font-bold ${accent ?? "text-white"}`}>
+      <span className="text-muted">{label}</span>
+      <span className={`font-bold ${accent ?? "text-fg"}`}>
         {typeof value === "number" ? value.toLocaleString("id-ID") : value}
       </span>
     </div>

@@ -23,7 +23,7 @@ export function RoleGuard({ allow, children }: Props) {
     return (
       <div className="bg-card rounded-xl border border-border p-8 text-center">
         <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-sweat border-t-transparent" />
-        <p className="text-sm text-gray-500 mt-3">Memeriksa akses...</p>
+        <p className="text-sm text-muted mt-3">Memeriksa akses...</p>
       </div>
     );
   }
@@ -31,11 +31,11 @@ export function RoleGuard({ allow, children }: Props) {
   if (!allow.includes(currentRole)) {
     return (
       <div className="bg-card rounded-xl border border-border p-8 text-center">
-        <i className="fas fa-lock text-3xl text-gray-700 mb-3 block" aria-hidden />
-        <h2 className="text-lg font-bold font-display uppercase text-white">
+        <i className="fas fa-lock text-3xl text-muted mb-3 block" aria-hidden />
+        <h2 className="text-lg font-bold font-display uppercase text-fg">
           Akses ditolak
         </h2>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-muted mt-1">
           Halaman ini hanya untuk SuperAdmin, Admin, dan Staff.
         </p>
       </div>

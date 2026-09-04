@@ -229,26 +229,26 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
           {totalRevenue !== undefined && (
             <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-gray-400 font-bold uppercase mb-1">Total Revenue</p>
-              <p className="text-2xl font-bold text-sweat">{formatRupiah(totalRevenue)}</p>
+              <p className="text-xs text-muted font-bold uppercase mb-1">Total Revenue</p>
+              <p className="text-2xl font-bold text-accent-ink">{formatRupiah(totalRevenue)}</p>
             </div>
           )}
           {summary.paidCount !== undefined && (
             <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-gray-400 font-bold uppercase mb-1">Paid</p>
-              <p className="text-2xl font-bold text-green-400">{summary.paidCount}</p>
+              <p className="text-xs text-muted font-bold uppercase mb-1">Paid</p>
+              <p className="text-2xl font-bold text-success">{summary.paidCount}</p>
             </div>
           )}
           {summary.pendingCount !== undefined && (
             <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-gray-400 font-bold uppercase mb-1">Pending</p>
-              <p className="text-2xl font-bold text-yellow-400">{summary.pendingCount}</p>
+              <p className="text-xs text-muted font-bold uppercase mb-1">Pending</p>
+              <p className="text-2xl font-bold text-warning">{summary.pendingCount}</p>
             </div>
           )}
           {summary.failedCount !== undefined && (
             <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-gray-400 font-bold uppercase mb-1">Failed</p>
-              <p className="text-2xl font-bold text-red-400">{summary.failedCount}</p>
+              <p className="text-xs text-muted font-bold uppercase mb-1">Failed</p>
+              <p className="text-2xl font-bold text-danger">{summary.failedCount}</p>
             </div>
           )}
         </div>
@@ -264,7 +264,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
                 onClick={() => setActiveTab(t.key)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${activeTab === t.key
                   ? "bg-sweat text-black border-sweat"
-                  : "bg-sidebar border-border text-gray-400 hover:text-white"
+                  : "bg-sidebar border-border text-muted hover:text-fg"
                   }`}
               >
                 {t.label}
@@ -274,7 +274,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="relative">
               <i
-                className={`fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs ${searchInput ? "text-sweat" : "text-gray-500"}`}
+                className={`fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs ${searchInput ? "text-accent-ink" : "text-muted"}`}
                 aria-hidden
               />
               <input
@@ -282,13 +282,13 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search invoice / plan..."
-                className="w-full sm:w-64 bg-sidebar border border-border text-white text-sm rounded-lg pl-9 pr-9 py-2 focus:outline-none focus:border-sweat transition placeholder:text-gray-500"
+                className="w-full sm:w-64 bg-sidebar border border-border text-fg text-sm rounded-lg pl-9 pr-9 py-2 focus:outline-none focus:border-sweat transition placeholder:text-muted"
               />
               {searchInput && (
                 <button
                   type="button"
                   onClick={() => { setSearchInput(""); setSearch(""); }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-fg transition"
                   aria-label="Clear search"
                   title="Clear search"
                 >
@@ -299,7 +299,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
             <button
               type="button"
               onClick={() => void exportXlsx()}
-              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition flex items-center gap-2"
+              className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition flex items-center gap-2"
             >
               <i className="fas fa-file-export" aria-hidden />
               Export
@@ -317,17 +317,17 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
         </div>
 
         {loading ? (
-          <div className="p-6 text-gray-400">Loading payments...</div>
+          <div className="p-6 text-muted">Loading payments...</div>
         ) : error ? (
-          <div className="p-6 text-red-400">{error}</div>
+          <div className="p-6 text-danger">{error}</div>
         ) : sorted.length === 0 ? (
-          <div className="p-6 text-gray-400">
+          <div className="p-6 text-muted">
             No payments found{search ? ` for \"${search}\"` : ""}.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] text-left text-sm text-gray-400">
-              <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+            <table className="w-full min-w-[800px] text-left text-sm text-muted">
+              <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
                 <tr>
                   {(
                     [
@@ -346,12 +346,12 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
                         <button
                           type="button"
                           onClick={() => toggleSort(key)}
-                          className="flex items-center gap-1.5 hover:text-white transition group"
+                          className="flex items-center gap-1.5 hover:text-fg transition group"
                         >
                           {label}
                           <span className="flex flex-col leading-none text-[10px]">
-                            <i className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`} aria-hidden />
-                            <i className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-sweat" : "text-gray-600 group-hover:text-gray-400"}`} aria-hidden />
+                            <i className={`fas fa-caret-up ${sortKey === key && sortDir === "asc" ? "text-accent-ink" : "text-muted group-hover:text-muted"}`} aria-hidden />
+                            <i className={`fas fa-caret-down ${sortKey === key && sortDir === "desc" ? "text-accent-ink" : "text-muted group-hover:text-muted"}`} aria-hidden />
                           </span>
                         </button>
                       ) : label}
@@ -365,22 +365,22 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
                   const badge = statusBadge(p.paymentStatus);
                   return (
                     <tr key={p.id} className="table-row transition">
-                      <td className="px-6 py-4 font-mono text-xs text-sweat">
+                      <td className="px-6 py-4 font-mono text-xs text-accent-ink">
                         {p.invoiceNo}
                       </td>
-                      <td className="px-6 py-4 font-medium text-white">
+                      <td className="px-6 py-4 font-medium text-fg">
                         {p.memberName || "—"}
                       </td>
-                      <td className="px-6 py-4 font-medium text-white">
+                      <td className="px-6 py-4 font-medium text-fg">
                         {p.branchName || "—"}
                       </td>
-                      <td className="px-6 py-4 font-medium text-white">
+                      <td className="px-6 py-4 font-medium text-fg">
                         {p.membershipPlanName ?? "—"}
                       </td>
-                      <td className="px-6 py-4 font-mono text-white">
+                      <td className="px-6 py-4 font-mono text-fg">
                         {formatRupiah(p.amount)}
                       </td>
-                      <td className="px-6 py-4 font-mono text-green-400">
+                      <td className="px-6 py-4 font-mono text-success">
                         {formatRupiah(p.finalAmount)}
                       </td>
                       <td className="px-6 py-4">
@@ -396,7 +396,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
                           <button
                             type="button"
                             onClick={() => setSelected(p)}
-                            className="text-gray-400 hover:text-white mx-1"
+                            className="text-muted hover:text-fg mx-1"
                             aria-label="Detail"
                             title="Detail"
                           >
@@ -406,7 +406,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
                             <button
                               type="button"
                               onClick={() => setDeleteId(p.id)}
-                              className="text-red-500 hover:text-red-400 mx-1"
+                              className="text-red-500 hover:text-danger mx-1"
                               aria-label="Delete"
                               title="Delete"
                             >
@@ -432,10 +432,10 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
       )}
 
       {deleteId && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-card w-full max-w-sm rounded-2xl border border-red-500/30 shadow-2xl p-6">
             <h3 className="text-lg font-bold mb-2">Delete Payment?</h3>
-            <p className="text-gray-400 text-sm mb-4">This action cannot be undone.</p>
+            <p className="text-muted text-sm mb-4">This action cannot be undone.</p>
             <div className="flex gap-3">
               <button
                 type="button"
@@ -448,7 +448,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
               <button
                 type="button"
                 onClick={() => setDeleteId(null)}
-                className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm transition"
+                className="flex-1 bg-sidebar border border-border text-fg py-2 rounded-lg text-sm transition"
               >
                 Cancel
               </button>

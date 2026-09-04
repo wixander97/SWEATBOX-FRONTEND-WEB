@@ -180,14 +180,14 @@ export function CreatePtSessionModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+    <div className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm p-4">
       <div className="bg-card w-full max-w-2xl rounded-2xl border border-border shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold font-display uppercase text-white">Create PT Session</h3>
+          <h3 className="text-xl font-bold font-display uppercase text-fg">Create PT Session</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl"
+            className="text-muted hover:text-fg text-xl"
             aria-label="Close"
           >
             <i className="fas fa-times" aria-hidden />
@@ -195,7 +195,7 @@ export function CreatePtSessionModal({
         </div>
 
         {error && (
-          <div className="mb-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-2 rounded-lg">
+          <div className="mb-3 bg-red-500/10 border border-red-500/30 text-danger text-sm px-4 py-2 rounded-lg">
             {error}
           </div>
         )}
@@ -203,13 +203,13 @@ export function CreatePtSessionModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-                PT Package <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+                PT Package <span className="text-danger">*</span>
               </label>
               <select
                 value={form.ptPackageId}
                 onChange={(e) => setForm((f) => ({ ...f, ptPackageId: e.target.value }))}
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               >
                 <option value="">Pilih package...</option>
@@ -221,8 +221,8 @@ export function CreatePtSessionModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-                Training Type <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+                Training Type <span className="text-danger">*</span>
               </label>
               <select
                 value={form.trainingType}
@@ -234,7 +234,7 @@ export function CreatePtSessionModal({
                       e.target.value === "Private" ? 1 : Math.max(1, f.maxParticipants),
                   }))
                 }
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               >
                 <option value="Private">Private</option>
@@ -245,13 +245,13 @@ export function CreatePtSessionModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-                Coach <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+                Coach <span className="text-danger">*</span>
               </label>
               <select
                 value={form.coachId}
                 onChange={(e) => setForm((f) => ({ ...f, coachId: e.target.value }))}
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               >
                 <option value="">Pilih coach...</option>
@@ -263,13 +263,13 @@ export function CreatePtSessionModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-                Branch <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+                Branch <span className="text-danger">*</span>
               </label>
               <select
                 value={form.branchId}
                 onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               >
                 <option value="">Pilih branch...</option>
@@ -284,38 +284,38 @@ export function CreatePtSessionModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-                Session Date <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+                Session Date <span className="text-danger">*</span>
               </label>
               <input
                 type="datetime-local"
                 value={form.sessionDate}
                 onChange={(e) => setForm((f) => ({ ...f, sessionDate: e.target.value }))}
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-                Start Time <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+                Start Time <span className="text-danger">*</span>
               </label>
               <input
                 type="time"
                 value={form.startTime}
                 onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-                End Time <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+                End Time <span className="text-danger">*</span>
               </label>
               <input
                 type="time"
                 value={form.endTime}
                 onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               />
             </div>
@@ -323,8 +323,8 @@ export function CreatePtSessionModal({
 
           {form.trainingType === "Group" && (
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-                Max Participants <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+                Max Participants <span className="text-danger">*</span>
               </label>
               <input
                 type="text"
@@ -333,7 +333,7 @@ export function CreatePtSessionModal({
                 onChange={(e) =>
                   setForm((f) => ({ ...f, maxParticipants: parseCountInput(e.target.value) }))
                 }
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 required
               />
             </div>
@@ -341,9 +341,9 @@ export function CreatePtSessionModal({
 
           {/* Member picker */}
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
+            <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
               {form.trainingType === "Private" ? "Member (1)" : "Members (multiple)"}{" "}
-              <span className="text-red-400">*</span>
+              <span className="text-danger">*</span>
             </label>
 
             {/* Selected chips */}
@@ -355,14 +355,14 @@ export function CreatePtSessionModal({
                   return (
                     <span
                       key={id}
-                      className="inline-flex items-center gap-2 bg-sweat/15 text-sweat px-3 py-1 rounded-full text-xs font-semibold"
+                      className="inline-flex items-center gap-2 bg-sweat/15 text-accent-ink px-3 py-1 rounded-full text-xs font-semibold"
                     >
                       {label}
                       {!isPkgMember && (
                         <button
                           type="button"
                           onClick={() => removeMember(id)}
-                          className="hover:text-white"
+                          className="hover:text-fg"
                           aria-label="Remove member"
                         >
                           <i className="fas fa-times" aria-hidden />
@@ -376,21 +376,21 @@ export function CreatePtSessionModal({
 
             {form.trainingType === "Private" ? (
               form.ptPackageId && !packageMemberId ? (
-                <p className="text-xs text-red-400">Selected package has no associated member</p>
+                <p className="text-xs text-danger">Selected package has no associated member</p>
               ) : null
             ) : (
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setMemberDropdownOpen((o) => !o)}
-                  className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-left text-sm text-white focus:outline-none focus:border-sweat flex items-center justify-between"
+                  className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-left text-sm text-fg focus:outline-none focus:border-sweat flex items-center justify-between"
                 >
-                  <span className="text-gray-400">
+                  <span className="text-muted">
                     {form.memberIds.length > 0
                       ? `${form.memberIds.length} member dipilih`
                       : "Tambah member..."}
                   </span>
-                  <i className="fas fa-chevron-down w-4 text-gray-400" aria-hidden />
+                  <i className="fas fa-chevron-down w-4 text-muted" aria-hidden />
                 </button>
                 {memberDropdownOpen && (
                   <div className="absolute z-50 w-full mt-1 bg-sidebar border border-border rounded-lg shadow-lg overflow-hidden">
@@ -399,12 +399,12 @@ export function CreatePtSessionModal({
                       value={memberSearch}
                       onChange={(e) => setMemberSearch(e.target.value)}
                       placeholder="Cari member..."
-                      className="w-full bg-card border-b border-border px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none"
+                      className="w-full bg-card border-b border-border px-3 py-2 text-sm text-fg placeholder-muted focus:outline-none"
                       autoFocus
                     />
                     <div className="max-h-48 overflow-y-auto">
                       {filteredMemberOptions.length === 0 ? (
-                        <div className="px-3 py-2 text-sm text-gray-500">No results found</div>
+                        <div className="px-3 py-2 text-sm text-muted">No results found</div>
                       ) : (
                         filteredMemberOptions.map((o) => {
                           const selected = form.memberIds.includes(o.id);
@@ -415,12 +415,12 @@ export function CreatePtSessionModal({
                               onClick={() => addMember(o.id)}
                               className={`w-full px-3 py-2 text-sm text-left cursor-pointer flex items-center justify-between transition-colors ${
                                 selected
-                                  ? "bg-sweat/10 text-sweat"
-                                  : "text-gray-300 hover:bg-white/5"
+                                  ? "bg-sweat/10 text-accent-ink"
+                                  : "text-fg-soft hover:bg-fg/5"
                               }`}
                             >
                               <span>{o.label}</span>
-                              {selected && <i className="fas fa-check w-4 text-sweat" aria-hidden />}
+                              {selected && <i className="fas fa-check w-4 text-accent-ink" aria-hidden />}
                             </button>
                           );
                         })
@@ -433,13 +433,13 @@ export function CreatePtSessionModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase mb-1.5">
-              Notes <span className="text-red-400">*</span>
+            <label className="block text-xs font-semibold text-muted uppercase mb-1.5">
+              Notes <span className="text-danger">*</span>
             </label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat resize-none"
+              className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat resize-none"
               rows={3}
               required
             />
@@ -449,7 +449,7 @@ export function CreatePtSessionModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-sidebar border border-border text-gray-300 px-4 py-3 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-white transition"
+              className="flex-1 bg-sidebar border border-border text-fg-soft px-4 py-3 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-fg transition"
             >
               Cancel
             </button>

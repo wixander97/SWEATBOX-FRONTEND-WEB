@@ -14,10 +14,10 @@ export function PtView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-display font-bold text-white uppercase tracking-wide">
+          <h1 className="text-2xl font-display font-bold text-fg uppercase tracking-wide">
             Personal Training
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-muted mt-1">
             Kelola PT Package dan PT Session
           </p>
         </div>
@@ -29,8 +29,8 @@ export function PtView() {
           onClick={() => setTab("package")}
           className={`px-4 py-2.5 text-sm font-semibold transition border-b-2 -mb-px ${
             tab === "package"
-              ? "border-sweat text-sweat"
-              : "border-transparent text-gray-400 hover:text-white"
+              ? "border-sweat text-accent-ink"
+              : "border-transparent text-muted hover:text-fg"
           }`}
         >
           PT Package
@@ -40,8 +40,8 @@ export function PtView() {
           onClick={() => setTab("session")}
           className={`px-4 py-2.5 text-sm font-semibold transition border-b-2 -mb-px ${
             tab === "session"
-              ? "border-sweat text-sweat"
-              : "border-transparent text-gray-400 hover:text-white"
+              ? "border-sweat text-accent-ink"
+              : "border-transparent text-muted hover:text-fg"
           }`}
         >
           PT Session

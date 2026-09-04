@@ -125,7 +125,7 @@ export function PromoBannerFormModal({
   return (
     <div
       id="modal-overlay"
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm"
       role="presentation"
       onClick={(ev) => {
         if (ev.target === ev.currentTarget) onClose();
@@ -147,7 +147,7 @@ export function PromoBannerFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl leading-none shrink-0"
+            className="text-muted hover:text-fg text-xl leading-none shrink-0"
             aria-label="Close modal"
           >
             <i className="fas fa-times" aria-hidden />
@@ -155,14 +155,14 @@ export function PromoBannerFormModal({
         </div>
 
         {(error || imageError) && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-200 text-sm rounded-lg">
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-danger text-sm rounded-lg">
             {error || imageError}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+            <label className="block text-sm font-medium text-fg-soft mb-1.5">
               Title
             </label>
             <input
@@ -170,27 +170,27 @@ export function PromoBannerFormModal({
               name="Title"
               defaultValue={initialValues?.title ?? ""}
               required
-              className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
               placeholder="e.g. 50% OFF Purchase"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+            <label className="block text-sm font-medium text-fg-soft mb-1.5">
               Description
             </label>
             <textarea
               name="Description"
               rows={3}
               defaultValue={initialValues?.description ?? ""}
-              className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat resize-none"
+              className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat resize-none"
               placeholder="Banner description"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label className="block text-sm font-medium text-fg-soft mb-1.5">
                 Redirect Type
               </label>
               <select
@@ -200,7 +200,7 @@ export function PromoBannerFormModal({
                     ? String(initialValues.redirectType)
                     : ""
                 }
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
               >
                 <option value="">—</option>
                 {REDIRECT_TYPES.map((t) => (
@@ -211,14 +211,14 @@ export function PromoBannerFormModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label className="block text-sm font-medium text-fg-soft mb-1.5">
                 Redirect Value
               </label>
               <input
                 type="text"
                 name="RedirectValue"
                 defaultValue={initialValues?.redirectValue ?? ""}
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 placeholder="e.g. Membership / URL"
               />
             </div>
@@ -226,7 +226,7 @@ export function PromoBannerFormModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label className="block text-sm font-medium text-fg-soft mb-1.5">
                 Display Order
               </label>
               <input
@@ -237,12 +237,12 @@ export function PromoBannerFormModal({
                     ? String(initialValues.displayOrder)
                     : ""
                 }
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
                 placeholder="0"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label className="block text-sm font-medium text-fg-soft mb-1.5">
                 IsActive
               </label>
               <label className="flex items-center gap-2 h-[3.25rem]">
@@ -252,14 +252,14 @@ export function PromoBannerFormModal({
                   defaultChecked={initialValues?.isActive ?? true}
                   className="w-4 h-4 rounded border border-border bg-sidebar cursor-pointer accent-sweat"
                 />
-                <span className="text-sm text-gray-300">Active</span>
+                <span className="text-sm text-fg-soft">Active</span>
               </label>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label className="block text-sm font-medium text-fg-soft mb-1.5">
                 Start Date
               </label>
               <input
@@ -267,11 +267,11 @@ export function PromoBannerFormModal({
                 name="StartDate"
                 defaultValue={toDatetimeLocalValue(initialValues?.startDate)}
                 step={1}
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label className="block text-sm font-medium text-fg-soft mb-1.5">
                 End Date
               </label>
               <input
@@ -279,13 +279,13 @@ export function PromoBannerFormModal({
                 name="EndDate"
                 defaultValue={toDatetimeLocalValue(initialValues?.endDate)}
                 step={1}
-                className="w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+            <label className="block text-sm font-medium text-fg-soft mb-1.5">
               Image
             </label>
             <input
@@ -311,13 +311,13 @@ export function PromoBannerFormModal({
                   setError("");
                 }
               }}
-              className="w-full bg-sidebar border border-border text-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:border-sweat file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-sweat file:text-black file:font-bold file:cursor-pointer"
+              className="w-full bg-sidebar border border-border text-fg-soft px-4 py-3 rounded-lg focus:outline-none focus:border-sweat file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-sweat file:text-black file:font-bold file:cursor-pointer"
             />
-            <p className="mt-1.5 text-xs text-gray-500">
+            <p className="mt-1.5 text-xs text-muted">
               Disarankan {RECOMMENDED_BANNER_WIDTH} × {RECOMMENDED_BANNER_HEIGHT} px (rasio 3:1) untuk tampilan terbaik. Ukuran lain tetap diperbolehkan.
             </p>
             {isEdit && initialValues?.imageUrl && !imageFile && (
-              <p className="mt-1.5 text-xs text-gray-500">
+              <p className="mt-1.5 text-xs text-muted">
                 Leave empty to keep the existing image.
               </p>
             )}
@@ -327,7 +327,7 @@ export function PromoBannerFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-sidebar border border-border text-gray-300 px-4 py-3 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-white transition"
+              className="flex-1 bg-sidebar border border-border text-fg-soft px-4 py-3 rounded-lg font-semibold hover:bg-sidebar/80 hover:text-fg transition"
             >
               Cancel
             </button>

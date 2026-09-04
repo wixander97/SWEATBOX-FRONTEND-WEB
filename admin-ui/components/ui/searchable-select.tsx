@@ -180,7 +180,7 @@ export function SearchableSelect<T>({
   if (loading) {
     return (
       <div className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 animate-pulse">
-        <div className="h-5 bg-gray-700/50 rounded" />
+        <div className="h-5 bg-fg/5 rounded" />
       </div>
     );
   }
@@ -192,13 +192,13 @@ export function SearchableSelect<T>({
         type="button"
         onClick={handleToggle}
         disabled={disabled}
-        className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-left text-sm text-white focus:outline-none focus:border-sweat disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between transition-colors"
+        className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-left text-sm text-fg focus:outline-none focus:border-sweat disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between transition-colors"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls="searchable-select-list"
         role="combobox"
       >
-        <span className={selectedOption ? "text-white" : "text-gray-500"}>
+        <span className={selectedOption ? "text-fg" : "text-muted"}>
           {selectedOption ? getOptionLabel(selectedOption) : placeholder}
         </span>
         <div className="flex items-center gap-2">
@@ -213,14 +213,14 @@ export function SearchableSelect<T>({
                   handleClear(e as any);
                 }
               }}
-              className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="text-muted hover:text-fg transition-colors cursor-pointer"
               aria-label="Clear selection"
             >
               ×
             </span>
           )}
           <svg
-            className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+            className={`w-4 h-4 text-muted transition-transform duration-200 ${
               isOpen ? "rotate-180" : "rotate-0"
             }`}
             fill="none"
@@ -252,7 +252,7 @@ export function SearchableSelect<T>({
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full bg-card border border-border rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-sweat"
+              className="w-full bg-card border border-border rounded px-3 py-2 text-sm text-fg placeholder-muted focus:outline-none focus:border-sweat"
               aria-label="Search options"
             />
           </div>
@@ -264,7 +264,7 @@ export function SearchableSelect<T>({
             role="listbox"
           >
             {filteredOptions.length === 0 ? (
-              <li className="px-3 py-4 text-center text-sm text-gray-500">
+              <li className="px-3 py-4 text-center text-sm text-muted">
                 {options.length === 0 ? "No options available" : emptyText}
               </li>
             ) : (
@@ -280,10 +280,10 @@ export function SearchableSelect<T>({
                     onClick={() => handleSelect(option)}
                     className={`px-3 py-2 text-sm cursor-pointer transition-colors flex items-center justify-between ${
                       isSelected
-                        ? "text-sweat bg-sweat/10"
+                        ? "text-accent-ink bg-sweat/10"
                         : isHighlighted
-                        ? "text-white bg-white/10"
-                        : "text-white hover:bg-white/10"
+                        ? "text-fg bg-fg/10"
+                        : "text-fg hover:bg-fg/10"
                     }`}
                     role="option"
                     aria-selected={isSelected}
@@ -291,7 +291,7 @@ export function SearchableSelect<T>({
                     <span className="truncate">{optionLabel}</span>
                     {isSelected && (
                       <svg
-                        className="w-4 h-4 text-sweat flex-shrink-0 ml-2"
+                        className="w-4 h-4 text-accent-ink flex-shrink-0 ml-2"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >

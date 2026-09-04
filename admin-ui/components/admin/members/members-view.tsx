@@ -308,8 +308,8 @@ export function MembersView() {
               setPage(1);
             }}
             className={`text-sm font-bold pb-2 transition border-b-2 ${memberFilterTab === "all"
-              ? "border-sweat text-sweat"
-              : "border-transparent text-gray-500 hover:text-white"
+              ? "border-sweat text-accent-ink"
+              : "border-transparent text-muted hover:text-fg"
               }`}
           >
             All Data Member
@@ -321,8 +321,8 @@ export function MembersView() {
               setPage(1);
             }}
             className={`text-sm font-bold pb-2 transition border-b-2 ${memberFilterTab === "active"
-              ? "border-sweat text-sweat"
-              : "border-transparent text-gray-500 hover:text-white"
+              ? "border-sweat text-accent-ink"
+              : "border-transparent text-muted hover:text-fg"
               }`}
           >
             Active Member
@@ -333,7 +333,7 @@ export function MembersView() {
           {/* Magic Search */}
           <div ref={searchWrapperRef} className="relative w-full sm:w-72">
             <div className="relative">
-              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
               <input
                 type="text"
                 placeholder="Magic search member..."
@@ -359,10 +359,10 @@ export function MembersView() {
                   }
                 }}
                 required
-                className="bg-sidebar border border-border text-white pl-9 pr-4 py-2 rounded-lg text-sm w-full focus:outline-none focus:border-sweat"
+                className="bg-sidebar border border-border text-fg pl-9 pr-4 py-2 rounded-lg text-sm w-full focus:outline-none focus:border-sweat"
               />
               {magicLoading && (
-                <i className="fas fa-spinner fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs" aria-hidden />
+                <i className="fas fa-spinner fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-muted text-xs" aria-hidden />
               )}
             </div>
 
@@ -376,9 +376,9 @@ export function MembersView() {
                         e.preventDefault();
                         selectMagicResult(m);
                       }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-gray-800 flex items-center gap-3 transition"
+                      className="w-full text-left px-4 py-2.5 hover:bg-fg/5 flex items-center gap-3 transition"
                     >
-                      <span className="w-7 h-7 rounded-full bg-gray-700 overflow-hidden inline-block shrink-0">
+                      <span className="w-7 h-7 rounded-full bg-fg/10 overflow-hidden inline-block shrink-0">
                         <Image
                           src={`https://ui-avatars.com/api/?name=${encodeURIComponent(m.fullName || "Member")}&background=random`}
                           alt=""
@@ -389,10 +389,10 @@ export function MembersView() {
                         />
                       </span>
                       <span className="min-w-0">
-                        <span className="block text-white text-sm font-medium truncate">
+                        <span className="block text-fg text-sm font-medium truncate">
                           {m.fullName || "-"}
                         </span>
-                        {/* <span className="block text-gray-500 text-xs truncate">
+                        {/* <span className="block text-muted text-xs truncate">
                           {m.memberCode || m.id} · {m.membershipType || "-"}
                         </span> */}
                       </span>
@@ -407,7 +407,7 @@ export function MembersView() {
           <button
             type="button"
             onClick={() => void exportXlsx()}
-            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
+            className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5"
           >
             <i className="fas fa-file-export mr-2" aria-hidden />
             Export
@@ -415,8 +415,8 @@ export function MembersView() {
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[860px] text-left text-sm text-gray-400">
-          <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+        <table className="w-full min-w-[860px] text-left text-sm text-muted">
+          <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
             <tr>
               {(
                 [
@@ -435,21 +435,21 @@ export function MembersView() {
                   <button
                     type="button"
                     onClick={() => toggleSort(key)}
-                    className="flex items-center gap-1.5 hover:text-white transition group"
+                    className="flex items-center gap-1.5 hover:text-fg transition group"
                   >
                     {label}
                     <span className="flex flex-col leading-none text-[10px]">
                       <i
                         className={`fas fa-caret-up ${sortKey === key && sortDir === "asc"
-                          ? "text-sweat"
-                          : "text-gray-600 group-hover:text-gray-400"
+                          ? "text-accent-ink"
+                          : "text-muted group-hover:text-muted"
                           }`}
                         aria-hidden
                       />
                       <i
                         className={`fas fa-caret-down ${sortKey === key && sortDir === "desc"
-                          ? "text-sweat"
-                          : "text-gray-600 group-hover:text-gray-400"
+                          ? "text-accent-ink"
+                          : "text-muted group-hover:text-muted"
                           }`}
                         aria-hidden
                       />
@@ -457,25 +457,25 @@ export function MembersView() {
                   </button>
                 </th>
               ))}
-              <th className="px-6 py-4 text-right text-xs uppercase font-bold text-gray-500">Actions</th>
+              <th className="px-6 py-4 text-right text-xs uppercase font-bold text-muted">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={10}>
+                <td className="px-6 py-6 text-muted" colSpan={10}>
                   Loading...
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td className="px-6 py-6 text-red-400" colSpan={10}>
+                <td className="px-6 py-6 text-danger" colSpan={10}>
                   {error}
                 </td>
               </tr>
             ) : displayMembers.length === 0 ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={10}>
+                <td className="px-6 py-6 text-muted" colSpan={10}>
                   Tidak ada data member.
                 </td>
               </tr>
@@ -485,7 +485,7 @@ export function MembersView() {
                   <td className="px-6 py-4 font-mono text-xs">
                     {m.memberCode || m.id}
                   </td>
-                  <td className="px-6 py-4 font-bold text-white">
+                  <td className="px-6 py-4 font-bold text-fg">
                     {m.fullName || "-"}
                   </td>
                   <td className="px-6 py-4">{m.email || "—"}</td>
@@ -493,10 +493,10 @@ export function MembersView() {
                   <td className="px-6 py-4">{m.membershipPlanName || "—"}</td>
                   <td className="px-6 py-4">{String(m.remainingCredits) || "-"}</td>
                   <td className="px-6 py-4">{m.remainingDropInVisits ?? "-"}</td>
-                  <td className="px-6 py-4 font-bold text-sweat">
+                  <td className="px-6 py-4 font-bold text-accent-ink">
                     {m.membershipStatus ?? 0}
                   </td>
-                  <td className="px-6 py-4 font-bold text-sweat">
+                  <td className="px-6 py-4 font-bold text-accent-ink">
                     {m.paymentStatus ?? 0}
                   </td>
 
@@ -517,7 +517,7 @@ export function MembersView() {
         </table>
       </div>
       <div className="px-4 sm:px-6 py-4 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted">
           Page {page} of {Math.max(1, totalPages)} • {totalItems} data
         </p>
         <div className="flex items-center gap-2">
@@ -525,7 +525,7 @@ export function MembersView() {
             type="button"
             disabled={page <= 1 || loading}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+            className="bg-sidebar border border-border text-fg px-3 py-1.5 rounded text-xs disabled:opacity-50"
           >
             Prev
           </button>
@@ -533,7 +533,7 @@ export function MembersView() {
             type="button"
             disabled={page >= totalPages || loading}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+            className="bg-sidebar border border-border text-fg px-3 py-1.5 rounded text-xs disabled:opacity-50"
           >
             Next
           </button>

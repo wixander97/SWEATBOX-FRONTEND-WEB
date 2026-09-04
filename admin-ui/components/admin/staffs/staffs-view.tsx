@@ -255,7 +255,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
   }
 
   const inputCls =
-    "bg-sidebar border border-border text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat";
+    "bg-sidebar border border-border text-fg px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-sweat";
   const selectCls = inputCls;
 
   return (
@@ -270,7 +270,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
               onClick={() => void exportXlsx()}
               disabled={exporting}
               title="Export semua data staff (tanpa filter)"
-              className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition disabled:opacity-50"
+              className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition disabled:opacity-50"
             >
               {exporting ? (
                 <i className="fas fa-spinner fa-spin mr-2" aria-hidden />
@@ -282,11 +282,11 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
           </div>
         </div>
         {exportError && (
-          <p className="text-red-400 text-sm">{exportError}</p>
+          <p className="text-danger text-sm">{exportError}</p>
         )}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 sm:flex-wrap">
           <div className="relative w-full sm:w-56">
-            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none" aria-hidden />
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none" aria-hidden />
             <input
               type="text"
               placeholder="Cari nama / email..."
@@ -347,7 +347,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
           <button
             type="button"
             onClick={resetFilters}
-            className="bg-sidebar border border-border text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition sm:ml-auto"
+            className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 transition sm:ml-auto"
           >
             <i className="fas fa-undo mr-2" aria-hidden />
             Clear Filters
@@ -357,8 +357,8 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[960px] text-left text-sm text-gray-400">
-          <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+        <table className="w-full min-w-[960px] text-left text-sm text-muted">
+          <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
             <tr>
               <th className="px-6 py-4">Staff Name</th>
               <th className="px-6 py-4">Email</th>
@@ -373,28 +373,28 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={8}>
+                <td className="px-6 py-6 text-muted" colSpan={8}>
                   Loading...
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td className="px-6 py-6 text-red-400" colSpan={8}>
+                <td className="px-6 py-6 text-danger" colSpan={8}>
                   {error}
                 </td>
               </tr>
             ) : staffs.length === 0 ? (
               <tr>
-                <td className="px-6 py-6 text-gray-400" colSpan={8}>
+                <td className="px-6 py-6 text-muted" colSpan={8}>
                   Tidak ada data staff.
                 </td>
               </tr>
             ) : (
               staffs.map((s) => (
                 <tr key={s.id} className="table-row transition">
-                  <td className="px-6 py-4 font-bold text-white">
+                  <td className="px-6 py-4 font-bold text-fg">
                     <span className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden inline-block shrink-0">
+                      <span className="w-8 h-8 rounded-full bg-fg/10 overflow-hidden inline-block shrink-0">
                         <Image
                           src={
                             s.profileImageUrl ||
@@ -420,8 +420,8 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
                   <td className="px-6 py-4">
                     <span
                       className={`px-2 py-1 rounded text-xs font-bold border ${s.isActive
-                        ? "bg-green-500/10 text-green-400 border-green-500/20"
-                        : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                        ? "bg-green-500/10 text-success border-green-500/20"
+                        : "bg-yellow-500/10 text-warning border-yellow-500/20"
                         }`}
                     >
                       {s.isActive ? "Active" : "Inactive"}
@@ -444,7 +444,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
                           setDeleteError("");
                         }}
                         title="Delete"
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500/20 text-red-400 hover:bg-red-500/10 transition"
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500/20 text-danger hover:bg-red-500/10 transition"
                       >
                         <i className="fas fa-trash" aria-hidden />
                       </button>
@@ -459,7 +459,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
 
       {/* Pagination */}
       <div className="px-4 sm:px-6 py-4 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted">
           Page {page} of {Math.max(1, totalPages)} • {totalItems} data
         </p>
         <div className="flex items-center gap-2">
@@ -467,7 +467,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
             type="button"
             disabled={page <= 1 || loading}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+            className="bg-sidebar border border-border text-fg px-3 py-1.5 rounded text-xs disabled:opacity-50"
           >
             Prev
           </button>
@@ -475,7 +475,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
             type="button"
             disabled={page >= totalPages || loading}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+            className="bg-sidebar border border-border text-fg px-3 py-1.5 rounded text-xs disabled:opacity-50"
           >
             Next
           </button>
@@ -496,12 +496,12 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
       )}
 
       {deleteId && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-card w-full max-w-sm rounded-2xl border border-red-500/30 shadow-2xl p-6">
             <h3 className="text-lg font-bold mb-2">Delete Staff?</h3>
-            <p className="text-gray-400 text-sm mb-4">This action cannot be undone.</p>
+            <p className="text-muted text-sm mb-4">This action cannot be undone.</p>
             {deleteError && (
-              <p className="text-red-400 text-sm mb-3">{deleteError}</p>
+              <p className="text-danger text-sm mb-3">{deleteError}</p>
             )}
             <div className="flex gap-3">
               <button
@@ -515,7 +515,7 @@ export const StaffsView = forwardRef<StaffsViewHandle>(function StaffsView(_prop
               <button
                 type="button"
                 onClick={() => setDeleteId(null)}
-                className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm transition"
+                className="flex-1 bg-sidebar border border-border text-fg py-2 rounded-lg text-sm transition"
               >
                 Cancel
               </button>

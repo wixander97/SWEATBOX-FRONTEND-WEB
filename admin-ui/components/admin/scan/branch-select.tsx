@@ -78,7 +78,7 @@ export function BranchSelect({ value, onChange, disabled }: Props) {
       value={value}
       onChange={(e) => handleSelect(e.target.value)}
       disabled={disabled || loading || branches.length === 0}
-      className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat disabled:opacity-60"
+      className="w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat disabled:opacity-60"
       aria-label="Active branch"
     >
       {loading && <option value="">Loading branches…</option>}

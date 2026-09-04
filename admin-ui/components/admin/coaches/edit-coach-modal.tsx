@@ -143,7 +143,7 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm"
       onClick={(e) => {
         if (e.currentTarget === e.target) onClose();
       }}
@@ -154,7 +154,7 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl"
+            className="text-muted hover:text-fg text-xl"
           >
             ×
           </button>
@@ -163,8 +163,8 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
         <div className="space-y-3">
           {/* Branch Selection */}
           <div>
-            <label className="block text-xs text-gray-400 mb-1">
-              Branch <span className="text-red-400">*</span>
+            <label className="block text-xs text-muted mb-1">
+              Branch <span className="text-danger">*</span>
             </label>
             <select
               required
@@ -174,7 +174,7 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
                 if (error) setError("");
               }}
               disabled={branchesLoading}
-              className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat disabled:opacity-50"
+              className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-fg focus:outline-none focus:border-sweat disabled:opacity-50"
             >
               <option value="">{branchesLoading ? "Loading branches..." : "Select a branch"}</option>
               {branches.map((b) => (
@@ -193,8 +193,8 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
             ["Emergency Contact", "emergencyContact"],
           ] as [string, keyof EditForm][]).map(([label, field]) => (
             <div key={field}>
-              <label className="block text-xs text-gray-400 mb-1">
-                {label}{field === "specialization" ? <span className="text-red-400">*</span> : null}
+              <label className="block text-xs text-muted mb-1">
+                {label}{field === "specialization" ? <span className="text-danger">*</span> : null}
               </label>
               <input
                 type="text"
@@ -209,26 +209,26 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
                   setForm((f) => ({ ...f, [field]: v }));
                 }}
                 required={field === "specialization"}
-                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
+                className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-fg focus:outline-none focus:border-sweat"
               />
             </div>
           ))}
 
           {/* Payroll Type */}
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Payroll Type</label>
+            <label className="block text-xs text-muted mb-1">Payroll Type</label>
             <input
               type="text"
               value={form.payrollType}
               onChange={(e) => setForm((f) => ({ ...f, payrollType: e.target.value }))}
               placeholder="e.g. Hourly, Daily, Monthly"
-              className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-fg focus:outline-none focus:border-sweat"
             />
           </div>
 
           {/* Payroll Rate */}
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">Payroll Rate</span>
+            <span className="text-muted text-xs uppercase font-bold">Payroll Rate</span>
             <input
               type="text"
               inputMode="decimal"
@@ -238,7 +238,7 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
                 setForm((f) => ({ ...f, payrollRate: String(num) }));
               }}
               placeholder="0"
-              className="w-full bg-sidebar border border-border rounded-lg pl-3 pr-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border rounded-lg pl-3 pr-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
 
@@ -252,12 +252,12 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
               ["Total PT Sessions", "totalPtSessions"],
             ] as [string, keyof EditForm][]).map(([label, field]) => (
               <div key={field}>
-                <label className="block text-xs text-gray-400 mb-1">{label}</label>
+                <label className="block text-xs text-muted mb-1">{label}</label>
                 <input
                   type="number"
                   value={String(form[field])}
                   onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
-                  className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
+                  className="w-full bg-sidebar border border-border rounded px-3 py-2 text-sm text-fg focus:outline-none focus:border-sweat"
                 />
               </div>
             ))}
@@ -272,11 +272,11 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
               onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
               className="w-4 h-4"
             />
-            <label htmlFor="editIsActive" className="text-sm text-gray-300">Active</label>
+            <label htmlFor="editIsActive" className="text-sm text-fg-soft">Active</label>
           </div>
 
           {/* Error Message */}
-          {error && <p className="text-red-400 text-xs">{error}</p>}
+          {error && <p className="text-danger text-xs">{error}</p>}
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
@@ -291,7 +291,7 @@ export function EditCoachModal({ coach, onClose, onSuccess }: EditCoachModalProp
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-sm"
+              className="flex-1 bg-sidebar border border-border text-fg py-2 rounded-lg text-sm"
             >
               Cancel
             </button>
