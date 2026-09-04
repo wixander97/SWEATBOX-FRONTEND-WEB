@@ -272,11 +272,12 @@ export function usePosCheckout(
               ? await createDropInPayment({
                   memberId: customer.id,
                   // The branch is the price: the backend reads
-                  // DROP_IN_<KIND>_<BRANCH> from System Settings. No plan.
+                  // DROP_IN_<KIND>_<BRANCH> from System Settings. No plan, and
+                  // no method either — a drop-in is always created on the rail
+                  // its backend path accepts, and an EDC sale is corrected to a
+                  // card payment when the slip number is recorded.
                   branchId: item.branchId,
                   kind: item.dropInKind,
-                  paymentMethod,
-                  paymentProvider: providerFor(selected),
                   notes: note,
                 })
               : await createMembershipPayment({

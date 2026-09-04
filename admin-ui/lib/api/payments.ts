@@ -104,11 +104,17 @@ export type CreatePaymentRequest = {
  * the fields it does not mean to change.
  */
 export type UpdatePaymentRequest = {
-  membershipPlanId: string;
+  /**
+   * Omitted for a drop-in, which has no plan: the backend leaves the column
+   * null rather than rejecting the write (verified against the live API).
+   */
+  membershipPlanId?: string;
   amount: number;
   discount: number;
   tax: number;
   paymentMethod: PaymentMethod;
+  /** Not part of the documented DTO; ignored by builds that do not read it. */
+  paymentProvider?: PaymentProvider;
   paymentStatus: PaymentStatus;
   providerTransactionId?: string;
   notes?: string | null;
@@ -133,14 +139,22 @@ export function createMembershipPayment(
  * with `_VISITS` and `_VALIDITY_DAYS`), issues a `DIP-` invoice, and creates the
  * `MemberDropInPass` once the payment settles. Sending a branch is therefore not
  * optional — without it the backend answers "Branch is required."
+ *
+ * The method is fixed, and that is not an oversight. Unlike a membership, the
+ * backend's drop-in path always registers the payment with AsteriPay and
+ * refuses anything AsteriPay does not sell: a create carrying `CreditCard`
+ * comes back "Unsupported AsteriPay payment method: CreditCard" (AsteriPay
+ * offers QRIS and VirtualAccount only) — and the refused attempt still leaves a
+ * Pending `DIP-` row behind. A card taken on the terminal is therefore created
+ * here like any other drop-in and corrected on the confirmation write, which is
+ * what `confirmEdcPayment` does: it sets the method to `CreditCard`, the
+ * provider to `Manual` and the slip number, exactly as for a membership.
  */
 export function createDropInPayment(
   body: {
     memberId: string;
     branchId: string;
     kind: "single" | "pass";
-    paymentMethod: PaymentMethod;
-    paymentProvider: PaymentProvider;
     notes?: string;
   },
   options?: RequestOptions
@@ -152,12 +166,12 @@ export function createDropInPayment(
       ...rest,
       paymentCategory:
         kind === "pass" ? PaymentCategory.DropInPass : PaymentCategory.DropInSingle,
+      paymentMethod: PaymentMethod.QRIS,
+      paymentProvider: PaymentProvider.AsteriPay,
     },
     { errorMessage: "Gagal membuat payment drop-in", ...options }
   );
 }
-
-const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
 
 /**
  * Record a card payment taken on the physical EDC terminal.
@@ -174,12 +188,18 @@ export function confirmEdcPayment(
 ): Promise<Payment> {
   const body: UpdatePaymentRequest = {
     // Carry the record's current values through, since the backend overwrites
-    // these fields whether or not they were meant to change.
-    membershipPlanId: payment.membershipPlanId ?? EMPTY_GUID,
+    // these fields whether or not they were meant to change. A drop-in carries
+    // no plan, and sending an empty GUID for one would be inventing a
+    // relationship the record does not have.
+    ...(payment.membershipPlanId ? { membershipPlanId: payment.membershipPlanId } : {}),
     amount: payment.amount ?? 0,
     discount: payment.discount ?? 0,
     tax: payment.tax ?? 0,
-    paymentMethod: payment.paymentMethod ?? PaymentMethod.CreditCard,
+    // This *is* the card-on-the-terminal write, so the method is not read off
+    // the record: a drop-in is necessarily created as QRIS (the only rail its
+    // backend path accepts) and becomes a card payment here.
+    paymentMethod: PaymentMethod.CreditCard,
+    paymentProvider: PaymentProvider.Manual,
     paymentStatus: PaymentStatus.Paid,
     providerTransactionId: transactionNumber,
     notes: payment.notes ?? null,
