@@ -14,6 +14,14 @@ import { formatRupiah } from "@/lib/pos/cart";
 type Props = {
   /** Payments settled in this transaction, in the order they were taken. */
   paymentIds: string[];
+  /**
+   * Reference the POS stamped on every payment of this checkout.
+   *
+   * The backend issues one invoice per purchase, so a membership plus a PT
+   * package settles as two payments. This is what makes them one transaction on
+   * paper: a single slip, one total, both invoice numbers on it.
+   */
+  orderRef?: string;
   /** Pre-filled recipient, normally the member's own address. */
   defaultEmail?: string | null;
   onClose: () => void;
@@ -105,6 +113,98 @@ function Receipt({ receipt }: { receipt: PaymentReceipt }) {
 }
 
 /**
+ * One slip for a transaction that produced several invoices.
+ *
+ * Same paper, same layout as a single-payment slip; the item block becomes a
+ * list, each line carrying its own invoice number so the printed slip still
+ * reconciles against the two backend records it came from.
+ */
+function CombinedReceipt({
+  receipts,
+  orderRef,
+}: {
+  receipts: PaymentReceipt[];
+  orderRef?: string;
+}) {
+  const first = receipts[0];
+  const sum = (pick: (r: PaymentReceipt) => number) =>
+    receipts.reduce((total, r) => total + (pick(r) || 0), 0);
+  const unique = (values: Array<string | null | undefined>) =>
+    Array.from(new Set(values.filter((v): v is string => !!v && v.trim() !== "")));
+
+  const paidAt = receipts.map((r) => r.paidAt ?? r.issuedAt).filter(Boolean).pop();
+  const methods = unique(receipts.map((r) => r.paymentMethod));
+  const statuses = unique(receipts.map((r) => r.paymentStatus));
+  const references = unique(receipts.map((r) => r.referenceNo));
+
+  return (
+    <div className="receipt-80 mx-auto bg-white p-3 rounded shadow-lg">
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 2 }}>SWEATBOX</div>
+        <div>{first.branchName || "-"}</div>
+      </div>
+
+      <hr className="receipt-rule" />
+
+      <table>
+        <tbody>
+          {orderRef ? <Line label="Transaksi" value={orderRef} /> : null}
+          <Line label="Tanggal" value={formatDateTime(paidAt)} />
+          <Line label="Member" value={first.memberName || "-"} />
+          {first.memberCode ? <Line label="Kode" value={first.memberCode} /> : null}
+          {first.cashierName ? <Line label="Kasir" value={first.cashierName} /> : null}
+        </tbody>
+      </table>
+
+      <hr className="receipt-rule" />
+
+      {receipts.map((r) => (
+        <div key={r.paymentId} style={{ marginBottom: 6 }}>
+          <div style={{ fontWeight: 700 }}>{r.itemName || r.itemCategory}</div>
+          <table>
+            <tbody>
+              <Line label={r.invoiceNo} value={formatRupiah(r.finalAmount)} />
+            </tbody>
+          </table>
+        </div>
+      ))}
+
+      <hr className="receipt-rule" />
+
+      <table>
+        <tbody>
+          <Line label="Subtotal" value={formatRupiah(sum((r) => r.amount))} />
+          {sum((r) => r.discount) > 0 ? (
+            <Line label="Diskon" value={`-${formatRupiah(sum((r) => r.discount))}`} />
+          ) : null}
+          {sum((r) => r.tax) > 0 ? (
+            <Line label="Pajak" value={formatRupiah(sum((r) => r.tax))} />
+          ) : null}
+          <tr style={{ fontWeight: 700, fontSize: 11 }}>
+            <td>TOTAL</td>
+            <td className="receipt-value">{formatRupiah(sum((r) => r.finalAmount))}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr className="receipt-rule" />
+
+      <table>
+        <tbody>
+          <Line label="Metode" value={methods.join(" / ") || "-"} />
+          <Line label="Status" value={statuses.join(" / ") || "-"} />
+          {references.length > 0 ? <Line label="Ref" value={references.join(" / ")} /> : null}
+        </tbody>
+      </table>
+
+      <hr className="receipt-rule" />
+
+      <div style={{ textAlign: "center" }}>Terima kasih — sampai jumpa</div>
+    </div>
+  );
+}
+
+/**
  * Receipt viewer for a completed POS transaction.
  *
  * Printing goes through the browser's own print dialog: the app shell is hidden
@@ -114,7 +214,7 @@ function Receipt({ receipt }: { receipt: PaymentReceipt }) {
  * Emailing is a backend call; the body is rendered server-side from the same
  * payment record, so the customer's paper and email copies cannot drift apart.
  */
-export function PosReceiptModal({ paymentIds, defaultEmail, onClose }: Props) {
+export function PosReceiptModal({ paymentIds, orderRef, defaultEmail, onClose }: Props) {
   const [receipts, setReceipts] = useState<PaymentReceipt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -205,7 +305,9 @@ export function PosReceiptModal({ paymentIds, defaultEmail, onClose }: Props) {
             <p className="text-xs text-muted mt-0.5">
               {loading
                 ? "Memuat…"
-                : `${receipts.length} struk · thermal 80 mm`}
+                : receipts.length > 1
+                  ? `1 struk · ${receipts.length} invoice · thermal 80 mm`
+                  : "1 struk · thermal 80 mm"}
             </p>
           </div>
           <button
@@ -260,6 +362,12 @@ export function PosReceiptModal({ paymentIds, defaultEmail, onClose }: Props) {
                 </button>
               </div>
             </label>
+            {!loading && receipts.length > 1 && (
+              <p className="text-[11px] text-muted mt-1">
+                Email dikirim backend per invoice, jadi member menerima {receipts.length}{" "}
+                email untuk transaksi ini. Struk cetaknya tetap satu lembar.
+              </p>
+            )}
             {!loading && receipts.length > 0 && !receipts[0].memberEmail && (
               <p className="text-[11px] text-muted mt-1">
                 Member ini belum punya email di sistem — isi manual untuk mengirim.
@@ -277,8 +385,12 @@ export function PosReceiptModal({ paymentIds, defaultEmail, onClose }: Props) {
             <p className="text-sm text-muted text-center py-8">
               Tidak ada receipt untuk ditampilkan.
             </p>
+          ) : receipts.length > 1 ? (
+            // One transaction, one slip — even though the backend recorded it
+            // as several payments.
+            <CombinedReceipt receipts={receipts} orderRef={orderRef} />
           ) : (
-            receipts.map((r) => <Receipt key={r.paymentId} receipt={r} />)
+            <Receipt receipt={receipts[0]} />
           )}
         </div>
       </div>

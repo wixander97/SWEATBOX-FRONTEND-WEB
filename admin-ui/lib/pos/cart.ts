@@ -1,3 +1,4 @@
+import type { DropInOption } from "@/lib/api/drop-in-options";
 import type { DropInKind, MembershipPlan } from "@/lib/api/membership-plans";
 import type { PtPackage } from "@/lib/api/pt-packages";
 
@@ -59,11 +60,35 @@ export type DropInCartItem = {
   kind: "dropin";
   name: string;
   price: number;
-  plan: MembershipPlan;
+  /**
+   * Plan the payment is created against. Drop-in tiers are configured in System
+   * Settings, but `POST /api/v1/payments` still takes a `membershipPlanId`, so
+   * the line carries the plan the tier resolved to (see `loadDropInOptions`).
+   */
+  planId: string;
+  /** The plan's own branch, which wins over the till's when it has one. */
+  planBranchId?: string;
   dropInKind: DropInKind;
   /** Visits the pass is worth, for the cart line and the post-sale check. */
   visits: number;
+  /** How long the issued pass stays valid, for display only. */
+  validityDays?: number;
 };
+
+/** Turn a configured drop-in tier into the one line a drop-in sale consists of. */
+export function dropInCartItem(option: DropInOption): DropInCartItem {
+  return {
+    lineId: newLineId(),
+    kind: "dropin",
+    name: option.label,
+    price: option.price,
+    planId: option.planId,
+    planBranchId: option.planBranchId,
+    dropInKind: option.kind,
+    visits: option.visits,
+    validityDays: option.validityDays,
+  };
+}
 
 export type CartItem = MembershipCartItem | DropInCartItem | PtCartItem;
 
@@ -101,7 +126,7 @@ export function queuedPlanIds(items: CartItem[]): string[] {
       (item): item is MembershipCartItem | DropInCartItem =>
         item.kind === "membership" || item.kind === "dropin"
     )
-    .map((item) => item.plan.id);
+    .map((item) => (item.kind === "membership" ? item.plan.id : item.planId));
 }
 
 export function formatRupiah(amount: number | null | undefined): string {

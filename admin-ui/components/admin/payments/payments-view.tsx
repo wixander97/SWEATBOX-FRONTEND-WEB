@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
@@ -9,7 +9,8 @@ import { useRole } from "@/contexts/role-context";
 // TODO: Re-enable create payment feature
 // import { CreatePaymentModal } from "./create-payment-modal";
 import { PaymentDetailModal } from "./payment-detail-modal";
-import { paymentStatusMeta } from "./payment-status";
+import { PaymentStatus, paymentStatusMeta } from "./payment-status";
+import { noteWithoutOrderRef, parseOrderRef } from "@/lib/pos/order-ref";
 
 export type Payment = {
   id: string;
@@ -75,6 +76,8 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
   const [actionLoading, setActionLoading] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  /** Order references whose invoices are shown individually. */
+  const [expandedRefs, setExpandedRefs] = useState<string[]>([]);
   // TODO: Re-enable create payment feature
   // const [createModalOpen, setCreateModalOpen] = useState(false);
 
@@ -144,6 +147,53 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
     });
   }, [payments, sortKey, sortDir]);
 
+  /**
+   * One front-desk transaction, which the backend stores as several payments.
+   *
+   * A membership and a PT package bought together are two `Payment` rows on two
+   * different endpoints — that is the backend's model and this screen does not
+   * fight it. What the POS does is stamp the same order reference onto the notes
+   * of every payment it creates in one checkout, so the rows can be shown as the
+   * single transaction they were, with the individual invoices one click away.
+   *
+   * Anything without a reference — payments taken before this existed, or made
+   * outside the POS — is listed exactly as before.
+   */
+  const rows = useMemo(() => {
+    const byRef = new Map<string, Payment[]>();
+    for (const payment of sorted) {
+      const ref = parseOrderRef(payment.notes);
+      if (!ref) continue;
+      const group = byRef.get(ref);
+      if (group) group.push(payment);
+      else byRef.set(ref, [payment]);
+    }
+
+    const emitted = new Set<string>();
+    const list: Array<
+      { kind: "single"; payment: Payment } | { kind: "group"; ref: string; payments: Payment[] }
+    > = [];
+    for (const payment of sorted) {
+      const ref = parseOrderRef(payment.notes);
+      const group = ref ? byRef.get(ref) : undefined;
+      // A reference on its own is not a transaction worth grouping.
+      if (!ref || !group || group.length < 2) {
+        list.push({ kind: "single", payment });
+        continue;
+      }
+      if (emitted.has(ref)) continue;
+      emitted.add(ref);
+      list.push({ kind: "group", ref, payments: group });
+    }
+    return list;
+  }, [sorted]);
+
+  function toggleGroup(ref: string) {
+    setExpandedRefs((current) =>
+      current.includes(ref) ? current.filter((r) => r !== ref) : [...current, ref]
+    );
+  }
+
   async function handleDelete(id: string) {
     setActionLoading(true);
     const res = await fetch(`/api/payments/${id}`, { method: "DELETE" });
@@ -177,6 +227,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
 
     const header = [
       "Invoice No",
+      "Order Ref",
       "Member Name",
       "Branch Name",
       "Membership Plan",
@@ -187,14 +238,16 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
       "Payment Method",
       "Payment Status",
       "Payment Provider",
+      "Transaction No",
       "Expiry At",
       "Paid At",
       "Notes",
       "Created",
       "Last Modified",
     ];
-    const rows = sorted.map((p) => [
+    const exportRows = sorted.map((p) => [
       val(p.invoiceNo),
+      val(parseOrderRef(p.notes)),
       val(p.memberName),
       val(p.branchName),
       val(p.membershipPlanName),
@@ -205,13 +258,14 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
       methodLabel(p.paymentMethod),
       statusLabel(p.paymentStatus),
       providerLabel(p.paymentProvider),
+      val(p.providerTransactionId),
       fmtDateTime(p.expiryAt),
       fmtDateTime(p.paidAt),
-      val(p.notes),
+      val(noteWithoutOrderRef(p.notes)),
       fmtDateTime(p.created),
       fmtDateTime(p.lastModified),
     ]);
-    await downloadXlsx([header, ...rows], "payments.xlsx");
+    await downloadXlsx([header, ...exportRows], "payments.xlsx");
   }
 
   const tabs: { key: StatusTab; label: string }[] = [
@@ -222,6 +276,132 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
   ];
 
   const totalRevenue = summary?.totalRevenue ?? summary?.totalAmount;
+
+  /** One payment. `nested` renders it as an invoice inside a transaction. */
+  function paymentRow(p: Payment, nested = false) {
+    const badge = statusBadge(p.paymentStatus);
+    return (
+      <tr
+        key={p.id}
+        className={`table-row transition ${nested ? "bg-sidebar/40" : ""}`}
+      >
+        <td className="px-6 py-4 font-mono text-xs text-accent-ink">
+          {nested && (
+            <span className="text-muted mr-1.5" aria-hidden>
+              ↳
+            </span>
+          )}
+          {p.invoiceNo}
+        </td>
+        <td className="px-6 py-4 font-medium text-fg">{p.memberName || "—"}</td>
+        <td className="px-6 py-4 font-medium text-fg">{p.branchName || "—"}</td>
+        <td className="px-6 py-4 font-medium text-fg">{p.membershipPlanName ?? "—"}</td>
+        <td className="px-6 py-4 font-mono text-fg">{formatRupiah(p.amount)}</td>
+        <td className="px-6 py-4 font-mono text-success">{formatRupiah(p.finalAmount)}</td>
+        <td className="px-6 py-4">
+          <span className={`px-2 py-1 rounded text-xs font-bold border ${badge.class}`}>
+            {badge.label}
+          </span>
+        </td>
+        <td className="px-6 py-4">{new Date(p.created).toLocaleDateString("id-ID")}</td>
+        <td className="px-6 py-4 text-right">
+          <div className="flex gap-2 justify-end">
+            <button
+              type="button"
+              onClick={() => setSelected(p)}
+              className="text-muted hover:text-fg mx-1"
+              aria-label="Detail"
+              title="Detail"
+            >
+              <i className="fas fa-eye" aria-hidden />
+            </button>
+            {currentRole === "superadmin" && (
+              <button
+                type="button"
+                onClick={() => setDeleteId(p.id)}
+                className="text-red-500 hover:text-danger mx-1"
+                aria-label="Delete"
+                title="Delete"
+              >
+                <i className="fas fa-trash" aria-hidden />
+              </button>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  /** Several invoices taken in one front-desk transaction, as a single line. */
+  function groupRow(ref: string, group: Payment[]) {
+    const open = expandedRefs.includes(ref);
+    const first = group[0];
+    const paidCount = group.filter((p) => p.paymentStatus === PaymentStatus.Paid).length;
+    const settled = paidCount === group.length;
+    const badge = settled
+      ? paymentStatusMeta(PaymentStatus.Paid)
+      : {
+          label: `${paidCount}/${group.length} Paid`,
+          class: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+        };
+    const items = group
+      .map((p) => p.membershipPlanName)
+      .filter((name): name is string => !!name);
+    const earliest = group.reduce(
+      (min, p) => (new Date(p.created) < new Date(min) ? p.created : min),
+      first.created
+    );
+
+    return (
+      <tr key={ref} className="table-row transition bg-sweat/5">
+        <td className="px-6 py-4">
+          <button
+            type="button"
+            onClick={() => toggleGroup(ref)}
+            className="flex items-center gap-2 text-left"
+            aria-expanded={open}
+          >
+            <i
+              className={`fas ${open ? "fa-chevron-down" : "fa-chevron-right"} text-[10px] text-muted`}
+              aria-hidden
+            />
+            <span>
+              <span className="block font-mono text-xs text-accent-ink">{ref}</span>
+              <span className="block text-[11px] text-muted">
+                {group.length} invoice · 1 transaksi
+              </span>
+            </span>
+          </button>
+        </td>
+        <td className="px-6 py-4 font-medium text-fg">{first.memberName || "—"}</td>
+        <td className="px-6 py-4 font-medium text-fg">{first.branchName || "—"}</td>
+        <td className="px-6 py-4 font-medium text-fg">
+          {items.length > 0 ? items.join(" + ") : "—"}
+        </td>
+        <td className="px-6 py-4 font-mono text-fg">
+          {formatRupiah(group.reduce((sum, p) => sum + (p.amount ?? 0), 0))}
+        </td>
+        <td className="px-6 py-4 font-mono text-success">
+          {formatRupiah(group.reduce((sum, p) => sum + (p.finalAmount ?? 0), 0))}
+        </td>
+        <td className="px-6 py-4">
+          <span className={`px-2 py-1 rounded text-xs font-bold border ${badge.class}`}>
+            {badge.label}
+          </span>
+        </td>
+        <td className="px-6 py-4">{new Date(earliest).toLocaleDateString("id-ID")}</td>
+        <td className="px-6 py-4 text-right">
+          <button
+            type="button"
+            onClick={() => toggleGroup(ref)}
+            className="text-xs text-muted hover:text-fg border border-border px-2 py-1 rounded transition"
+          >
+            {open ? "Tutup" : "Lihat invoice"}
+          </button>
+        </td>
+      </tr>
+    );
+  }
 
   return (
     <>
@@ -361,63 +541,17 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {sorted.map((p) => {
-                  const badge = statusBadge(p.paymentStatus);
-                  return (
-                    <tr key={p.id} className="table-row transition">
-                      <td className="px-6 py-4 font-mono text-xs text-accent-ink">
-                        {p.invoiceNo}
-                      </td>
-                      <td className="px-6 py-4 font-medium text-fg">
-                        {p.memberName || "—"}
-                      </td>
-                      <td className="px-6 py-4 font-medium text-fg">
-                        {p.branchName || "—"}
-                      </td>
-                      <td className="px-6 py-4 font-medium text-fg">
-                        {p.membershipPlanName ?? "—"}
-                      </td>
-                      <td className="px-6 py-4 font-mono text-fg">
-                        {formatRupiah(p.amount)}
-                      </td>
-                      <td className="px-6 py-4 font-mono text-success">
-                        {formatRupiah(p.finalAmount)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-xs font-bold border ${badge.class}`}>
-                          {badge.label}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {new Date(p.created).toLocaleDateString("id-ID")}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            type="button"
-                            onClick={() => setSelected(p)}
-                            className="text-muted hover:text-fg mx-1"
-                            aria-label="Detail"
-                            title="Detail"
-                          >
-                            <i className="fas fa-eye" aria-hidden />
-                          </button>
-                          {currentRole === "superadmin" && (
-                            <button
-                              type="button"
-                              onClick={() => setDeleteId(p.id)}
-                              className="text-red-500 hover:text-danger mx-1"
-                              aria-label="Delete"
-                              title="Delete"
-                            >
-                              <i className="fas fa-trash" aria-hidden />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {rows.map((row) =>
+                  row.kind === "single" ? (
+                    paymentRow(row.payment)
+                  ) : (
+                    <Fragment key={row.ref}>
+                      {groupRow(row.ref, row.payments)}
+                      {expandedRefs.includes(row.ref) &&
+                        row.payments.map((p) => paymentRow(p, true))}
+                    </Fragment>
+                  )
+                )}
               </tbody>
             </table>
           </div>

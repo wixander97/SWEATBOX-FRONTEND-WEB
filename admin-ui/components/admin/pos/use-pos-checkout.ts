@@ -27,6 +27,7 @@ import {
   type MembershipCartItem,
 } from "@/lib/pos/cart";
 import { memberDisplayName, type ApiMember } from "@/lib/api/members";
+import { newOrderRef, stampOrderRef } from "@/lib/pos/order-ref";
 
 /**
  * Drives a POS checkout.
@@ -198,6 +199,16 @@ export function usePosCheckout(
   const [steps, setSteps] = useState<CheckoutStep[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [error, setError] = useState("");
+  /**
+   * Reference shared by every payment of this checkout.
+   *
+   * The backend keeps one payment per purchase, so a membership plus a PT
+   * package is always two invoices. Stamping both notes with the same reference
+   * is what makes them one transaction on the receipt and in the Payments
+   * history, without touching the backend.
+   */
+  const [orderRef, setOrderRef] = useState("");
+  const orderRefRef = useRef("");
 
   /** Guards against a double-click creating two backend payments. */
   const busyRef = useRef(false);
@@ -263,7 +274,10 @@ export function usePosCheckout(
             : await createMembershipPayment({
                 // Names the customer; the JWT still identifies the operator.
                 memberId: customer.id,
-                membershipPlanId: item.plan.id,
+                // A membership line is backed by the plan itself; a drop-in line
+                // by the plan its configured tier resolved to.
+                membershipPlanId:
+                  item.kind === "membership" ? item.plan.id : item.planId,
                 // Membership, drop-in single or drop-in pass — the plan record
                 // is the same shape, the category is what the backend acts on.
                 paymentCategory: paymentCategoryFor(item),
@@ -274,12 +288,20 @@ export function usePosCheckout(
                 // carry none, and sending nothing would leave the backend to
                 // guess which branch merchant settles it, so the branch the
                 // till is open on is the fallback.
-                branchId: item.plan.branchId || branchId,
+                branchId:
+                  (item.kind === "membership" ? item.plan.branchId : item.planBranchId) ||
+                  branchId,
                 // Staff notes win. The default is what a finance report needs
                 // to read months later: where it was sold and what was sold —
                 // not the literal word "POS" followed by a plan name, which is
                 // what this used to write.
-                notes: notes?.trim() || defaultNote(branchName, item.name),
+                // Every payment of one checkout carries the same order
+                // reference, which is what lets two invoices from a single
+                // visit be recognised as one transaction later on.
+                notes: stampOrderRef(
+                  orderRefRef.current,
+                  notes?.trim() || defaultNote(branchName, item.name)
+                ),
               });
 
         if (!mountedRef.current) return;
@@ -495,6 +517,8 @@ export function usePosCheckout(
     busyRef.current = true;
     createdRef.current.clear();
     advancedRef.current.clear();
+    orderRefRef.current = newOrderRef();
+    setOrderRef(orderRefRef.current);
     setError("");
     setChoice(selected);
     setActiveIndex(0);
@@ -659,6 +683,7 @@ export function usePosCheckout(
   return {
     phase,
     choice,
+    orderRef,
     steps,
     activeIndex,
     paidPaymentIds,

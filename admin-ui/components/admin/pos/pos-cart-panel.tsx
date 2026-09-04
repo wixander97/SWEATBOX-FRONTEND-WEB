@@ -29,8 +29,7 @@ function lineDetail(item: CartItem): string {
     case "dropin":
       return [
         item.dropInKind === "pass" ? `${item.visits}x kunjungan` : "1x kunjungan",
-        `berlaku ${item.plan.validityDays} hari`,
-        item.plan.branchName,
+        item.validityDays ? `berlaku ${item.validityDays} hari` : null,
       ]
         .filter(Boolean)
         .join(" · ");

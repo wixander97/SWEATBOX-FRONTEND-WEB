@@ -2,6 +2,7 @@
 
 import type { Payment } from "./payments-view";
 import { paymentStatusMeta } from "./payment-status";
+import { noteWithoutOrderRef, parseOrderRef } from "@/lib/pos/order-ref";
 
 type Props = {
   payment: Payment;
@@ -32,6 +33,32 @@ function methodLabel(method: number): string {
 
 function providerLabel(provider: number): string {
   return provider === 0 ? "Offline" : "AsteriPay";
+}
+
+/**
+ * What the reference on the record actually is.
+ *
+ * `providerTransactionId` holds the EDC slip number for a card charged on the
+ * terminal (provider `Manual`/Offline) and the gateway reference for an online
+ * rail, so the label has to say which one the reader is looking at.
+ */
+function transactionLabel(provider: number): string {
+  return provider === 0 ? "No. Transaksi EDC" : "Transaction ID";
+}
+
+/**
+ * A timestamp, or nothing.
+ *
+ * An unset date reaches the browser as `null`, an empty string or
+ * `0001-01-01`/epoch, all of which `toLocaleString` happily renders as
+ * "1/1/1970" — a date that never happened and reads as real. Nothing is shown
+ * instead, and the row disappears.
+ */
+function formatDateTime(iso?: string | null): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime()) || date.getFullYear() <= 1970) return null;
+  return date.toLocaleString("id-ID");
 }
 
 function SectionHeader({
@@ -78,6 +105,8 @@ function Row({
 
 export function PaymentDetailModal({ payment, onClose }: Props) {
   const badge = statusBadge(payment.paymentStatus);
+  const orderRef = parseOrderRef(payment.notes);
+  const notes = noteWithoutOrderRef(payment.notes);
 
   return (
     <div
@@ -147,40 +176,34 @@ export function PaymentDetailModal({ payment, onClose }: Props) {
               value={providerLabel(payment.paymentProvider)}
             />
             <Row
+              label={transactionLabel(payment.paymentProvider)}
+              value={payment.providerTransactionId || "—"}
+            />
+            <Row
               label="Provider Order ID"
               value={payment.providerOrderId ?? "—"}
             />
+            {/* One front-desk transaction can produce several invoices — a
+                membership and a PT package are two backend payments. The POS
+                stamps the same reference on each, so this is what ties them
+                together. */}
+            <Row label="Order Ref" value={orderRef ?? "—"} />
           </div>
 
           {/* Timeline */}
           <SectionHeader icon="fas fa-calendar-alt" label="Timeline" />
           <div className="bg-sidebar rounded-lg border border-border px-3 py-1">
-            <Row
-              label="Created"
-              value={new Date(payment.created).toLocaleString("id-ID")}
-            />
-            <Row
-              label="Expiry"
-              value={new Date(payment.expiryAt).toLocaleString("id-ID")}
-            />
-            <Row
-              label="Paid At"
-              value={
-                payment.paidAt
-                  ? new Date(payment.paidAt).toLocaleString("id-ID")
-                  : null
-              }
-            />
+            <Row label="Created" value={formatDateTime(payment.created)} />
+            <Row label="Expiry" value={formatDateTime(payment.expiryAt)} />
+            <Row label="Paid At" value={formatDateTime(payment.paidAt)} />
           </div>
 
           {/* Notes */}
-          {payment.notes && (
+          {notes && (
             <>
               <SectionHeader icon="fas fa-sticky-note" label="Notes" />
               <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
-                <p className="text-sm text-fg-soft whitespace-pre-wrap">
-                  {payment.notes}
-                </p>
+                <p className="text-sm text-fg-soft whitespace-pre-wrap">{notes}</p>
               </div>
             </>
           )}

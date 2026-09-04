@@ -23,6 +23,11 @@ type Props = {
   onClose: () => void;
   /** Called once the transaction settled, so the POS can reset. */
   onCompleted: () => void;
+  /**
+   * Label of the button that ends the transaction. The till starts a new sale;
+   * a drop-in taken during a class booking goes back to the booking instead.
+   */
+  completeLabel?: string;
   /** Reports whether a checkout is in flight, to lock the rest of the POS. */
   onBusyChange?: (busy: boolean) => void;
 };
@@ -58,6 +63,7 @@ export function PosCheckoutModal({
   branchName,
   onClose,
   onCompleted,
+  completeLabel = "Transaksi baru",
   onBusyChange,
 }: Props) {
   const checkout = usePosCheckout(items, customer, branchName, branchId);
@@ -413,7 +419,7 @@ export function PosCheckoutModal({
                 onClick={onCompleted}
                 className="mt-2 w-full bg-sidebar border border-border text-fg py-2.5 rounded-lg text-sm font-bold"
               >
-                Transaksi baru
+                {completeLabel}
               </button>
             </div>
           )}
@@ -423,6 +429,7 @@ export function PosCheckoutModal({
       {receiptOpen && (
         <PosReceiptModal
           paymentIds={paidPaymentIds}
+          orderRef={checkout.orderRef}
           defaultEmail={customer.email}
           onClose={() => setReceiptOpen(false)}
         />
