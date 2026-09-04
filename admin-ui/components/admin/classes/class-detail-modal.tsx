@@ -311,7 +311,11 @@ export function ClassDetailModal({ cls, onClose }: Props) {
    * elsewhere), and it answers 200 even when it refuses, so only its own
    * `success` flag closes the row here.
    */
-  async function markPresent(memberId: string, label: string) {
+  async function markPresent(
+    memberId: string,
+    label: string,
+    memberCode?: string | null
+  ) {
     if (attendingId) return;
     setAttendingId(memberId);
     setAttendanceError("");
@@ -320,6 +324,8 @@ export function ClassDetailModal({ cls, onClose }: Props) {
       const result = await recordManualAttendance({
         memberId,
         classScheduleId: c.id,
+        branchId: c.branchId,
+        memberCode,
       });
       if (result.success) {
         setAttendanceMessage(`${label}: ${result.message}`);
@@ -367,6 +373,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
         const result = await recordManualAttendance({
           memberId: booking.memberId,
           classScheduleId: c.id,
+          branchId: c.branchId,
         });
         if (result.success) done += 1;
         else failures.push(`${label}: ${result.message}`);
@@ -724,7 +731,11 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                                   <button
                                     type="button"
                                     onClick={() =>
-                                      void markPresent(m.id, memberDisplayName(m))
+                                      void markPresent(
+                                        m.id,
+                                        memberDisplayName(m),
+                                        m.memberCode
+                                      )
                                     }
                                     disabled={attendingId !== null || bulkRunning || already}
                                     className="shrink-0 text-[10px] font-bold uppercase tracking-wide bg-sweat text-black px-2.5 py-1.5 rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
