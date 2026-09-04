@@ -57,11 +57,14 @@ function navButtonClasses(active: boolean) {
 }
 
 type Props = {
+  /** Drawer state below `lg`. */
   open?: boolean;
+  /** Hidden state from `lg` up, where the drawer does not apply. */
+  collapsed?: boolean;
   onClose?: () => void;
 };
 
-export function AdminSidebar({ open = false, onClose }: Props) {
+export function AdminSidebar({ open = false, collapsed = false, onClose }: Props) {
   const pathname = usePathname();
   const { displayName, displayRole, currentRole } = useRole();
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -111,8 +114,21 @@ export function AdminSidebar({ open = false, onClose }: Props) {
         className={`fixed inset-0 z-30 bg-overlay transition-opacity lg:hidden ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           }`}
       />
+      {/*
+        * One element serves both layouts, so the two states are expressed on
+        * different breakpoints rather than by unmounting: below `lg` it slides
+        * as a drawer, at `lg` and up it collapses its width to nothing.
+        *
+        * `lg:invisible` is what takes the collapsed column out of the tab order
+        * and the accessibility tree — a zero-width element with overflow hidden
+        * is merely unreadable, and would still trap focus on the way past.
+        */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-sidebar border-r border-border flex flex-col justify-between overflow-y-auto transform transition-transform lg:static lg:z-auto lg:w-64 lg:max-w-none lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"
+        id="admin-sidebar"
+        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-sidebar border-r border-border flex flex-col justify-between overflow-y-auto transform transition-[transform,width] duration-200 lg:static lg:z-auto lg:max-w-none lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"
+          } ${collapsed
+            ? "lg:w-0 lg:invisible lg:overflow-hidden lg:border-r-0"
+            : "lg:w-64 lg:visible"
           }`}
       >
         <div>
