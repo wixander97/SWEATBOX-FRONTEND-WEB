@@ -14,6 +14,8 @@ import {
   type ClassBooking,
 } from "@/lib/api/classes";
 import { errorMessageOf } from "@/lib/api/http";
+import { recordManualAttendance } from "@/lib/api/attendance";
+import { memberDisplayName, searchMembers, type ApiMember } from "@/lib/api/members";
 
 type Props = {
   cls: ApiClass;
@@ -163,6 +165,15 @@ export function ClassDetailModal({ cls, onClose }: Props) {
   /** Bumped after an activation so the flags below are re-read from backend. */
   const [reloadKey, setReloadKey] = useState(0);
   const [confirmActivate, setConfirmActivate] = useState(false);
+  /** Member currently being marked present, so only that row shows a spinner. */
+  const [attendingId, setAttendingId] = useState<string | null>(null);
+  const [attendanceMessage, setAttendanceMessage] = useState("");
+  const [attendanceError, setAttendanceError] = useState("");
+  const [walkInOpen, setWalkInOpen] = useState(false);
+  const [walkInQuery, setWalkInQuery] = useState("");
+  const [walkInResults, setWalkInResults] = useState<ApiMember[]>([]);
+  const [walkInSearching, setWalkInSearching] = useState(false);
+  const [bulkRunning, setBulkRunning] = useState(false);
   const [activating, setActivating] = useState(false);
   const [activateError, setActivateError] = useState("");
   const [activateMessage, setActivateMessage] = useState("");
@@ -212,6 +223,32 @@ export function ClassDetailModal({ cls, onClose }: Props) {
     };
   }, [cls.id, reloadKey]);
 
+  useEffect(() => {
+    const keyword = walkInQuery.trim();
+    if (!walkInOpen || keyword.length < 2) {
+      setWalkInResults([]);
+      return;
+    }
+    let cancelled = false;
+    setWalkInSearching(true);
+    const timer = setTimeout(() => {
+      searchMembers(keyword)
+        .then((list) => {
+          if (!cancelled) setWalkInResults(list.slice(0, 6));
+        })
+        .catch(() => {
+          if (!cancelled) setWalkInResults([]);
+        })
+        .finally(() => {
+          if (!cancelled) setWalkInSearching(false);
+        });
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [walkInQuery, walkInOpen]);
+
   const c: ApiClass = detail ?? cls;
   const badge = statusBadge(c);
   const enrolled =
@@ -222,6 +259,18 @@ export function ClassDetailModal({ cls, onClose }: Props) {
     iso ? new Date(iso).toLocaleString("id-ID") : null;
 
   const activationBlocker = sessionActivationBlocker(c);
+  /**
+   * Attendance the backend will not take.
+   *
+   * `ManualAttendanceAsync` refuses a cancelled or completed class outright, so
+   * the buttons are hidden rather than offered and rejected. Everything else it
+   * checks — membership, credits, drop-in pass, capacity — is left to it.
+   */
+  const attendanceClosed = c.isCancelled === true || c.isCompleted === true;
+  /** Booked members not yet marked present — what "Absen semua" works on. */
+  const pendingAttendance = attendees.filter(
+    (b) => !b.isCancelled && (b.bookingStatus ?? "").toLowerCase() !== "attended"
+  );
 
   /**
    * Turn the session on without the coach's QR.
@@ -249,6 +298,90 @@ export function ClassDetailModal({ cls, onClose }: Props) {
       setActivateError(errorMessageOf(err, "Gagal mengaktifkan session class"));
     } finally {
       setActivating(false);
+    }
+  }
+
+  /**
+   * Mark a member present without their QR.
+   *
+   * One endpoint covers both cases the front desk has: a member who booked but
+   * cannot scan, and a walk-in who never booked — the backend creates the
+   * booking for the latter before recording attendance. Entitlement stays
+   * entirely backend-side (a credit at the home club, a drop-in visit
+   * elsewhere), and it answers 200 even when it refuses, so only its own
+   * `success` flag closes the row here.
+   */
+  async function markPresent(memberId: string, label: string) {
+    if (attendingId) return;
+    setAttendingId(memberId);
+    setAttendanceError("");
+    setAttendanceMessage("");
+    try {
+      const result = await recordManualAttendance({
+        memberId,
+        classScheduleId: c.id,
+      });
+      if (result.success) {
+        setAttendanceMessage(`${label}: ${result.message}`);
+        setWalkInQuery("");
+        setWalkInResults([]);
+        setReloadKey((v) => v + 1);
+      } else {
+        setAttendanceError(`${label}: ${result.message}`);
+      }
+    } catch (err) {
+      setAttendanceError(errorMessageOf(err, "Gagal mencatat absensi"));
+    } finally {
+      setAttendingId(null);
+    }
+  }
+
+  /**
+   * Mark everyone who booked and has not been checked in yet.
+   *
+   * Sequential on purpose: each member is a separate entitlement decision
+   * backend-side (a credit here, a drop-in visit there), and firing twenty
+   * parallel writes would make a refusal impossible to attribute. Every answer
+   * is kept, so the summary says exactly who could not be marked and why —
+   * a refused member never disappears behind a cheerful total.
+   */
+  async function markAllPresent() {
+    if (attendingId || bulkRunning) return;
+    const pending = attendees.filter(
+      (b) =>
+        !b.isCancelled &&
+        (b.bookingStatus ?? "").toLowerCase() !== "attended"
+    );
+    if (pending.length === 0) return;
+
+    setBulkRunning(true);
+    setAttendanceError("");
+    setAttendanceMessage("");
+
+    const failures: string[] = [];
+    let done = 0;
+
+    for (const booking of pending) {
+      const label = booking.memberName || booking.memberId;
+      try {
+        const result = await recordManualAttendance({
+          memberId: booking.memberId,
+          classScheduleId: c.id,
+        });
+        if (result.success) done += 1;
+        else failures.push(`${label}: ${result.message}`);
+      } catch (err) {
+        failures.push(`${label}: ${errorMessageOf(err, "gagal")}`);
+      }
+    }
+
+    setBulkRunning(false);
+    setReloadKey((v) => v + 1);
+    if (done > 0) {
+      setAttendanceMessage(`${done} dari ${pending.length} member ditandai hadir.`);
+    }
+    if (failures.length > 0) {
+      setAttendanceError(`Tidak bisa diabsen — ${failures.join(" · ")}`);
     }
   }
 
@@ -445,9 +578,23 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                 )}
               </div>
 
-              {/* Members */}
+              {/* Members — booked, walk-in, and marked present from here */}
               <SectionHeader icon="fas fa-user-friends" label="Members" />
               <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
+                {pendingAttendance.length > 0 && !attendanceClosed && (
+                  <button
+                    type="button"
+                    onClick={() => void markAllPresent()}
+                    disabled={bulkRunning || attendingId !== null}
+                    className="w-full mb-2 bg-sweat text-black text-[11px] font-bold uppercase tracking-wide px-3 py-2 rounded transition hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Catat hadir semua peserta yang sudah booking, tanpa scan QR"
+                  >
+                    <i className="fas fa-user-check mr-2" aria-hidden />
+                    {bulkRunning
+                      ? "Mengabsen…"
+                      : `Absen semua (${pendingAttendance.length})`}
+                  </button>
+                )}
                 {attendeesLoading ? (
                   <p className="text-xs text-muted py-1">Memuat peserta...</p>
                 ) : attendeesError ? (
@@ -456,33 +603,165 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                   <p className="text-xs text-muted py-1">Belum ada member yang booking.</p>
                 ) : (
                   <ul className="divide-y divide-border/40">
-                    {attendees.map((b) => (
-                      <li
-                        key={b.id}
-                        className="flex items-center justify-between gap-3 py-1.5"
-                      >
-                        <span className="min-w-0">
-                          <span className="block text-sm text-fg-soft truncate">
-                            {b.memberName || b.memberId}
-                          </span>
-                          {b.bookingDate && (
-                            <span className="block text-[10px] text-muted">
-                              Booked {new Date(b.bookingDate).toLocaleDateString("id-ID")}
-                            </span>
-                          )}
-                        </span>
-                        <span
-                          className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                            b.isCancelled
-                              ? "bg-red-500/10 text-danger border-red-500/30"
-                              : "bg-green-500/10 text-success border-green-500/30"
-                          }`}
+                    {attendees.map((b) => {
+                      const attended = (b.bookingStatus ?? "").toLowerCase() === "attended";
+                      const canAttend = !attended && !b.isCancelled && !attendanceClosed;
+                      return (
+                        <li
+                          key={b.id}
+                          className="flex items-center justify-between gap-3 py-1.5"
                         >
-                          {b.isCancelled ? "Cancelled" : (b.bookingStatus || "Booked")}
-                        </span>
-                      </li>
-                    ))}
+                          <span className="min-w-0">
+                            <span className="block text-sm text-fg-soft truncate">
+                              {b.memberName || b.memberId}
+                            </span>
+                            {b.bookingDate && (
+                              <span className="block text-[10px] text-muted">
+                                Booked {new Date(b.bookingDate).toLocaleDateString("id-ID")}
+                              </span>
+                            )}
+                          </span>
+                          <span className="flex items-center gap-2 shrink-0">
+                            {canAttend && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void markPresent(b.memberId, b.memberName || "Member")
+                                }
+                                disabled={attendingId !== null || bulkRunning}
+                                className="text-[10px] font-bold uppercase tracking-wide border border-border text-fg-soft hover:text-fg hover:border-sweat px-2 py-1 rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                title="Catat hadir tanpa scan QR member"
+                              >
+                                {attendingId === b.memberId ? "Absen…" : "Absen"}
+                              </button>
+                            )}
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                b.isCancelled
+                                  ? "bg-red-500/10 text-danger border-red-500/30"
+                                  : attended
+                                    ? "bg-green-500/10 text-success border-green-500/30"
+                                    : "bg-blue-500/10 text-blue-500 border-blue-500/30"
+                              }`}
+                            >
+                              {b.isCancelled ? "Cancelled" : (b.bookingStatus || "Booked")}
+                            </span>
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
+                )}
+
+                {/* Walk-in: no booking needed — the backend books them as part
+                    of recording the attendance. */}
+                {!attendanceClosed && (
+                  <div className="mt-2 pt-2 border-t border-border/40">
+                    {!walkInOpen ? (
+                      <button
+                        type="button"
+                        onClick={() => setWalkInOpen(true)}
+                        className="w-full text-[11px] font-bold uppercase tracking-wide border border-dashed border-border text-muted hover:text-fg hover:border-sweat px-3 py-2 rounded transition"
+                      >
+                        <i className="fas fa-user-plus mr-2" aria-hidden />
+                        Walk-in — absen member tanpa booking
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] uppercase tracking-wider text-muted font-bold">
+                            Walk-in
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setWalkInOpen(false);
+                              setWalkInQuery("");
+                              setWalkInResults([]);
+                            }}
+                            className="text-muted hover:text-fg text-xs"
+                          >
+                            Tutup
+                          </button>
+                        </div>
+                        <input
+                          value={walkInQuery}
+                          onChange={(e) => setWalkInQuery(e.target.value)}
+                          autoFocus
+                          placeholder="Cari nama / kode member / email"
+                          className="w-full bg-card border border-border text-fg text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-sweat"
+                        />
+                        {walkInSearching ? (
+                          <p className="text-[11px] text-muted">Mencari…</p>
+                        ) : walkInQuery.trim().length < 2 ? (
+                          <p className="text-[11px] text-muted">
+                            Ketik minimal 2 huruf. Member yang belum booking akan
+                            dibookingkan otomatis oleh backend saat diabsen.
+                          </p>
+                        ) : walkInResults.length === 0 ? (
+                          <p className="text-[11px] text-muted">
+                            Tidak ada member yang cocok.
+                          </p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {walkInResults.map((m) => {
+                              const already = attendees.some(
+                                (b) => b.memberId === m.id && !b.isCancelled
+                              );
+                              return (
+                                <li
+                                  key={m.id}
+                                  className="flex items-center justify-between gap-2 bg-card border border-border rounded-lg px-3 py-2"
+                                >
+                                  <span className="min-w-0">
+                                    <span className="block text-sm text-fg truncate">
+                                      {memberDisplayName(m)}
+                                    </span>
+                                    <span className="block text-[10px] text-muted truncate">
+                                      {m.memberCode || m.email}
+                                    </span>
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      void markPresent(m.id, memberDisplayName(m))
+                                    }
+                                    disabled={attendingId !== null || bulkRunning || already}
+                                    className="shrink-0 text-[10px] font-bold uppercase tracking-wide bg-sweat text-black px-2.5 py-1.5 rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                  >
+                                    {already
+                                      ? "Sudah di list"
+                                      : attendingId === m.id
+                                        ? "Absen…"
+                                        : "Absen"}
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {attendanceClosed && (
+                  <p className="mt-2 pt-2 border-t border-border/40 text-[11px] text-muted">
+                    Class sudah {c.isCancelled ? "dibatalkan" : "selesai"} — absensi
+                    ditutup backend.
+                  </p>
+                )}
+
+                {attendanceMessage && (
+                  <p className="mt-2 text-[11px] text-green-600 bg-green-500/10 border border-green-500/30 px-3 py-2 rounded">
+                    <i className="fas fa-check mr-1.5" aria-hidden />
+                    {attendanceMessage}
+                  </p>
+                )}
+                {attendanceError && (
+                  <p className="mt-2 text-[11px] text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+                    {attendanceError}
+                  </p>
                 )}
               </div>
 
