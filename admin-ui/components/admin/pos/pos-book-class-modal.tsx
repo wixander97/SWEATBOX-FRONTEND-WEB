@@ -148,11 +148,13 @@ export function PosBookClassModal({
     if (offerLoading) return;
     setOfferLoading(true);
     try {
-      setOffer(await loadDropInOptions(branchId));
+      // Matched by branch *name*: the settings keys are DROP_IN_SINGLE_KEDOYA,
+      // DROP_IN_PASS_PIK2 and so on.
+      setOffer(await loadDropInOptions(branchName));
     } finally {
       setOfferLoading(false);
     }
-  }, [branchId, offerLoading]);
+  }, [branchName, offerLoading]);
 
   const book = useCallback(
     async (afterDropIn = false) => {
@@ -198,7 +200,10 @@ export function PosBookClassModal({
    * Rebuilding it on every render would hand the checkout a new `lineId` each
    * time and detach the payment steps it keys by that id.
    */
-  const dropInItems = useMemo(() => (paying ? [dropInCartItem(paying)] : []), [paying]);
+  const dropInItems = useMemo(
+    () => (paying ? [dropInCartItem(paying, branchId)] : []),
+    [paying, branchId]
+  );
 
   return (
     <div
@@ -336,13 +341,8 @@ export function PosBookClassModal({
                 )}
 
                 <p className="text-[10px] text-muted mt-2">
-                  Sumber harga:{" "}
-                  {offer.source === "settings"
-                    ? "System Settings"
-                    : offer.source === "plan"
-                      ? "membership plan kategori Drop In"
-                      : "belum dikonfigurasi"}
-                  .
+                  Harga & masa berlaku diambil dari System Settings branch{" "}
+                  {branchName || "ini"}; backend menagih dari sumber yang sama.
                 </p>
               </div>
             )}

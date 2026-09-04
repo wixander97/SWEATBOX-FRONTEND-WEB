@@ -1,187 +1,94 @@
-import {
-  dropInKindOf,
-  dropInVisitsOf,
-  isDropInPlan,
-  listMembershipPlans,
-  type DropInKind,
-  type MembershipPlan,
-} from "./membership-plans";
+import type { DropInKind } from "./membership-plans";
 import {
   dropInOptionsFromSettings,
   listSystemSettings,
-  type DropInSettingOption,
+  normalizeToken,
 } from "./system-settings";
 
 /**
  * The drop-in menu the front desk sells from.
  *
- * Two sources, in the order the gym expects them:
+ * System Settings is the only source, because it is the only source the
+ * *backend* uses: `POST /api/v1/payments` with `paymentCategory`
+ * `DropInSingle` (3) or `DropInPass` (4) takes no membership plan at all — it
+ * takes a branch, and prices the payment from `DROP_IN_SINGLE_<BRANCH>` /
+ * `DROP_IN_PASS_<BRANCH>` itself (verified against the live API: Kedoya single
+ * → Rp 100.000, Kedoya pass → Rp 45.000, invoice prefix `DIP-`).
  *
- *  1. **System Settings** — where drop-in pricing is configured and what the
- *     member app reads, so the counter must not disagree with it; and
- *  2. **Membership plans marked "Drop In"** — the catalogue rows that already
- *     existed, used when settings carry no usable drop-in configuration.
- *
- * A plan is needed either way: `POST /api/v1/payments` takes a
- * `membershipPlanId`, so a settings-defined tier is charged against the drop-in
- * plan it corresponds to. A tier with no plan behind it cannot be rung up
- * without a backend change, so it is left out and reported through `warning`
- * rather than shown as a button that would fail.
+ * Reading the price from anywhere else — a membership plan marked "Drop In",
+ * say — would show the customer a number the backend then ignores, so this
+ * deliberately has no other fallback. When a branch has no drop-in configured,
+ * the till says so instead of quoting a price it cannot charge.
  */
 export type DropInOption = {
-  /** Stable key for lists and selection. */
+  /** Settings key the price came from. */
   id: string;
   label: string;
   kind: DropInKind;
   visits: number;
   price: number;
   validityDays?: number;
-  /** Plan the payment is created against. */
-  planId: string;
-  /** Plan's own branch, which wins over the till's when it has one. */
-  planBranchId?: string;
-  source: "settings" | "plan";
+  /** Branch part of the settings key, "" when it applies to every branch. */
+  branchToken: string;
 };
 
 export type DropInOptionsResult = {
   options: DropInOption[];
-  source: "settings" | "plan" | "none";
-  /** Why the list is shorter than the configuration suggests, if it is. */
+  /** Why the menu is empty or shorter than the settings suggest. */
   warning: string | null;
 };
 
-function optionFromPlan(plan: MembershipPlan): DropInOption {
-  const visits = dropInVisitsOf(plan);
-  const kind = dropInKindOf(plan) ?? (visits > 1 ? "pass" : "single");
-  return {
-    id: plan.id,
-    label: plan.planName,
-    kind,
-    visits,
-    price: plan.price ?? 0,
-    validityDays: plan.validityDays,
-    planId: plan.id,
-    planBranchId: plan.branchId,
-    source: "plan",
-  };
-}
-
 /**
- * The plan a settings tier is charged against.
+ * Drop-in tiers sellable at one branch.
  *
- * Same shape first (a 5-visit pass against the 5-visit plan), then the same
- * kind, and only then any drop-in plan at all — a single visit and a pass are
- * charged under different payment categories, so kind matters more than price.
+ * `branchName` is matched against the branch part of the setting key
+ * ("Kedoya" → `DROP_IN_SINGLE_KEDOYA`); a key that names no branch applies
+ * everywhere. Never throws — the till has a customer standing at it.
  */
-function matchPlan(option: DropInSettingOption, plans: MembershipPlan[]): MembershipPlan | null {
-  const sameKind = plans.filter(
-    (plan) => (dropInKindOf(plan) ?? "single") === option.kind
-  );
-  return (
-    sameKind.find((plan) => dropInVisitsOf(plan) === option.visits) ??
-    sameKind[0] ??
-    (option.kind === "single" ? (plans.find((p) => dropInVisitsOf(p) === 1) ?? null) : null)
-  );
-}
-
-/**
- * Load the drop-in options sellable at one branch.
- *
- * Never throws: a settings outage falls back to the plans, and a plan outage
- * leaves an empty menu with a message. The till has a customer standing at it.
- */
-export async function loadDropInOptions(branchId?: string): Promise<DropInOptionsResult> {
-  const [settingsResult, plansResult] = await Promise.allSettled([
-    listSystemSettings({ redirectOn401: false }),
-    listMembershipPlans({ redirectOn401: false }),
-  ]);
-
-  const allPlans = plansResult.status === "fulfilled" ? plansResult.value : [];
-  // A record with no branch is shown rather than hidden — plans predating the
-  // branch column would otherwise become unsellable, exactly as in the catalogue.
-  const dropInPlans = allPlans.filter(
-    (plan) =>
-      isDropInPlan(plan) &&
-      plan.isActive !== false &&
-      (!plan.branchId || !branchId || plan.branchId === branchId)
-  );
-
-  const settings =
-    settingsResult.status === "fulfilled"
-      ? dropInOptionsFromSettings(settingsResult.value)
-      : null;
-
-  if (settings?.disabled) {
+export async function loadDropInOptions(branchName?: string): Promise<DropInOptionsResult> {
+  let settings;
+  try {
+    settings = await listSystemSettings({ redirectOn401: false });
+  } catch {
     return {
       options: [],
-      source: "none",
-      warning: "Drop-in dimatikan di System Settings.",
+      warning: "System Settings gagal dimuat, jadi harga drop-in belum bisa ditampilkan.",
     };
   }
 
-  if (settings && settings.options.length > 0) {
-    const chargeable: DropInOption[] = [];
-    const unmatched: string[] = [];
-    for (const option of settings.options) {
-      const plan = matchPlan(option, dropInPlans);
-      if (!plan) {
-        unmatched.push(option.label);
-        continue;
-      }
-      chargeable.push({
-        id: option.key,
-        label: option.label,
-        kind: option.kind,
-        visits: option.visits,
-        price: option.price,
-        validityDays: option.validityDays ?? plan.validityDays,
-        planId: plan.id,
-        planBranchId: plan.branchId,
-        source: "settings",
-      });
-    }
-
-    if (chargeable.length > 0) {
-      const notes = [...settings.warnings];
-      if (unmatched.length > 0) {
-        notes.push(
-          `${unmatched.join(", ")} belum punya membership plan berkategori "Drop In", jadi belum bisa ditagih dari POS.`
-        );
-      }
-      return {
-        options: chargeable,
-        source: "settings",
-        warning: notes.length > 0 ? notes.join(" ") : null,
-      };
-    }
+  const parsed = dropInOptionsFromSettings(settings);
+  if (parsed.disabled) {
+    return { options: [], warning: "Drop-in dimatikan di System Settings." };
   }
 
-  if (dropInPlans.length > 0) {
-    const configured = (settings?.options.length ?? 0) > 0;
-    return {
-      options: dropInPlans
-        .map(optionFromPlan)
-        .filter((option) => option.price > 0)
-        .sort((a, b) => a.visits - b.visits || a.price - b.price),
-      source: "plan",
-      warning: configured
-        ? "Opsi drop-in di System Settings belum cocok dengan plan mana pun — memakai membership plan berkategori \"Drop In\"."
-        : null,
-    };
-  }
+  const wanted = branchName ? normalizeToken(branchName) : "";
+  const forBranch = parsed.options.filter(
+    (option) => !option.branchToken || !wanted || option.branchToken === wanted
+  );
 
-  const problems: string[] = [];
-  if (settingsResult.status === "rejected") problems.push("System Settings gagal dimuat.");
-  if (plansResult.status === "rejected") problems.push("Membership plan gagal dimuat.");
-  if (settings?.warnings.length) problems.push(...settings.warnings);
+  const notes = [...parsed.warnings];
+  if (forBranch.length === 0) {
+    const configured = Array.from(
+      new Set(parsed.options.map((o) => o.branchToken).filter(Boolean))
+    );
+    notes.push(
+      configured.length > 0
+        ? `Drop-in belum dikonfigurasi untuk branch ${branchName || "ini"} — yang ada di System Settings baru ${configured.join(", ")}.`
+        : `Belum ada konfigurasi drop-in di System Settings (mis. DROP_IN_SINGLE_${wanted || "<BRANCH>"}).`
+    );
+  }
 
   return {
-    options: [],
-    source: "none",
-    warning:
-      problems.length > 0
-        ? problems.join(" ")
-        : "Belum ada konfigurasi drop-in: isi harga drop-in di System Settings atau buat membership plan dengan kategori \"Drop In\".",
+    options: forBranch.map((option) => ({
+      id: option.key,
+      label: option.label,
+      kind: option.kind,
+      visits: option.visits,
+      price: option.price,
+      validityDays: option.validityDays,
+      branchToken: option.branchToken,
+    })),
+    warning: notes.length > 0 ? notes.join(" ") : null,
   };
 }
 

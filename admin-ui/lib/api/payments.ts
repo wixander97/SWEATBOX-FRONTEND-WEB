@@ -83,7 +83,12 @@ export type PaymentMethodOption = {
  */
 export type CreatePaymentRequest = {
   memberId: string;
-  membershipPlanId: string;
+  /**
+   * Required for a membership (the backend answers "Membership plan is
+   * required." without it) and meaningless for a drop-in, which is priced from
+   * the branch's settings instead.
+   */
+  membershipPlanId?: string;
   paymentCategory: PaymentCategory;
   paymentMethod: PaymentMethod;
   paymentProvider: PaymentProvider;
@@ -117,6 +122,39 @@ export function createMembershipPayment(
     errorMessage: "Gagal membuat payment",
     ...options,
   });
+}
+
+/**
+ * Buy a drop-in visit or a multi-visit pass.
+ *
+ * Same endpoint as a membership, but a genuinely different purchase: there is
+ * no drop-in plan and none is sent. The backend prices it from the branch's own
+ * System Settings rows (`DROP_IN_SINGLE_<BRANCH>` / `DROP_IN_PASS_<BRANCH>`,
+ * with `_VISITS` and `_VALIDITY_DAYS`), issues a `DIP-` invoice, and creates the
+ * `MemberDropInPass` once the payment settles. Sending a branch is therefore not
+ * optional — without it the backend answers "Branch is required."
+ */
+export function createDropInPayment(
+  body: {
+    memberId: string;
+    branchId: string;
+    kind: "single" | "pass";
+    paymentMethod: PaymentMethod;
+    paymentProvider: PaymentProvider;
+    notes?: string;
+  },
+  options?: RequestOptions
+): Promise<Payment> {
+  const { kind, ...rest } = body;
+  return apiPost<Payment>(
+    "/api/v1/payments",
+    {
+      ...rest,
+      paymentCategory:
+        kind === "pass" ? PaymentCategory.DropInPass : PaymentCategory.DropInSingle,
+    },
+    { errorMessage: "Gagal membuat payment drop-in", ...options }
+  );
 }
 
 const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";

@@ -9,6 +9,7 @@ import {
   PaymentProvider,
   asteriPayRedirectUrl,
   confirmEdcPayment,
+  createDropInPayment,
   createMembershipPayment,
   getPayment,
   isAsteriPayReady,
@@ -19,13 +20,7 @@ import {
 } from "@/lib/api/payments";
 import { PaymentStatus, paymentStatusMeta } from "@/components/admin/payments/payment-status";
 import { listMemberDropInPasses } from "@/lib/api/drop-in-passes";
-import {
-  cartSubtotal,
-  payableItems,
-  type CartItem,
-  type DropInCartItem,
-  type MembershipCartItem,
-} from "@/lib/pos/cart";
+import { cartSubtotal, payableItems, type CartItem } from "@/lib/pos/cart";
 import { memberDisplayName, type ApiMember } from "@/lib/api/members";
 import { newOrderRef, stampOrderRef } from "@/lib/pos/order-ref";
 
@@ -46,12 +41,13 @@ import { newOrderRef, stampOrderRef } from "@/lib/pos/order-ref";
  * `POST /api/v1/class-bookings` from the catalogue and never queued behind a
  * checkout it would take no payment for.
  *
- * Drop-ins ride the same rails as a membership — one `POST /api/v1/payments`,
- * only under `PaymentCategory.DropInSingle` / `DropInPass` — and are then
- * verified: after the backend reports Paid, the member's drop-in passes are
- * re-read to confirm one was actually issued. The payment is real either way,
- * so a failed check never fails the sale; it tells the front desk to issue the
- * pass from the Drop In screen instead of sending the customer away.
+ * Drop-ins ride the same endpoint as a membership but carry no plan: they are
+ * posted under `PaymentCategory.DropInSingle` / `DropInPass` with a branch, and
+ * the backend prices them from that branch's `DROP_IN_*` System Settings. They
+ * are then verified: after the backend reports Paid, the member's drop-in passes
+ * are re-read to confirm one was actually issued. The payment is real either
+ * way, so a failed check never fails the sale; it tells the front desk to issue
+ * the pass from the Drop In screen instead of sending the customer away.
  */
 
 /**
@@ -91,19 +87,6 @@ function defaultNote(branchName: string | undefined, itemName: string): string {
 
 export function isEdc(choice: PosPaymentChoice): boolean {
   return choice === "edc";
-}
-
-/**
- * Which backend category a plan-backed line is charged under.
- *
- * Same endpoint and same plan record for both; the category is the whole
- * difference between starting a membership and issuing a drop-in pass.
- */
-function paymentCategoryFor(item: MembershipCartItem | DropInCartItem): PaymentCategory {
-  if (item.kind === "membership") return PaymentCategory.Membership;
-  return item.dropInKind === "pass"
-    ? PaymentCategory.DropInPass
-    : PaymentCategory.DropInSingle;
 }
 
 /** Attempts and spacing for the post-sale drop-in pass check. */
@@ -251,15 +234,29 @@ export function usePosCheckout(
 
       const paymentMethod = methodFor(selected);
 
-      if (item.kind === "pt" && !item.branchId) {
+      // Both of these are priced or resolved per branch backend-side, and both
+      // are refused outright without one.
+      if ((item.kind === "pt" || item.kind === "dropin") && !item.branchId) {
         createdRef.current.delete(item.lineId);
         updateStep(item.lineId, {
           status: "failed",
-          error: "Branch wajib dipilih untuk pembelian PT package.",
+          error:
+            item.kind === "pt"
+              ? "Branch wajib dipilih untuk pembelian PT package."
+              : "Branch wajib dipilih untuk pembelian drop-in.",
         });
         setPhase("blocked");
         return;
       }
+
+      // Staff notes win. The default is what a finance report needs to read
+      // months later: where it was sold and what was sold. Every payment of one
+      // checkout carries the same order reference, which is what lets two
+      // invoices from a single visit be recognised as one transaction later on.
+      const note = stampOrderRef(
+        orderRefRef.current,
+        notes?.trim() || defaultNote(branchName, item.name)
+      );
 
       try {
         const payment =
@@ -271,38 +268,32 @@ export function usePosCheckout(
                 paymentMethod,
                 paymentProvider: providerFor(selected),
               })
-            : await createMembershipPayment({
-                // Names the customer; the JWT still identifies the operator.
-                memberId: customer.id,
-                // A membership line is backed by the plan itself; a drop-in line
-                // by the plan its configured tier resolved to.
-                membershipPlanId:
-                  item.kind === "membership" ? item.plan.id : item.planId,
-                // Membership, drop-in single or drop-in pass — the plan record
-                // is the same shape, the category is what the backend acts on.
-                paymentCategory: paymentCategoryFor(item),
-                paymentMethod,
-                paymentProvider: providerFor(selected),
-                // The plan's own branch wins — a PIK2 plan is a PIK2 sale
-                // wherever it is rung up. Plans that predate the branch column
-                // carry none, and sending nothing would leave the backend to
-                // guess which branch merchant settles it, so the branch the
-                // till is open on is the fallback.
-                branchId:
-                  (item.kind === "membership" ? item.plan.branchId : item.planBranchId) ||
-                  branchId,
-                // Staff notes win. The default is what a finance report needs
-                // to read months later: where it was sold and what was sold —
-                // not the literal word "POS" followed by a plan name, which is
-                // what this used to write.
-                // Every payment of one checkout carries the same order
-                // reference, which is what lets two invoices from a single
-                // visit be recognised as one transaction later on.
-                notes: stampOrderRef(
-                  orderRefRef.current,
-                  notes?.trim() || defaultNote(branchName, item.name)
-                ),
-              });
+            : item.kind === "dropin"
+              ? await createDropInPayment({
+                  memberId: customer.id,
+                  // The branch is the price: the backend reads
+                  // DROP_IN_<KIND>_<BRANCH> from System Settings. No plan.
+                  branchId: item.branchId,
+                  kind: item.dropInKind,
+                  paymentMethod,
+                  paymentProvider: providerFor(selected),
+                  notes: note,
+                })
+              : await createMembershipPayment({
+                  // Names the customer; the JWT still identifies the operator.
+                  memberId: customer.id,
+                  membershipPlanId: item.plan.id,
+                  paymentCategory: PaymentCategory.Membership,
+                  paymentMethod,
+                  paymentProvider: providerFor(selected),
+                  // The plan's own branch wins — a PIK2 plan is a PIK2 sale
+                  // wherever it is rung up. Plans that predate the branch column
+                  // carry none, and sending nothing would leave the backend to
+                  // guess which branch merchant settles it, so the branch the
+                  // till is open on is the fallback.
+                  branchId: item.plan.branchId || branchId,
+                  notes: note,
+                });
 
         if (!mountedRef.current) return;
 

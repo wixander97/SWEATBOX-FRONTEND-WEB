@@ -61,13 +61,11 @@ export type DropInCartItem = {
   name: string;
   price: number;
   /**
-   * Plan the payment is created against. Drop-in tiers are configured in System
-   * Settings, but `POST /api/v1/payments` still takes a `membershipPlanId`, so
-   * the line carries the plan the tier resolved to (see `loadDropInOptions`).
+   * Branch the drop-in is sold on. No plan is involved: the backend prices a
+   * drop-in payment from the branch's own `DROP_IN_*` settings, so the branch
+   * is the only thing that decides what the customer is charged.
    */
-  planId: string;
-  /** The plan's own branch, which wins over the till's when it has one. */
-  planBranchId?: string;
+  branchId: string;
   dropInKind: DropInKind;
   /** Visits the pass is worth, for the cart line and the post-sale check. */
   visits: number;
@@ -76,14 +74,13 @@ export type DropInCartItem = {
 };
 
 /** Turn a configured drop-in tier into the one line a drop-in sale consists of. */
-export function dropInCartItem(option: DropInOption): DropInCartItem {
+export function dropInCartItem(option: DropInOption, branchId: string): DropInCartItem {
   return {
     lineId: newLineId(),
     kind: "dropin",
     name: option.label,
     price: option.price,
-    planId: option.planId,
-    planBranchId: option.planBranchId,
+    branchId,
     dropInKind: option.kind,
     visits: option.visits,
     validityDays: option.validityDays,
@@ -119,14 +116,11 @@ export function hasPackage(items: CartItem[], packageId: string): boolean {
   return items.some((item) => item.kind === "pt" && item.pkg.id === packageId);
 }
 
-/** Plan-backed lines already in the cart — memberships and drop-ins alike. */
+/** Plan-backed lines already in the cart. Drop-ins carry no plan. */
 export function queuedPlanIds(items: CartItem[]): string[] {
   return items
-    .filter(
-      (item): item is MembershipCartItem | DropInCartItem =>
-        item.kind === "membership" || item.kind === "dropin"
-    )
-    .map((item) => (item.kind === "membership" ? item.plan.id : item.planId));
+    .filter((item): item is MembershipCartItem => item.kind === "membership")
+    .map((item) => item.plan.id);
 }
 
 export function formatRupiah(amount: number | null | undefined): string {
