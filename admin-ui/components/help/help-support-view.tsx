@@ -14,13 +14,16 @@ import {
 import type { HelpArticle, HelpGuide } from "@/lib/help/registry";
 
 /**
- * Optional support channels.
+ * Support channels.
  *
- * Read from configuration rather than hard-coded: this build ships no support
- * address, and inventing one would send staff to a mailbox nobody reads. When
- * neither is set the section explains who to ask instead.
+ * The email is the product owner's own support address, so it ships as the
+ * default and the section works without any configuration. Both stay readable
+ * from the environment so a deployment can point staff somewhere else — a
+ * helpdesk URL, or a different mailbox — without a code change. Setting either
+ * to an empty value switches that channel off.
  */
-const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "";
+const SUPPORT_EMAIL =
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "info@wixander.com";
 const SUPPORT_URL = process.env.NEXT_PUBLIC_SUPPORT_URL ?? "";
 
 export function HelpSupportView() {
@@ -420,12 +423,23 @@ function SupportSection() {
             {SUPPORT_EMAIL && (
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
-                className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm font-bold hover:bg-fg/5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sweat"
+                /* Primary when it is the only channel, so the section always
+                   has one obvious action rather than a lone outlined link. */
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition inline-flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-sweat ${
+                  SUPPORT_URL
+                    ? "bg-sidebar border border-border text-fg hover:bg-fg/5"
+                    : "bg-sweat text-black hover:brightness-95"
+                }`}
               >
+                <i className="fas fa-envelope" aria-hidden />
                 {SUPPORT_EMAIL}
               </a>
             )}
           </div>
+          <p className="text-xs text-muted mt-3 max-w-md mx-auto">
+            Include the module, what you were doing, and any invoice or member
+            code shown in the error.
+          </p>
         </>
       ) : (
         <p className="text-sm text-muted mt-1 max-w-md mx-auto">
