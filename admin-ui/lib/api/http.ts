@@ -43,19 +43,53 @@ export function apiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }
 
+/** What the API says when it has nothing useful to say. */
+const GENERIC_BACKEND_MESSAGE = "an unexpected error occurred";
+
+/**
+ * The most useful sentence in an error body.
+ *
+ * The backend answers in two shapes and casings. A handled 400 is
+ * `{ "message": "Membership plan is required." }`; an unhandled 500 is
+ * `{ "Success": false, "Message": "An unexpected error occurred",
+ *    "Errors": ["Unsupported AsteriPay payment method: CreditCard"] }` — where
+ * the only sentence worth showing staff is inside `Errors`, and `Message` is
+ * boilerplate. Keys are therefore matched case-insensitively and the array is
+ * read first, otherwise a real reason like the one above reaches the front desk
+ * as nothing but the caller's generic fallback.
+ */
 function messageFrom(body: unknown, fallback: string): string {
   if (body && typeof body === "object") {
     const record = body as Record<string, unknown>;
-    for (const key of ["message", "title", "error", "detail"]) {
-      const value = record[key];
-      if (typeof value === "string" && value.trim()) return value;
+    const at = (name: string): unknown => {
+      const key = Object.keys(record).find((k) => k.toLowerCase() === name);
+      return key === undefined ? undefined : record[key];
+    };
+
+    const errors = at("errors");
+    if (Array.isArray(errors)) {
+      const first = errors.find((e) => typeof e === "string" && e.trim());
+      if (typeof first === "string") return first;
     }
     // ASP.NET ModelState: { errors: { Field: ["msg"] } }
-    const errors = record.errors;
-    if (errors && typeof errors === "object") {
+    if (errors && typeof errors === "object" && !Array.isArray(errors)) {
       const first = Object.values(errors as Record<string, unknown>).flat()[0];
       if (typeof first === "string" && first.trim()) return first;
     }
+
+    for (const key of ["message", "title", "error", "detail"]) {
+      const value = at(key);
+      if (
+        typeof value === "string" &&
+        value.trim() &&
+        value.trim().toLowerCase() !== GENERIC_BACKEND_MESSAGE
+      ) {
+        return value;
+      }
+    }
+    // Nothing specific anywhere: the boilerplate still beats a made-up message.
+    const message = at("message");
+    if (typeof message === "string" && message.trim()) return message;
   }
   if (typeof body === "string" && body.trim()) return body;
   return fallback;

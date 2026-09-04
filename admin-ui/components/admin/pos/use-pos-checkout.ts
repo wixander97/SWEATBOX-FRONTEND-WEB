@@ -344,12 +344,19 @@ export function usePosCheckout(
         updateStep(item.lineId, { paymentUrl: asteriPayRedirectUrl(payment.id) });
         await watchPayment(index, payment.id);
       } catch (err) {
-        // Creation failed, so no backend record exists: allow a retry.
+        // Creation failed, so the POS holds no payment for this line: allow a
+        // retry. A drop-in is the exception worth warning about — the backend
+        // writes the payment row *before* it calls AsteriPay, so a refused
+        // drop-in still leaves a Pending `DIP-` invoice that each retry adds to.
         createdRef.current.delete(item.lineId);
         if (!mountedRef.current) return;
+        const message = errorMessageOf(err, "Gagal membuat payment");
         updateStep(item.lineId, {
           status: "failed",
-          error: errorMessageOf(err, "Gagal membuat payment"),
+          error:
+            item.kind === "dropin"
+              ? `${message} Payment drop-in yang gagal tetap tersimpan Pending di menu Payments (invoice DIP-) — hapus dari sana, jangan diulang berkali-kali.`
+              : message,
         });
         setPhase("blocked");
       }

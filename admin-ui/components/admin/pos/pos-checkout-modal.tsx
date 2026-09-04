@@ -75,6 +75,16 @@ export function PosCheckoutModal({
   const [receiptOpen, setReceiptOpen] = useState(false);
 
   const { phase, steps, activeIndex, subtotal, paidPaymentIds } = checkout;
+  /*
+   * Drop-ins can only be paid on an online rail.
+   *
+   * The backend routes every drop-in payment through AsteriPay whatever
+   * `paymentProvider` says — a card charged on the terminal comes back as
+   * "Unsupported AsteriPay payment method: CreditCard", and the refused attempt
+   * still leaves a Pending `DIP-` invoice behind. So EDC is closed off here
+   * rather than offered and rejected downstream.
+   */
+  const hasDropIn = items.some((item) => item.kind === "dropin");
   const running = phase !== "idle";
   const finished = phase === "done";
 
@@ -142,7 +152,13 @@ export function PosCheckoutModal({
                 </p>
                 <div className="space-y-2">
                   {POS_PAYMENT_CHOICES.map((c) => {
-                    const unavailable = c.value === "qris" && qrisAvailable === false;
+                    const unavailable =
+                      (c.value === "qris" && qrisAvailable === false) ||
+                      (c.value === "edc" && hasDropIn);
+                    const unavailableHint =
+                      c.value === "edc"
+                        ? "Drop-in selalu diproses lewat AsteriPay di backend, jadi belum bisa EDC"
+                        : "Tidak aktif di payment method settings";
                     return (
                       <button
                         key={c.value}
@@ -159,7 +175,7 @@ export function PosCheckoutModal({
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-bold text-fg">{c.label}</span>
                           <span className="block text-[11px] text-muted">
-                            {unavailable ? "Tidak aktif di payment method settings" : c.hint}
+                            {unavailable ? unavailableHint : c.hint}
                           </span>
                         </span>
                         {selected === c.value && !unavailable && (
