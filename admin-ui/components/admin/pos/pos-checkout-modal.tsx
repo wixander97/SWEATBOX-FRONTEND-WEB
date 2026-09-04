@@ -248,10 +248,7 @@ export function PosCheckoutModal({
                                 {formatRupiah(step.amount)}
                               </p>
                               <p className="text-[11px] text-gray-500 mt-1">
-                                Method:{" "}
-                                {checkout.choice === "edc-credit"
-                                  ? "EDC — Credit Card"
-                                  : "EDC — Debit Card"}
+                                Method: EDC
                               </p>
                             </div>
                             <label className="block">

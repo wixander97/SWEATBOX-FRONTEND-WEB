@@ -39,8 +39,13 @@ import { memberDisplayName, type ApiMember } from "@/lib/api/members";
  * available credits.
  */
 
-/** Payment rails the front desk can take money on. */
-export type PosPaymentChoice = "qris" | "edc-credit" | "edc-debit";
+/**
+ * Payment rails the front desk can take money on.
+ *
+ * EDC is a single option: the terminal itself decides whether the card runs as
+ * debit or credit, so asking staff to pick is both redundant and error-prone.
+ */
+export type PosPaymentChoice = "qris" | "edc";
 
 export const POS_PAYMENT_CHOICES: Array<{
   value: PosPaymentChoice;
@@ -50,27 +55,21 @@ export const POS_PAYMENT_CHOICES: Array<{
 }> = [
   { value: "qris", label: "QRIS", hint: "AsteriPay hosted QRIS page", icon: "fa-qrcode" },
   {
-    value: "edc-credit",
-    label: "EDC — Credit Card",
-    hint: "Card charged on the terminal, reference recorded here",
+    value: "edc",
+    label: "EDC",
+    hint: "Card charged on the terminal; only the reference is recorded here",
     icon: "fa-credit-card",
-  },
-  {
-    value: "edc-debit",
-    label: "EDC — Debit Card",
-    hint: "Card charged on the terminal, reference recorded here",
-    icon: "fa-money-check",
   },
 ];
 
 export function isEdc(choice: PosPaymentChoice): boolean {
-  return choice !== "qris";
+  return choice === "edc";
 }
 
 function methodFor(choice: PosPaymentChoice): PaymentMethod {
-  if (choice === "qris") return PaymentMethod.QRIS;
-  if (choice === "edc-credit") return PaymentMethod.CreditCard;
-  return PaymentMethod.DebitCard;
+  // The terminal settles debit vs credit; the record keeps the generic card
+  // method and the slip reference identifies the actual transaction.
+  return choice === "qris" ? PaymentMethod.QRIS : PaymentMethod.CreditCard;
 }
 
 /** QRIS is routed through AsteriPay; EDC is settled off-platform. */
@@ -110,18 +109,31 @@ export type BookingResult = {
 export type CheckoutPhase = "idle" | "paying" | "booking" | "done" | "blocked";
 
 /**
- * Detects a payment created against the wrong account. `MemberName` is derived
- * from the payment's own user, so a mismatch means the request did not target
- * the selected customer and the transaction must stop.
+ * Detects a payment created against the wrong account.
+ *
+ * Prefers the stable ids — `payment.userId` is the owner the backend actually
+ * persisted and `customer.userId` is the account the member is linked to. Names
+ * are only consulted for members with no linked account, where no id comparison
+ * is possible.
  */
 function wrongAccountMessage(payment: Payment, customer: ApiMember): string | null {
+  const stop = (detail: string) =>
+    `${detail} Transaksi dihentikan — hapus payment ini dari menu Payments sebelum mencoba lagi.`;
+
+  if (customer.userId && payment.userId) {
+    return payment.userId.toLowerCase() === customer.userId.toLowerCase()
+      ? null
+      : stop(
+          `Payment tercatat untuk user ${payment.userId}, bukan akun customer ${customer.userId}.`
+        );
+  }
+
   const onPayment = (payment.memberName ?? "").trim().toLowerCase();
   if (!onPayment) return null;
   const expected = memberDisplayName(customer).trim().toLowerCase();
   if (!expected || onPayment === expected) return null;
-  return (
-    `Payment tercatat atas nama "${payment.memberName}", bukan "${memberDisplayName(customer)}". ` +
-    "Transaksi dihentikan — hapus payment ini dari menu Payments sebelum mencoba lagi."
+  return stop(
+    `Payment tercatat atas nama "${payment.memberName}", bukan "${memberDisplayName(customer)}".`
   );
 }
 
@@ -235,6 +247,7 @@ export function usePosCheckout(items: CartItem[], customer: ApiMember | null) {
                 ptPackageId: item.pkg.id,
                 branchId: item.branchId,
                 paymentMethod,
+                paymentProvider: providerFor(selected),
               });
 
         if (!mountedRef.current) return;

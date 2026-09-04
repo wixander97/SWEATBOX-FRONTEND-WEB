@@ -15,7 +15,6 @@ import {
 import {
   formatRupiah,
   newLineId,
-  ptTrainingTypeLabel,
   type CartItem,
   type ClassBookingCartItem,
   type MembershipCartItem,
@@ -152,9 +151,7 @@ export function PosCatalog({ onAdd, bookedScheduleIds, disabled = false }: Props
   const visiblePackages = useMemo(
     () =>
       category === "all" || category === "pt"
-        ? packages.filter((p) =>
-            matches(p.name, p.description, p.coachName, ptTrainingTypeLabel(p))
-          )
+        ? packages.filter((p) => matches(p.name, p.description, p.coachName))
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [packages, category, term]
@@ -300,7 +297,7 @@ export function PosCatalog({ onAdd, bookedScheduleIds, disabled = false }: Props
                     <Card
                       key={pkg.id}
                       title={pkg.name}
-                      subtitle={`${ptTrainingTypeLabel(pkg)} · ${pkg.sessionCount ?? 0} sesi`}
+                      subtitle={`${pkg.sessionCount ?? 0} sesi`}
                       meta={pkg.coachName ? `Coach ${pkg.coachName}` : pkg.branchName}
                       price={formatRupiah(pkg.price ?? 0)}
                       disabled={disabled}

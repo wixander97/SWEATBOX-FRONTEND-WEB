@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { branchLabel, listBranches, type Branch } from "@/lib/api/branches";
-import {
-  formatRupiah,
-  newLineId,
-  ptTrainingTypeLabel,
-  type PtCartItem,
-} from "@/lib/pos/cart";
+import { formatRupiah, newLineId, type PtCartItem } from "@/lib/pos/cart";
 import type { PtPackage } from "@/lib/api/pt-packages";
 
 type Props = {
@@ -72,7 +67,6 @@ export function PosPtOptionsModal({ pkg, onClose, onAdd }: Props) {
       branchId,
       branchName: branchLabel(branch),
       coachName: pkg.coachName ?? "",
-      trainingTypeLabel: ptTrainingTypeLabel(pkg),
     });
   }
 
@@ -89,7 +83,9 @@ export function PosPtOptionsModal({ pkg, onClose, onAdd }: Props) {
             <h3 className="text-xl font-bold font-display uppercase text-white truncate">
               {pkg.name}
             </h3>
-            <p className="text-xs text-sweat mt-0.5">{ptTrainingTypeLabel(pkg)}</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {pkg.sessionCount ?? 0} sesi · {formatRupiah(pkg.price ?? 0)}
+            </p>
           </div>
           <button
             type="button"

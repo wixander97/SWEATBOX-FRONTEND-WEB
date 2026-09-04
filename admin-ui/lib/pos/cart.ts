@@ -33,7 +33,6 @@ export type PtCartItem = {
   branchName: string;
   /** Display only, read off the package record. */
   coachName: string;
-  trainingTypeLabel: string;
 };
 
 export type ClassBookingCartItem = {
@@ -76,16 +75,6 @@ export function payableItems(items: CartItem[]): PayableCartItem[] {
 
 export function bookingItems(items: CartItem[]): ClassBookingCartItem[] {
   return items.filter((item): item is ClassBookingCartItem => item.kind === "class");
-}
-
-/**
- * Existing PT domain terminology. The purchase endpoint takes no training type
- * — it lives on the package — so this only classifies the catalogue.
- */
-export function ptTrainingTypeLabel(pkg: PtPackage): string {
-  const haystack = `${pkg.name} ${pkg.description ?? ""}`.toLowerCase();
-  if (haystack.includes("group")) return "PT Group";
-  return "PT Private";
 }
 
 /** Guard against booking the same class twice in one transaction. */

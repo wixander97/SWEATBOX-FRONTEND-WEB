@@ -25,7 +25,6 @@ function lineDetail(item: CartItem): string {
       }`;
     case "pt":
       return [
-        item.trainingTypeLabel,
         `${item.sessionCount} sesi`,
         item.branchName,
         item.coachName ? `Coach ${item.coachName}` : null,

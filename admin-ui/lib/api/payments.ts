@@ -164,6 +164,11 @@ export type PurchasePtPackageRequest = {
   ptPackageId: string;
   branchId: string;
   paymentMethod: PaymentMethod;
+  /**
+   * Omitted keeps the AsteriPay checkout (what member/mobile purchases do).
+   * `Manual` is used when the card is charged on an EDC terminal.
+   */
+  paymentProvider?: PaymentProvider;
 };
 
 /** Statuses that end a polling cycle — nothing more will change on its own. */

@@ -8,6 +8,7 @@ import {
   generateMemberPassword,
   memberDisplayName,
   registerMember,
+  sendPasswordReset,
   type ApiMember,
 } from "@/lib/api/members";
 
@@ -41,6 +42,25 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [duplicate, setDuplicate] = useState<ApiMember | null>(null);
+  /** Set once registration succeeded, so staff can hand over next steps. */
+  const [registered, setRegistered] = useState<ApiMember | null>(null);
+  const [resetState, setResetState] = useState<"idle" | "sending" | "sent" | "failed">(
+    "idle"
+  );
+  const [resetError, setResetError] = useState("");
+
+
+  async function sendReset(email: string) {
+    setResetState("sending");
+    setResetError("");
+    try {
+      await sendPasswordReset(email);
+      setResetState("sent");
+    } catch (err) {
+      setResetState("failed");
+      setResetError(errorMessageOf(err, "Gagal mengirim reset password"));
+    }
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -82,7 +102,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
         );
         return;
       }
-      onCreated(member);
+      setRegistered(member);
     } catch (err) {
       setError(errorMessageOf(err, "Gagal mendaftarkan member"));
     } finally {
@@ -118,6 +138,59 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
           </button>
         </div>
 
+        {registered ? (
+          <div className="space-y-3 text-sm">
+            <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <p className="text-green-400 font-bold text-sm">✓ Customer Registered</p>
+            </div>
+            <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
+              <div className="flex justify-between py-1">
+                <span className="text-[11px] text-gray-500 uppercase">Name</span>
+                <span className="text-xs text-gray-200">{memberDisplayName(registered)}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-[11px] text-gray-500 uppercase">Phone</span>
+                <span className="text-xs text-gray-200">{registered.phoneNumber || "-"}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-[11px] text-gray-500 uppercase">Email</span>
+                <span className="text-xs text-gray-200">{registered.email || "-"}</span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-gray-400">
+              Customer bisa membuat password sendiri lewat{" "}
+              <span className="text-gray-200 font-semibold">Forgot Password</span> di aplikasi
+              mobile, lalu login. Staff tidak pernah melihat atau mengatur password customer.
+            </p>
+
+            {registered.email && (
+              <button
+                type="button"
+                onClick={() => void sendReset(registered.email as string)}
+                disabled={resetState === "sending" || resetState === "sent"}
+                className="w-full bg-sidebar border border-border text-white py-2.5 rounded-lg text-sm disabled:opacity-60"
+              >
+                <i className="fas fa-envelope mr-2" aria-hidden />
+                {resetState === "sending"
+                  ? "Mengirim..."
+                  : resetState === "sent"
+                    ? "Reset password terkirim ✓"
+                    : "Send Password Reset"}
+              </button>
+            )}
+
+            {resetError && <p className="text-xs text-red-400">{resetError}</p>}
+
+            <button
+              type="button"
+              onClick={() => onCreated(registered)}
+              className="w-full bg-sweat text-black py-2.5 rounded-lg text-sm font-bold hover:bg-yellow-400 transition"
+            >
+              Pilih customer ini
+            </button>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-3 text-sm">
           <label className="block">
             <span className="text-gray-500 text-xs uppercase font-bold">
@@ -201,6 +274,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

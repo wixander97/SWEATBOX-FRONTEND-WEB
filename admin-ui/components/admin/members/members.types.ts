@@ -1,5 +1,7 @@
 export type ApiMember = {
   id: string;
+  /** Login account this member belongs to. Null for unlinked legacy records. */
+  userId?: string | null;
   memberCode?: string | null;
   fullName?: string | null;
   email?: string | null;
