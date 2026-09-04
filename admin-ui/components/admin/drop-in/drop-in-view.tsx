@@ -9,6 +9,7 @@ import {
   DropInDetailModal,
   type MemberDropInPass,
 } from "./drop-in-detail-modal";
+import { dropInPassStatusMeta } from "@/lib/api/drop-in-passes";
 
 type PagedResponse<T> = {
   items?: T[];
@@ -148,7 +149,7 @@ export function DropInView() {
       String(p.remainingVisits),
       fmtDate(p.purchasedAt),
       fmtDate(p.expiredAt),
-      p.isActive ? "Active" : "Expired",
+      dropInPassStatusMeta(p).label,
     ]);
     await downloadXlsx([header, ...rows], "drop-in-passes.xlsx");
   }
@@ -248,12 +249,9 @@ export function DropInView() {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${p.isActive
-                          ? "bg-green-500/10 text-success border-green-500/30"
-                          : "bg-red-500/10 text-danger border-red-500/30"
-                          }`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${dropInPassStatusMeta(p).class}`}
                       >
-                        {p.isActive ? "Active" : "Expired"}
+                        {dropInPassStatusMeta(p).label}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">

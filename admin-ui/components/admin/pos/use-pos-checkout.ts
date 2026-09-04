@@ -21,7 +21,7 @@ import {
 import { PaymentStatus, paymentStatusMeta } from "@/components/admin/payments/payment-status";
 import { listMemberDropInPasses } from "@/lib/api/drop-in-passes";
 import { cartSubtotal, payableItems, type CartItem } from "@/lib/pos/cart";
-import { memberDisplayName, type ApiMember } from "@/lib/api/members";
+import { getMember, memberDisplayName, type ApiMember } from "@/lib/api/members";
 import { newOrderRef, stampOrderRef } from "@/lib/pos/order-ref";
 
 /**
@@ -134,7 +134,7 @@ export type CheckoutStep = {
    * pre-sale snapshot failed), which is reported as nothing rather than as a
    * false alarm.
    */
-  dropInCheck: "none" | "checking" | "issued" | "missing" | "skipped";
+  dropInCheck: "none" | "checking" | "issued" | "missing" | "skipped" | "not-credited";
 };
 
 export type CheckoutPhase = "idle" | "paying" | "done" | "blocked";
@@ -208,6 +208,14 @@ export function usePosCheckout(
    * skipped rather than guessed at.
    */
   const dropInBeforeRef = useRef<Set<string> | null>(null);
+  /**
+   * The member's own drop-in quota before the sale.
+   *
+   * A pass row and the member's quota are two different things backend-side,
+   * and `ClassBookingService` reads the quota — so a pass that lands without
+   * the quota moving is a sale the customer cannot actually use.
+   */
+  const memberVisitsBeforeRef = useRef<number | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -439,6 +447,31 @@ export function usePosCheckout(
    * reported as "unverified", never as a failed sale: the money has already
    * changed hands and the payment record exists either way.
    */
+  /**
+   * Did the member's bookable drop-in quota actually grow?
+   *
+   * Verified against the live API on 2026-09-04: a `DropInSingle` purchase
+   * raises `remainingDropInVisits`, a `DropInPass` purchase does not — the pass
+   * row is written but the member's quota stays put, so the class booking that
+   * follows is refused with "No remaining drop-in pass." while the Drop In
+   * screen shows a healthy 5-visit pass. Unknowable answers count as credited:
+   * a read that fails must not accuse a good sale.
+   */
+  const isQuotaCredited = useCallback(
+    async (expectedVisits: number): Promise<boolean> => {
+      const before = memberVisitsBeforeRef.current;
+      if (before == null || !customer) return true;
+      try {
+        const member = await getMember(customer.id, { redirectOn401: false });
+        const after = member.remainingDropInVisits ?? 0;
+        return after >= before + Math.max(1, expectedVisits) || after > before;
+      } catch {
+        return true;
+      }
+    },
+    [customer]
+  );
+
   const verifyDropInIssued = useCallback(
     async (item: CartItem) => {
       if (item.kind !== "dropin" || !customer) return;
@@ -458,7 +491,9 @@ export function usePosCheckout(
           });
           if (!mountedRef.current) return;
           if (passes.some((pass) => pass.id && !before.has(pass.id))) {
-            updateStep(item.lineId, { dropInCheck: "issued" });
+            updateStep(item.lineId, {
+              dropInCheck: (await isQuotaCredited(item.visits)) ? "issued" : "not-credited",
+            });
             return;
           }
         } catch {
@@ -472,7 +507,7 @@ export function usePosCheckout(
 
       if (mountedRef.current) updateStep(item.lineId, { dropInCheck: "missing" });
     },
-    [customer, updateStep]
+    [customer, updateStep, isQuotaCredited]
   );
 
   /** Move to the next payment, or finish when the queue is empty. */
@@ -545,6 +580,7 @@ export function usePosCheckout(
      * reporting a pass as missing on no evidence.
      */
     dropInBeforeRef.current = null;
+    memberVisitsBeforeRef.current = null;
     if (payables.some((item) => item.kind === "dropin")) {
       try {
         const existing = await listMemberDropInPasses(customer.id, {
@@ -553,6 +589,12 @@ export function usePosCheckout(
         dropInBeforeRef.current = new Set(existing.map((pass) => pass.id));
       } catch {
         dropInBeforeRef.current = null;
+      }
+      try {
+        const member = await getMember(customer.id, { redirectOn401: false });
+        memberVisitsBeforeRef.current = member.remainingDropInVisits ?? 0;
+      } catch {
+        memberVisitsBeforeRef.current = null;
       }
     }
 

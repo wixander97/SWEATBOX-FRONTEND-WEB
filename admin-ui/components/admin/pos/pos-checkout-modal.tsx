@@ -353,6 +353,15 @@ export function PosCheckoutModal({
                         Drop-in pass terbit di akun member.
                       </p>
                     )}
+                    {step.dropInCheck === "not-credited" && (
+                      <p className="mt-2 text-[11px] text-yellow-600 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded">
+                        <i className="fas fa-triangle-exclamation mr-1.5" aria-hidden />
+                        Pass terbit, tapi kuota drop-in member tidak bertambah, jadi
+                        booking class masih akan ditolak (&quot;No remaining drop-in
+                        pass&quot;). Ini keterbatasan backend untuk pembelian multi-visit
+                        pass — jangan bayar ulang, laporkan invoice ini ke tim backend.
+                      </p>
+                    )}
                     {step.dropInCheck === "missing" && (
                       <p className="mt-2 text-[11px] text-yellow-600 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded">
                         <i className="fas fa-triangle-exclamation mr-1.5" aria-hidden />

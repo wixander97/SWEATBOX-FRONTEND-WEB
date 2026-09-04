@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
-import type { MemberDropInPass } from "@/lib/api/drop-in-passes";
+import {
+  dropInPassStatusMeta,
+  type MemberDropInPass,
+} from "@/lib/api/drop-in-passes";
 
 /** The pass model lives with its service now; re-exported for existing callers. */
 export type { MemberDropInPass };
@@ -20,12 +23,6 @@ function formatDate(iso: string): string {
     month: "short",
     day: "2-digit",
   });
-}
-
-function statusBadge(active: boolean) {
-  return active
-    ? { label: "Active", class: "bg-green-500/10 text-success border-green-500/30" }
-    : { label: "Expired", class: "bg-red-500/10 text-danger border-red-500/30" };
 }
 
 function membershipBadge(status?: string) {
@@ -164,7 +161,7 @@ export function DropInDetailModal({ memberId, memberName, onClose }: Props) {
                 </div>
                 <div className="space-y-2">
                   {passes.map((p) => {
-                    const badge = statusBadge(p.isActive);
+                    const badge = dropInPassStatusMeta(p);
                     return (
                       <div
                         key={p.id}

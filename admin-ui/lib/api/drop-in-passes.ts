@@ -49,3 +49,58 @@ export async function listMemberDropInPasses(
   );
   return toList(payload);
 }
+
+/* -------------------------------------------------------------------------
+   Pass status
+   ------------------------------------------------------------------------- */
+
+/**
+ * What a pass is actually worth right now.
+ *
+ * `isActive` alone does not say it: the backend switches the flag off when the
+ * last visit is spent but never when a pass simply runs out of time, so an
+ * expired pass keeps reading `isActive: true` while a fully used one reads
+ * `false` for a different reason entirely. Showing "Active"/"Expired" off that
+ * single flag therefore mislabels both. The rule here mirrors the backend's own
+ * `MemberDropInPass.IsUsable`, which is what every entitlement check consults.
+ */
+export type DropInPassStatus = "active" | "used-up" | "expired" | "inactive";
+
+export function dropInPassStatus(
+  pass: Pick<MemberDropInPass, "isActive" | "remainingVisits" | "expiredAt">,
+  now: Date = new Date()
+): DropInPassStatus {
+  const expiry = new Date(pass.expiredAt);
+  if (!Number.isNaN(expiry.getTime()) && expiry <= now) return "expired";
+  if ((pass.remainingVisits ?? 0) <= 0) return "used-up";
+  if (!pass.isActive) return "inactive";
+  return "active";
+}
+
+export const DROP_IN_PASS_STATUS_META: Record<
+  DropInPassStatus,
+  { label: string; class: string }
+> = {
+  active: {
+    label: "Active",
+    class: "bg-green-500/10 text-success border-green-500/30",
+  },
+  "used-up": {
+    label: "Habis",
+    class: "bg-gray-500/10 text-muted border-gray-500/30",
+  },
+  expired: {
+    label: "Expired",
+    class: "bg-red-500/10 text-danger border-red-500/30",
+  },
+  inactive: {
+    label: "Nonaktif",
+    class: "bg-yellow-500/10 text-yellow-500 border-yellow-500/30",
+  },
+};
+
+export function dropInPassStatusMeta(
+  pass: Pick<MemberDropInPass, "isActive" | "remainingVisits" | "expiredAt">
+): { label: string; class: string } {
+  return DROP_IN_PASS_STATUS_META[dropInPassStatus(pass)];
+}

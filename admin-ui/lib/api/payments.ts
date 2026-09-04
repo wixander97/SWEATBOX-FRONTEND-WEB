@@ -141,14 +141,13 @@ export function createMembershipPayment(
  * optional — without it the backend answers "Branch is required."
  *
  * The method is fixed, and that is not an oversight. Unlike a membership, the
- * backend's drop-in path always registers the payment with AsteriPay and
- * refuses anything AsteriPay does not sell: a create carrying `CreditCard`
- * comes back "Unsupported AsteriPay payment method: CreditCard" (AsteriPay
- * offers QRIS and VirtualAccount only) — and the refused attempt still leaves a
- * Pending `DIP-` row behind. A card taken on the terminal is therefore created
- * here like any other drop-in and corrected on the confirmation write, which is
- * what `confirmEdcPayment` does: it sets the method to `CreditCard`, the
- * provider to `Manual` and the slip number, exactly as for a membership.
+ * backend registers every drop-in with AsteriPay, which sells QRIS and
+ * VirtualAccount only — so the rail the customer actually used is recorded on
+ * the confirmation write rather than at creation. That is what
+ * `confirmEdcPayment` does for a card taken on the terminal: it sets the method
+ * to `CreditCard`, the provider to `Manual` and the slip number, exactly as for
+ * a membership. Sending the supported method here keeps the record honest in
+ * the meantime instead of leaving it on a rail the gateway would reject.
  */
 export function createDropInPayment(
   body: {
