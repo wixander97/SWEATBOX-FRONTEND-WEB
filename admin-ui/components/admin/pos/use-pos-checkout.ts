@@ -18,8 +18,7 @@ import {
   type Payment,
 } from "@/lib/api/payments";
 import { PaymentStatus, paymentStatusMeta } from "@/components/admin/payments/payment-status";
-import { createClassBooking } from "@/lib/api/classes";
-import { bookingItems, cartSubtotal, payableItems, type CartItem } from "@/lib/pos/cart";
+import { cartSubtotal, payableItems, type CartItem } from "@/lib/pos/cart";
 import { memberDisplayName, type ApiMember } from "@/lib/api/members";
 
 /**
@@ -34,9 +33,10 @@ import { memberDisplayName, type ApiMember } from "@/lib/api/members";
  * Either way the payment is re-read afterwards and only a backend-reported
  * `Paid` completes a line.
  *
- * Class bookings carry no price and run only after every payment is confirmed,
- * because `ClassBookingService` requires an active, paid membership with
- * available credits.
+ * Classes are not part of this at all: a class is settled with the member's own
+ * entitlement rather than money, so it is booked directly against
+ * `POST /api/v1/class-bookings` from the catalogue and never queued behind a
+ * checkout it would take no payment for.
  */
 
 /**
@@ -61,6 +61,18 @@ export const POS_PAYMENT_CHOICES: Array<{
     icon: "fa-credit-card",
   },
 ];
+
+/**
+ * Note stamped on a front-desk payment when staff do not write their own.
+ *
+ * It has to survive being read out of context in the Payments list, so it says
+ * the channel, the branch and the item.
+ */
+function defaultNote(branchName: string | undefined, itemName: string): string {
+  return ["Front Desk", branchName?.trim(), itemName.trim()]
+    .filter(Boolean)
+    .join(" · ");
+}
 
 export function isEdc(choice: PosPaymentChoice): boolean {
   return choice === "edc";
@@ -99,14 +111,7 @@ export type CheckoutStep = {
   error: string | null;
 };
 
-export type BookingResult = {
-  lineId: string;
-  label: string;
-  status: "queued" | "booking" | "booked" | "failed";
-  error: string | null;
-};
-
-export type CheckoutPhase = "idle" | "paying" | "booking" | "done" | "blocked";
+export type CheckoutPhase = "idle" | "paying" | "done" | "blocked";
 
 /**
  * Detects a payment created against the wrong account.
@@ -137,14 +142,16 @@ function wrongAccountMessage(payment: Payment, customer: ApiMember): string | nu
   );
 }
 
-export function usePosCheckout(items: CartItem[], customer: ApiMember | null) {
+export function usePosCheckout(
+  items: CartItem[],
+  customer: ApiMember | null,
+  branchName?: string
+) {
   const payables = useMemo(() => payableItems(items), [items]);
-  const bookings = useMemo(() => bookingItems(items), [items]);
 
   const [phase, setPhase] = useState<CheckoutPhase>("idle");
   const [choice, setChoice] = useState<PosPaymentChoice>("qris");
   const [steps, setSteps] = useState<CheckoutStep[]>([]);
-  const [bookingResults, setBookingResults] = useState<BookingResult[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [error, setError] = useState("");
 
@@ -171,42 +178,6 @@ export function usePosCheckout(items: CartItem[], customer: ApiMember | null) {
       current.map((step) => (step.lineId === lineId ? { ...step, ...patch } : step))
     );
   }, []);
-
-  const runBookings = useCallback(async () => {
-    if (!customer) return;
-    if (bookings.length === 0) {
-      setPhase("done");
-      return;
-    }
-    setPhase("booking");
-    for (const item of bookings) {
-      setBookingResults((current) =>
-        current.map((b) => (b.lineId === item.lineId ? { ...b, status: "booking" } : b))
-      );
-      try {
-        await createClassBooking({
-          memberId: customer.id,
-          classScheduleId: item.schedule.id,
-        });
-        if (!mountedRef.current) return;
-        setBookingResults((current) =>
-          current.map((b) =>
-            b.lineId === item.lineId ? { ...b, status: "booked", error: null } : b
-          )
-        );
-      } catch (err) {
-        if (!mountedRef.current) return;
-        setBookingResults((current) =>
-          current.map((b) =>
-            b.lineId === item.lineId
-              ? { ...b, status: "failed", error: errorMessageOf(err, "Gagal membooking class") }
-              : b
-          )
-        );
-      }
-    }
-    if (mountedRef.current) setPhase("done");
-  }, [bookings, customer]);
 
   const createPaymentForStep = useCallback(
     async (index: number, selected: PosPaymentChoice, notes?: string): Promise<void> => {
@@ -240,7 +211,11 @@ export function usePosCheckout(items: CartItem[], customer: ApiMember | null) {
                 paymentMethod,
                 paymentProvider: providerFor(selected),
                 branchId: item.plan.branchId,
-                notes: notes || `POS — ${item.name}`,
+                // Staff notes win. The default is what a finance report needs
+                // to read months later: where it was sold and what was sold —
+                // not the literal word "POS" followed by a plan name, which is
+                // what this used to write.
+                notes: notes?.trim() || defaultNote(branchName, item.name),
               })
             : await purchasePtPackage({
                 userId: customer.id,
@@ -310,7 +285,7 @@ export function usePosCheckout(items: CartItem[], customer: ApiMember | null) {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [payables, customer, updateStep]
+    [payables, customer, branchName, updateStep]
   );
 
   /** Poll until the backend says the payment settled. Backend is the truth. */
@@ -377,7 +352,7 @@ export function usePosCheckout(items: CartItem[], customer: ApiMember | null) {
     [payables, updateStep]
   );
 
-  /** Move to the next payment, or run the bookings when the queue is empty. */
+  /** Move to the next payment, or finish when the queue is empty. */
   const advanceAfterPaid = useCallback(
     async (index: number, selected?: PosPaymentChoice, notes?: string) => {
       if (advancedRef.current.has(index)) return;
@@ -389,9 +364,9 @@ export function usePosCheckout(items: CartItem[], customer: ApiMember | null) {
         return;
       }
       busyRef.current = false;
-      await runBookings();
+      setPhase("done");
     },
-    [payables.length, choice, createPaymentForStep, runBookings]
+    [payables.length, choice, createPaymentForStep]
   );
 
   /** Kick off checkout. Ignored while a checkout is already running. */
@@ -407,8 +382,8 @@ export function usePosCheckout(items: CartItem[], customer: ApiMember | null) {
       setError("Pilih customer terlebih dahulu.");
       return;
     }
-    if (items.length === 0) {
-      setError("Cart masih kosong.");
+    if (payables.length === 0) {
+      setError("Belum ada item berbayar di transaksi ini.");
       return;
     }
     busyRef.current = true;
@@ -417,21 +392,6 @@ export function usePosCheckout(items: CartItem[], customer: ApiMember | null) {
     setError("");
     setChoice(selected);
     setActiveIndex(0);
-    setBookingResults(
-      bookings.map((item) => ({
-        lineId: item.lineId,
-        label: item.name,
-        status: "queued" as const,
-        error: null,
-      }))
-    );
-
-    if (payables.length === 0) {
-      setSteps([]);
-      await runBookings();
-      busyRef.current = false;
-      return;
-    }
 
     setSteps(
       payables.map((item) => ({
@@ -448,7 +408,7 @@ export function usePosCheckout(items: CartItem[], customer: ApiMember | null) {
     setPhase("paying");
     await createPaymentForStep(0, selected, notes);
     busyRef.current = false;
-  }, [customer, items.length, payables, bookings, createPaymentForStep, runBookings]);
+  }, [customer, payables, createPaymentForStep]);
 
   /**
    * Record the EDC slip reference against the payment that is waiting.
@@ -555,13 +515,26 @@ export function usePosCheckout(items: CartItem[], customer: ApiMember | null) {
 
   const backendTotal = steps.reduce((sum, s) => sum + (s.payment?.finalAmount ?? s.amount), 0);
 
+  /**
+   * Payments the backend confirmed as Paid, in the order they were taken.
+   *
+   * Only these get a receipt: a slip must never be printed for a payment the
+   * backend has not settled.
+   */
+  const paidPaymentIds = useMemo(
+    () =>
+      steps
+        .filter((step) => step.status === "paid" && step.payment?.id)
+        .map((step) => step.payment!.id),
+    [steps]
+  );
+
   return {
     phase,
     choice,
     steps,
     activeIndex,
-    bookingResults,
-    bookings,
+    paidPaymentIds,
     payables,
     subtotal: cartSubtotal(items),
     backendTotal: steps.length > 0 ? backendTotal : cartSubtotal(items),

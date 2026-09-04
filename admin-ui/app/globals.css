@@ -1,19 +1,63 @@
 @import "tailwindcss";
 @import "@fortawesome/fontawesome-free/css/all.min.css";
 
+/*
+ * Surface + ink tokens.
+ *
+ * The admin portal is dark and stays dark: these :root values are exactly the
+ * palette it has always used, so nothing outside the POS changes. The POS is the
+ * only surface that offers a light mode, and it does so by re-declaring these
+ * same variables on its own subtree (see [data-pos-theme="light"] below) — which
+ * works because @theme inline emits `var(--sb-*)` into every utility instead of
+ * resolving the colour at build time.
+ */
+:root {
+  --sb-sweat: #ffd700;
+  /* Yellow-on-white is unreadable, so accent *text* gets its own token. */
+  --sb-accent-ink: #ffd700;
+  --sb-dark: #0f0f0f;
+  --sb-card: #1a1a1a;
+  --sb-sidebar: #111111;
+  --sb-border: #333333;
+  --sb-fg: #ffffff;
+  --sb-fg-soft: #e5e5e5;
+  --sb-muted: #8a8a8a;
+  --sb-overlay: rgb(0 0 0 / 0.8);
+}
+
+[data-pos-theme="light"] {
+  --sb-sweat: #ffd700;
+  --sb-accent-ink: #7a5d00;
+  --sb-dark: #f1f2f4;
+  --sb-card: #ffffff;
+  --sb-sidebar: #f7f7f8;
+  --sb-border: #d9dade;
+  --sb-fg: #17181b;
+  --sb-fg-soft: #3f4148;
+  --sb-muted: #6b6d76;
+  --sb-overlay: rgb(23 24 27 / 0.45);
+}
+
 @theme inline {
-  --color-sweat: #ffd700;
-  --color-dark: #0f0f0f;
-  --color-card: #1a1a1a;
-  --color-sidebar: #111111;
-  --color-border: #333333;
+  --color-sweat: var(--sb-sweat);
+  --color-accent-ink: var(--sb-accent-ink);
+  --color-dark: var(--sb-dark);
+  --color-card: var(--sb-card);
+  --color-sidebar: var(--sb-sidebar);
+  --color-border: var(--sb-border);
+  --color-fg: var(--sb-fg);
+  --color-fg-soft: var(--sb-fg-soft);
+  --color-muted: var(--sb-muted);
+  --color-overlay: var(--sb-overlay);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-oswald), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  background-color: #0f0f0f;
-  color: #e5e5e5;
+  /* Token-driven so a light POS does not sit on a dark page behind it. The
+     dark values are identical to what the portal has always used. */
+  background-color: var(--sb-dark);
+  color: var(--sb-fg-soft);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -67,6 +111,17 @@ body {
 /* Fix option text color in dark theme selects */
 select {
   color-scheme: dark;
+}
+
+/*
+ * Inside a light POS the native widgets have to flip too, otherwise the option
+ * list, the caret and the date picker all render dark on a white panel.
+ */
+[data-pos-theme="light"],
+[data-pos-theme="light"] select,
+[data-pos-theme="light"] input,
+[data-pos-theme="light"] textarea {
+  color-scheme: light;
 }
 
 /*
@@ -137,4 +192,162 @@ select[name="branchId"] option:checked {
   background: linear-gradient(#ffd700, #ffd700) !important;
   background-color: #ffd700 !important;
   color: #000000 !important;
+}
+/* ==========================================================================
+   Thermal receipt printing
+   --------------------------------------------------------------------------
+   The receipt prints on 80 x 80 mm pages.
+
+   `size: 80mm auto` looks like the obvious choice for a continuous roll, but it
+   is not valid CSS — a length may not be paired with the `auto` keyword — so
+   Chrome drops the whole declaration and silently falls back to Letter. Verified
+   against Chrome's own print pipeline: `80mm auto` yields a 215.9 x 279.4 mm
+   page, while `80mm 80mm` yields 80.1 x 80.1 mm.
+
+   Height is therefore pinned, and content that runs past one square flows onto
+   the next 80 mm page instead of being clipped — on a roll that simply feeds on.
+   The layout below is kept tight so an ordinary single-item sale lands on one.
+
+   Printing is done by hiding the whole app and unhiding only the receipt, so
+   the browser's own print dialog drives it — there is no second render path
+   that could drift from what staff previewed on screen.
+   ========================================================================== */
+
+.receipt-80 {
+  /* 80 mm minus 2 x 3 mm of printer margin. */
+  width: 74mm;
+  font-family: "Courier New", ui-monospace, monospace;
+  color: #000;
+  background: #fff;
+  /* Sized so an ordinary single-item sale lands inside one 80 mm page. A
+     thermal head at ~203 dpi renders 9px monospace crisply; this was reduced
+     until a real Chrome print produced a single page, not chosen by eye. */
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.receipt-80 .receipt-rule {
+  border: 0;
+  border-top: 1px dashed #000;
+  margin: 2px 0;
+}
+
+.receipt-80 table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.receipt-80 td {
+  padding: 1px 0;
+  vertical-align: top;
+  /* Long plan names must wrap rather than widen the roll. */
+  overflow-wrap: anywhere;
+}
+
+.receipt-80 td.receipt-value {
+  text-align: right;
+  padding-left: 6px;
+}
+
+@media print {
+  @page {
+    size: 80mm 80mm;
+    margin: 3mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    width: auto;
+    height: auto;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide the application shell without unmounting it, so closing the print
+     dialog returns staff to exactly the checkout state they printed from. */
+  body > *:not(.receipt-print-root) {
+    display: none !important;
+  }
+
+  .receipt-print-root {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    background: none !important;
+    padding: 0 !important;
+    backdrop-filter: none !important;
+  }
+
+  /*
+   * Flatten the dialog chrome around the slip. Its card padding, rounded
+   * borders and vertical margin are worth ~19 mm, which is the difference
+   * between a receipt landing on one 80 mm page and spilling onto a second.
+   */
+  .receipt-print-root * {
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: none !important;
+    overflow: visible !important;
+  }
+
+  .receipt-print-root > *,
+  .receipt-print-root > * > * {
+    padding: 0 !important;
+    border: 0 !important;
+    background: none !important;
+  }
+
+  /*
+   * Put back the slip's own spacing, which the reset above also stripped.
+   * Without this the dashed rules sit on the text baseline instead of between
+   * the sections.
+   */
+  .receipt-print-root .receipt-80 .receipt-rule {
+    border-top: 1px dashed #000 !important;
+    margin: 3px 0 !important;
+  }
+
+  .receipt-print-root .receipt-80 td {
+    padding: 1px 0 !important;
+  }
+
+  .receipt-print-root .receipt-80 td.receipt-value {
+    padding-left: 6px !important;
+  }
+
+  .receipt-print-root .receipt-print-hide {
+    display: none !important;
+  }
+
+  .receipt-print-root .receipt-80 {
+    width: auto;
+    max-width: 74mm;
+    margin: 0;
+    /* The printable margin comes from @page; the on-screen inset would only
+       eat into the square and push the slip onto a second page. */
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Thermal heads render solid black far better than screen greys. */
+  .receipt-80,
+  .receipt-80 * {
+    color: #000 !important;
+    background: transparent !important;
+  }
+
+  /* A page break must fall between rows, never through one. */
+  .receipt-80 tr,
+  .receipt-80 table {
+    break-inside: avoid;
+  }
+
+  /* Two sales in one transaction print as two slips, not one run-on. */
+  .receipt-80 + .receipt-80 {
+    break-before: page;
+  }
 }

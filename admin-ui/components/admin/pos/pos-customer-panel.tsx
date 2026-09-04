@@ -10,7 +10,13 @@ import {
   type ApiMember,
 } from "@/lib/api/members";
 import { listMemberUpcomingBookings, type ClassBooking } from "@/lib/api/classes";
-import { isOwnedBy, listPtPackages, type PtPackage } from "@/lib/api/pt-packages";
+import { listMemberPtPackages, type PtPackage } from "@/lib/api/pt-packages";
+import {
+  getMembershipPlan,
+  membershipKindOf,
+  type MembershipKind,
+  type MembershipPlan,
+} from "@/lib/api/membership-plans";
 import { PosQuickRegisterModal } from "./pos-quick-register-modal";
 
 type Props = {
@@ -18,6 +24,8 @@ type Props = {
   onSelect: (member: ApiMember | null) => void;
   /** Locked while a checkout is in flight so the customer cannot change mid-payment. */
   locked?: boolean;
+  /** Bumped by the POS after a sale or a booking, to re-read the context. */
+  refreshKey?: number;
 };
 
 function formatDate(iso?: string | null): string {
@@ -37,22 +45,66 @@ function initialsOf(name: string): string {
   );
 }
 
-function ContextRow({ label, value }: { label: string; value: string }) {
+function ContextRow({
+  label,
+  value,
+  tone = "normal",
+}: {
+  label: string;
+  value: string;
+  tone?: "normal" | "warn";
+}) {
   return (
     <div className="flex justify-between items-baseline gap-3 py-1">
-      <span className="text-[11px] text-gray-500 uppercase tracking-wide">{label}</span>
-      <span className="text-xs text-gray-200 text-right truncate">{value}</span>
+      <span className="text-[11px] text-muted uppercase tracking-wide">{label}</span>
+      <span
+        className={`text-xs text-right truncate ${
+          tone === "warn" ? "text-red-500 font-semibold" : "text-fg-soft"
+        }`}
+      >
+        {value}
+      </span>
     </div>
   );
+}
+
+/** What the front desk needs to know about class entitlement, in one line. */
+function creditsLabel(
+  kind: MembershipKind | null,
+  remainingCredits: number
+): { value: string; tone: "normal" | "warn" } {
+  switch (kind) {
+    case "unlimited":
+      return { value: "Unlimited · tidak pakai credit", tone: "normal" };
+    case "regular":
+      return { value: "Gym access · tidak bisa book class", tone: "normal" };
+    case "credit":
+      return {
+        value: `${remainingCredits} class credit`,
+        tone: remainingCredits > 0 ? "normal" : "warn",
+      };
+    default:
+      return { value: `${remainingCredits} class credit`, tone: "normal" };
+  }
 }
 
 /**
  * Customer search / selection plus the compact context panel.
  *
- * The selected customer stays put while staff add memberships, PT packages and
- * class bookings — it is only cleared explicitly or after a completed sale.
+ * The selected customer stays put while staff add memberships and PT packages
+ * and book classes — it is only cleared explicitly or after a completed sale.
+ *
+ * The context deliberately mirrors what `ClassBookingService` will actually
+ * enforce (active, paid, unexpired, and either credits, an unlimited plan, or a
+ * plan that allows classes at all) so staff can see a refusal coming instead of
+ * discovering it at the booking modal.
  */
-export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) {
+export function PosCustomerPanel({
+  customer,
+  onSelect,
+  locked = false,
+  refreshKey = 0,
+}: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ApiMember[]>([]);
   const [searching, setSearching] = useState(false);
@@ -61,6 +113,7 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
   const [registerOpen, setRegisterOpen] = useState(false);
 
   const [detail, setDetail] = useState<ApiMember | null>(null);
+  const [plan, setPlan] = useState<MembershipPlan | null>(null);
   const [ptPackages, setPtPackages] = useState<PtPackage[]>([]);
   const [bookings, setBookings] = useState<ClassBooking[]>([]);
   const [contextLoading, setContextLoading] = useState(false);
@@ -113,20 +166,38 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
     setDetail(member);
     setPtPackages([]);
     setBookings([]);
+    setPlan(null);
+
     const [detailResult, packagesResult, bookingsResult] = await Promise.allSettled([
       getMember(member.id),
-      listPtPackages(),
+      // The backend's own assignment lookup, not a client-side scan of every
+      // package in the system.
+      listMemberPtPackages(member.id),
       listMemberUpcomingBookings(member.id),
     ]);
-    if (detailResult.status === "fulfilled" && detailResult.value) {
-      setDetail(detailResult.value);
-    }
+
+    const resolved =
+      detailResult.status === "fulfilled" && detailResult.value
+        ? detailResult.value
+        : member;
+    setDetail(resolved);
+
     if (packagesResult.status === "fulfilled") {
-      setPtPackages(packagesResult.value.filter((p) => isOwnedBy(p, member.id)));
+      setPtPackages(packagesResult.value.filter((p) => p.isActive !== false));
     }
     if (bookingsResult.status === "fulfilled") {
       setBookings(bookingsResult.value);
     }
+
+    // The plan carries the unlimited / regular flags the member record does not.
+    if (resolved.membershipPlanId) {
+      try {
+        setPlan(await getMembershipPlan(resolved.membershipPlanId));
+      } catch {
+        setPlan(null);
+      }
+    }
+
     setContextLoading(false);
   }, []);
 
@@ -135,10 +206,11 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
       setDetail(null);
       setPtPackages([]);
       setBookings([]);
+      setPlan(null);
       return;
     }
     void loadContext(customer);
-  }, [customer, loadContext]);
+  }, [customer, loadContext, refreshKey]);
 
   function select(member: ApiMember) {
     setQuery("");
@@ -157,23 +229,22 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
     [bookings]
   );
 
-  const activePt = useMemo(
-    () => ptPackages.filter((p) => p.isActive !== false),
-    [ptPackages]
-  );
-
   const m = detail ?? customer;
+  const kind = membershipKindOf(plan);
+  const credits = creditsLabel(kind, m?.remainingCredits ?? 0);
+  const expired = m?.isExpired === true;
+  const inactive = (m?.membershipStatus ?? "").toLowerCase() !== "active";
 
   return (
     <div className="border-b border-border">
       {!customer ? (
         <div className="p-4" ref={wrapperRef}>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted mb-2">
             Customer
           </p>
           <div className="relative">
             <i
-              className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"
+              className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs pointer-events-none"
               aria-hidden
             />
             <input
@@ -181,7 +252,7 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => query.trim().length >= 2 && setShowResults(true)}
               placeholder="Cari phone, email, nama, atau member code"
-              className="w-full bg-sidebar border border-border text-white pl-9 pr-9 py-2.5 rounded-lg text-sm focus:outline-none focus:border-sweat"
+              className="w-full bg-sidebar border border-border text-fg pl-9 pr-9 py-2.5 rounded-lg text-sm focus:outline-none focus:border-sweat"
             />
             {searching && (
               <span className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin rounded-full border-2 border-sweat border-t-transparent" />
@@ -191,9 +262,9 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
           {showResults && (
             <div className="mt-2 bg-sidebar border border-border rounded-lg overflow-hidden max-h-64 overflow-y-auto">
               {searchError ? (
-                <p className="px-3 py-3 text-xs text-red-400">{searchError}</p>
+                <p className="px-3 py-3 text-xs text-red-500">{searchError}</p>
               ) : results.length === 0 ? (
-                <p className="px-3 py-3 text-xs text-gray-500">
+                <p className="px-3 py-3 text-xs text-muted">
                   {searching ? "Mencari..." : "Customer tidak ditemukan."}
                 </p>
               ) : (
@@ -202,12 +273,12 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
                     key={r.id}
                     type="button"
                     onClick={() => select(r)}
-                    className="w-full text-left px-3 py-2.5 hover:bg-white/5 border-b border-border/60 last:border-b-0 transition"
+                    className="w-full text-left px-3 py-2.5 hover:bg-sweat/10 border-b border-border/60 last:border-b-0 transition"
                   >
-                    <p className="text-sm text-white font-semibold truncate">
+                    <p className="text-sm text-fg font-semibold truncate">
                       {memberDisplayName(r)}
                     </p>
-                    <p className="text-[11px] text-gray-500 truncate">
+                    <p className="text-[11px] text-muted truncate">
                       {r.phoneNumber || "-"} · {r.email || "-"}
                     </p>
                   </button>
@@ -219,7 +290,7 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
           <button
             type="button"
             onClick={() => setRegisterOpen(true)}
-            className="mt-2 w-full bg-sidebar border border-dashed border-border text-gray-300 hover:text-white hover:border-sweat py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2"
+            className="mt-2 w-full bg-sidebar border border-dashed border-border text-fg-soft hover:text-fg hover:border-sweat py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2"
           >
             <i className="fas fa-user-plus text-xs" aria-hidden />
             Quick Register
@@ -232,15 +303,11 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
               {initialsOf(memberDisplayName(m))}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-white truncate">
-                {memberDisplayName(m)}
-              </p>
-              <p className="text-[11px] text-gray-500 truncate">
-                {m?.phoneNumber || "-"}
-              </p>
-              <p className="text-[11px] text-gray-500 truncate">{m?.email || "-"}</p>
+              <p className="text-sm font-bold text-fg truncate">{memberDisplayName(m)}</p>
+              <p className="text-[11px] text-muted truncate">{m?.phoneNumber || "-"}</p>
+              <p className="text-[11px] text-muted truncate">{m?.email || "-"}</p>
               {m?.memberCode && (
-                <span className="inline-block mt-1 text-[10px] font-mono text-sweat">
+                <span className="inline-block mt-1 text-[10px] font-mono text-accent-ink">
                   {m.memberCode}
                 </span>
               )}
@@ -250,7 +317,7 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
               onClick={() => onSelect(null)}
               disabled={locked}
               title={locked ? "Selesaikan transaksi dulu" : "Ganti customer"}
-              className="text-gray-500 hover:text-white text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+              className="text-muted hover:text-fg text-sm disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label="Clear customer"
             >
               <i className="fas fa-times" aria-hidden />
@@ -259,7 +326,7 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
 
           <div className="mt-3 bg-sidebar rounded-lg border border-border px-3 py-2">
             {contextLoading && !detail ? (
-              <p className="text-xs text-gray-500 py-1">Memuat data customer...</p>
+              <p className="text-xs text-muted py-1">Memuat data customer...</p>
             ) : (
               <>
                 <ContextRow
@@ -269,31 +336,45 @@ export function PosCustomerPanel({ customer, onSelect, locked = false }: Props) 
                       ? `${m.membershipPlanName}${m.membershipStatus ? ` · ${m.membershipStatus}` : ""}`
                       : "Belum ada membership aktif"
                   }
+                  tone={m?.membershipPlanName && inactive ? "warn" : "normal"}
                 />
                 {m?.expiryDate && (
-                  <ContextRow label="Expiry" value={formatDate(m.expiryDate)} />
+                  <ContextRow
+                    label="Expiry"
+                    value={expired ? `${formatDate(m.expiryDate)} · expired` : formatDate(m.expiryDate)}
+                    tone={expired ? "warn" : "normal"}
+                  />
                 )}
+                <ContextRow label="Credits" value={credits.value} tone={credits.tone} />
                 <ContextRow
-                  label="Credits"
-                  value={`${m?.remainingCredits ?? 0} class credit`}
+                  label="PT sesi"
+                  value={`${m?.remainingPtSessions ?? 0} sesi tersisa`}
                 />
-                <ContextRow
-                  label="PT"
-                  value={
-                    activePt.length > 0
-                      ? `${activePt[0].name} · ${m?.remainingPtSessions ?? 0} sesi tersisa`
-                      : `${m?.remainingPtSessions ?? 0} sesi PT tersisa`
-                  }
-                />
+
                 <div className="pt-1 mt-1 border-t border-border/60">
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wide mb-1">
+                  <p className="text-[11px] text-muted uppercase tracking-wide mb-1">
+                    PT package assigned
+                  </p>
+                  {ptPackages.length === 0 ? (
+                    <p className="text-xs text-muted">Belum ada package di-assign.</p>
+                  ) : (
+                    ptPackages.slice(0, 3).map((p) => (
+                      <p key={p.id} className="text-xs text-fg-soft truncate">
+                        {p.name} · {p.sessionCount ?? 0} sesi
+                      </p>
+                    ))
+                  )}
+                </div>
+
+                <div className="pt-1 mt-1 border-t border-border/60">
+                  <p className="text-[11px] text-muted uppercase tracking-wide mb-1">
                     Upcoming classes
                   </p>
                   {upcoming.length === 0 ? (
-                    <p className="text-xs text-gray-600">Tidak ada booking mendatang.</p>
+                    <p className="text-xs text-muted">Tidak ada booking mendatang.</p>
                   ) : (
                     upcoming.map((b) => (
-                      <p key={b.id} className="text-xs text-gray-300 truncate">
+                      <p key={b.id} className="text-xs text-fg-soft truncate">
                         {formatDate(b.classDate)} {b.startTime?.slice(0, 5) ?? ""} ·{" "}
                         {b.className ?? "-"}
                       </p>

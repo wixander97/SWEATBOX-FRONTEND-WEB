@@ -1,11 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
+import { adminPaths } from "@/lib/admin-routes";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import type { ApiMember } from "@/lib/api/members";
-import { formatRupiah, hasClass, type CartItem } from "@/lib/pos/cart";
+import { formatRupiah, hasPackage, type CartItem } from "@/lib/pos/cart";
+import { branchLabel, usePosBranch } from "@/lib/pos/branch-context";
+import { usePosTheme } from "@/lib/pos/pos-theme";
 import { PosCatalog } from "./pos-catalog";
 import { PosCartPanel } from "./pos-cart-panel";
 import { PosCustomerPanel } from "./pos-customer-panel";
@@ -19,13 +23,20 @@ type ProfileData = {
 };
 
 /**
- * Front-desk POS shell.
+ * Front-desk POS shell — a kiosk, not an admin page.
  *
- * Left: catalogue (search + categories + item cards).
- * Right: selected customer, cart, totals and checkout — collapsing into a
- * bottom drawer on tablet/phone so the checkout button is always reachable.
+ * The admin layout drops its sidebar and header on this route, so everything
+ * the till needs lives in this one bar: which branch is selling, the light/dark
+ * switch, and the way back out. Below it, the catalogue on the left and the
+ * customer + cart rail on the right, collapsing into a bottom drawer on tablets
+ * so the checkout button is always reachable.
  */
 export function PosView() {
+  const router = useRouter();
+  const { branches, branch, branchId, setBranchId, loading: branchLoading, error: branchError } =
+    usePosBranch();
+  const { theme, toggleTheme } = usePosTheme();
+
   const [customer, setCustomer] = useState<ApiMember | null>(null);
   const [items, setItems] = useState<CartItem[]>([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -33,6 +44,8 @@ export function PosView() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [notice, setNotice] = useState<{ title: string; detail?: string } | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  /** Bumped after a class booking so the customer panel re-reads its context. */
+  const [contextVersion, setContextVersion] = useState(0);
 
   useEffect(() => {
     authFetch(`${API_BASE_URL}/api/v1/auth/profile`, { cache: "no-store" })
@@ -43,10 +56,20 @@ export function PosView() {
       .catch(() => null);
   }, []);
 
-  const bookedScheduleIds = useMemo(
-    () => items.filter((i) => i.kind === "class").map((i) => i.schedule.id),
-    [items]
-  );
+  /*
+   * A cart is priced per branch and, for QRIS, settles against that branch's
+   * own AsteriPay merchant. Carrying lines across a branch switch would bill the
+   * wrong merchant, so the cart is emptied with the switch.
+   *
+   * Adjusted during render rather than in an effect: React re-runs this
+   * component before committing, so the stale cart is never painted.
+   */
+  const [lastBranchId, setLastBranchId] = useState(branchId);
+  if (branchId !== lastBranchId) {
+    setLastBranchId(branchId);
+    setItems([]);
+    setNotice(null);
+  }
 
   const addItem = useCallback(
     (item: CartItem) => {
@@ -55,8 +78,8 @@ export function PosView() {
         setNotice({ title: "Pilih customer dulu sebelum menambah item." });
         return;
       }
-      if (item.kind === "class" && hasClass(items, item.schedule.id)) {
-        setNotice({ title: "Class tersebut sudah ada di cart." });
+      if (item.kind === "pt" && hasPackage(items, item.pkg.id)) {
+        setNotice({ title: "PT package tersebut sudah ada di transaksi." });
         return;
       }
       setItems((current) => [...current, item]);
@@ -74,121 +97,209 @@ export function PosView() {
     setCheckoutBusy(false);
     setDrawerOpen(false);
     setNotice(null);
+    setContextVersion((v) => v + 1);
   }, []);
 
-  const total = items.reduce((sum, i) => sum + i.price, 0);
+  const total = useMemo(
+    () => items.reduce((sum, i) => sum + i.price, 0),
+    [items]
+  );
+
+  const exitPos = useCallback(() => {
+    if (checkoutBusy) return;
+    router.push(adminPaths.dashboard);
+  }, [checkoutBusy, router]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] min-h-[560px]">
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold font-display uppercase text-white">
-            Sweatbox POS
-          </h1>
-          <p className="text-xs text-gray-500 truncate">
-            Front desk · {profile?.fullName ?? "Staff"}
-            {profile?.roleName ? ` (${profile.roleName})` : ""}
-            {profile?.branchName ? ` · ${profile.branchName}` : ""}
-          </p>
-        </div>
-      </div>
-
-      {notice && (
-        <div className="mb-3 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs text-yellow-400 font-semibold">{notice.title}</p>
-            {notice.detail && (
-              <p className="text-[11px] text-gray-400 mt-1">{notice.detail}</p>
-            )}
+    <div className="h-screen flex flex-col bg-dark overflow-hidden">
+      {/* ---------- Kiosk bar ---------- */}
+      <header className="shrink-0 border-b border-border bg-sidebar px-3 sm:px-5 py-2.5 flex items-center gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="w-9 h-9 rounded-lg bg-sweat text-black grid place-items-center shrink-0">
+            <i className="fas fa-cash-register" aria-hidden />
+          </span>
+          <div className="min-w-0 hidden sm:block">
+            <p className="text-sm font-bold font-display uppercase text-fg leading-tight">
+              Sweatbox POS
+            </p>
+            <p className="text-[11px] text-muted truncate">
+              {profile?.fullName ?? "Front desk"}
+              {profile?.roleName ? ` · ${profile.roleName}` : ""}
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setNotice(null)}
-            className="text-gray-500 hover:text-white shrink-0"
-            aria-label="Dismiss"
+        </div>
+
+        <div className="flex-1" />
+
+        {/* Branch — the whole POS is scoped to it, so it sits front and centre */}
+        <label className="flex items-center gap-2 min-w-0">
+          <span className="text-[11px] uppercase font-bold text-muted hidden md:inline">
+            Branch
+          </span>
+          <select
+            value={branchId}
+            onChange={(e) => setBranchId(e.target.value)}
+            disabled={branchLoading || checkoutBusy}
+            title={checkoutBusy ? "Selesaikan transaksi dulu" : "Pilih branch"}
+            className="bg-card border border-border text-fg rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:border-sweat disabled:opacity-50 max-w-[10rem] sm:max-w-none"
           >
-            <i className="fas fa-times" aria-hidden />
-          </button>
-        </div>
-      )}
+            <option value="">
+              {branchLoading ? "Memuat…" : "Pilih branch"}
+            </option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {branchLabel(b)}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4">
-        <div className="bg-card rounded-xl border border-border overflow-hidden min-h-0 flex flex-col">
-          <PosCatalog
-            onAdd={addItem}
-            bookedScheduleIds={bookedScheduleIds}
-            disabled={checkoutBusy}
-          />
-        </div>
-
-        {/*
-          One panel instance for both layouts: a persistent right rail on
-          desktop, and the same tree promoted to a bottom drawer on small
-          screens. Rendering it twice would double every customer-context fetch.
-        */}
-        {drawerOpen && (
-          <button
-            type="button"
-            aria-label="Close cart"
-            onClick={() => setDrawerOpen(false)}
-            className="lg:hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
-          />
-        )}
-        <aside
-          className={`bg-card border border-border overflow-hidden flex-col min-h-0 lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-xl lg:border ${
-            drawerOpen
-              ? "flex fixed inset-x-0 bottom-0 z-50 max-h-[85vh] rounded-t-2xl"
-              : "hidden rounded-xl"
-          }`}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          title={theme === "dark" ? "Light mode" : "Dark mode"}
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          className="w-10 h-10 grid place-items-center rounded-lg bg-card border border-border text-fg-soft hover:text-fg hover:border-sweat transition shrink-0"
         >
-          {drawerOpen && (
-            <div className="lg:hidden flex justify-between items-center px-4 pt-3">
-              <span className="text-[11px] uppercase font-bold tracking-wider text-gray-500">
-                Transaksi
-              </span>
+          <i className={`fas ${theme === "dark" ? "fa-sun" : "fa-moon"}`} aria-hidden />
+        </button>
+
+        <button
+          type="button"
+          onClick={exitPos}
+          disabled={checkoutBusy}
+          title={checkoutBusy ? "Selesaikan transaksi dulu" : "Kembali ke Admin Portal"}
+          className="h-10 px-3 sm:px-4 rounded-lg bg-card border border-border text-fg-soft hover:text-fg hover:border-red-500/60 transition text-sm font-bold flex items-center gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <i className="fas fa-right-from-bracket" aria-hidden />
+          <span className="hidden sm:inline">Exit POS</span>
+        </button>
+      </header>
+
+      <div className="flex-1 min-h-0 p-3 sm:p-4 flex flex-col">
+        {branchError && (
+          <p className="mb-3 text-xs text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+            {branchError}
+          </p>
+        )}
+
+        {notice && (
+          <div className="mb-3 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs text-yellow-600 font-semibold">
+                {notice.title}
+              </p>
+              {notice.detail && (
+                <p className="text-[11px] text-muted mt-1">{notice.detail}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setNotice(null)}
+              className="text-muted hover:text-fg shrink-0"
+              aria-label="Dismiss"
+            >
+              <i className="fas fa-times" aria-hidden />
+            </button>
+          </div>
+        )}
+
+        {!branchId && !branchLoading ? (
+          <div className="flex-1 grid place-items-center">
+            <div className="text-center max-w-sm">
+              <i className="fas fa-store text-4xl text-muted mb-4 block" aria-hidden />
+              <p className="text-lg font-bold text-fg mb-1">Pilih branch dulu</p>
+              <p className="text-sm text-muted">
+                Katalog, harga, dan merchant pembayaran berbeda per branch, jadi POS
+                menunggu branch dipilih sebelum menampilkan item.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-3 sm:gap-4">
+            <div className="bg-card rounded-xl border border-border overflow-hidden min-h-0 flex flex-col">
+              <PosCatalog
+                onAdd={addItem}
+                customer={customer}
+                branchId={branchId}
+                branchName={branch ? branchLabel(branch) : ""}
+                cartItems={items}
+                disabled={checkoutBusy}
+                onBooked={() => setContextVersion((v) => v + 1)}
+              />
+            </div>
+
+            {/*
+              One panel instance for both layouts: a persistent right rail on
+              desktop, and the same tree promoted to a bottom drawer on small
+              screens. Rendering it twice would double every customer-context fetch.
+            */}
+            {drawerOpen && (
               <button
                 type="button"
+                aria-label="Close cart"
                 onClick={() => setDrawerOpen(false)}
-                className="text-gray-400 hover:text-white text-xl leading-none"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-          )}
-          <PosCustomerPanel
-            customer={customer}
-            onSelect={(member) => {
-              setCustomer(member);
-              if (!member) setItems([]);
-            }}
-            locked={checkoutBusy}
-          />
-          <PosCartPanel
-            items={items}
-            onRemove={removeItem}
-            onClear={() => setItems([])}
-            onCheckout={() => setCheckoutOpen(true)}
-            hasCustomer={!!customer}
-            disabled={checkoutBusy}
-          />
-        </aside>
+                className="lg:hidden fixed inset-0 z-40 bg-overlay backdrop-blur-sm"
+              />
+            )}
+            <aside
+              className={`bg-card border border-border overflow-hidden flex-col min-h-0 lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-xl lg:border ${
+                drawerOpen
+                  ? "flex fixed inset-x-0 bottom-0 z-50 max-h-[85vh] rounded-t-2xl"
+                  : "hidden rounded-xl"
+              }`}
+            >
+              {drawerOpen && (
+                <div className="lg:hidden flex justify-between items-center px-4 pt-3">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-muted">
+                    Transaksi
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setDrawerOpen(false)}
+                    className="text-muted hover:text-fg text-xl leading-none"
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              <PosCustomerPanel
+                customer={customer}
+                onSelect={(member) => {
+                  setCustomer(member);
+                  if (!member) setItems([]);
+                }}
+                locked={checkoutBusy}
+                refreshKey={contextVersion}
+              />
+              <PosCartPanel
+                items={items}
+                onRemove={removeItem}
+                onClear={() => setItems([])}
+                onCheckout={() => setCheckoutOpen(true)}
+                hasCustomer={!!customer}
+                disabled={checkoutBusy}
+              />
+            </aside>
+          </div>
+        )}
       </div>
 
       {/* Tablet / phone: the checkout bar is always reachable */}
-      {!drawerOpen && (
-        <div className="lg:hidden fixed bottom-0 inset-x-0 z-30">
+      {!drawerOpen && branchId && (
+        <div className="lg:hidden shrink-0">
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="w-full bg-sweat text-black px-4 py-3.5 flex items-center justify-between font-bold text-sm shadow-2xl"
+            className="w-full bg-sweat text-black px-4 py-3.5 flex items-center justify-between font-bold text-sm"
           >
             <span className="flex items-center gap-2">
-              <i className="fas fa-shopping-cart" aria-hidden />
+              <i className="fas fa-receipt" aria-hidden />
               {items.length} item
             </span>
             <span>{formatRupiah(total)}</span>
-            <span className="uppercase text-xs">Buka cart</span>
+            <span className="uppercase text-xs">Buka transaksi</span>
           </button>
         </div>
       )}
@@ -197,6 +308,7 @@ export function PosView() {
         <PosCheckoutModal
           items={items}
           customer={customer}
+          branchName={branch ? branchLabel(branch) : ""}
           onClose={() => {
             setCheckoutOpen(false);
             setCheckoutBusy(false);

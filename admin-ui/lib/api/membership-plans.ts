@@ -27,3 +27,31 @@ export async function listMembershipPlans(options?: RequestOptions): Promise<Mem
   );
   return toList(payload).filter((p) => p.isActive !== false);
 }
+
+/**
+ * One plan by id.
+ *
+ * The member record carries only `membershipPlanId`, but the front desk has to
+ * show *which kind* of membership it is — unlimited, regular gym access, or
+ * credit-based — because that decides what the member can actually do at the
+ * counter. Those flags live on the plan, so the POS resolves it.
+ */
+export function getMembershipPlan(
+  id: string,
+  options?: RequestOptions
+): Promise<MembershipPlan> {
+  return apiGet<MembershipPlan>(
+    `/api/v1/membership-plans/${encodeURIComponent(id)}`,
+    { errorMessage: "Gagal memuat membership plan", ...options }
+  );
+}
+
+/** How a plan grants class access — the three shapes the backend distinguishes. */
+export type MembershipKind = "unlimited" | "regular" | "credit";
+
+export function membershipKindOf(plan: MembershipPlan | null): MembershipKind | null {
+  if (!plan) return null;
+  if ((plan.planCategory ?? "").toLowerCase() === "regular") return "regular";
+  if (plan.isUnlimitedClasses) return "unlimited";
+  return "credit";
+}

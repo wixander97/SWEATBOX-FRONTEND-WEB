@@ -112,7 +112,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget && !submitting) onClose();
       }}
@@ -120,10 +120,10 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
       <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-2xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h3 className="text-xl font-bold font-display uppercase text-white">
+            <h3 className="text-xl font-bold font-display uppercase text-fg">
               Quick Register
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               Akun customer dibuat otomatis; password di-reset sendiri lewat
               &ldquo;forgot password&rdquo;.
             </p>
@@ -131,7 +131,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl leading-none"
+            className="text-fg-soft hover:text-fg text-xl leading-none"
             aria-label="Close"
           >
             ×
@@ -141,26 +141,26 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
         {registered ? (
           <div className="space-y-3 text-sm">
             <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-              <p className="text-green-400 font-bold text-sm">✓ Customer Registered</p>
+              <p className="text-green-600 font-bold text-sm">✓ Customer Registered</p>
             </div>
             <div className="bg-sidebar rounded-lg border border-border px-3 py-2">
               <div className="flex justify-between py-1">
-                <span className="text-[11px] text-gray-500 uppercase">Name</span>
-                <span className="text-xs text-gray-200">{memberDisplayName(registered)}</span>
+                <span className="text-[11px] text-muted uppercase">Name</span>
+                <span className="text-xs text-fg-soft">{memberDisplayName(registered)}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-[11px] text-gray-500 uppercase">Phone</span>
-                <span className="text-xs text-gray-200">{registered.phoneNumber || "-"}</span>
+                <span className="text-[11px] text-muted uppercase">Phone</span>
+                <span className="text-xs text-fg-soft">{registered.phoneNumber || "-"}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-[11px] text-gray-500 uppercase">Email</span>
-                <span className="text-xs text-gray-200">{registered.email || "-"}</span>
+                <span className="text-[11px] text-muted uppercase">Email</span>
+                <span className="text-xs text-fg-soft">{registered.email || "-"}</span>
               </div>
             </div>
 
-            <p className="text-[11px] text-gray-400">
+            <p className="text-[11px] text-fg-soft">
               Customer bisa membuat password sendiri lewat{" "}
-              <span className="text-gray-200 font-semibold">Forgot Password</span> di aplikasi
+              <span className="text-fg-soft font-semibold">Forgot Password</span> di aplikasi
               mobile, lalu login. Staff tidak pernah melihat atau mengatur password customer.
             </p>
 
@@ -169,7 +169,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
                 type="button"
                 onClick={() => void sendReset(registered.email as string)}
                 disabled={resetState === "sending" || resetState === "sent"}
-                className="w-full bg-sidebar border border-border text-white py-2.5 rounded-lg text-sm disabled:opacity-60"
+                className="w-full bg-sidebar border border-border text-fg py-2.5 rounded-lg text-sm disabled:opacity-60"
               >
                 <i className="fas fa-envelope mr-2" aria-hidden />
                 {resetState === "sending"
@@ -180,7 +180,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
               </button>
             )}
 
-            {resetError && <p className="text-xs text-red-400">{resetError}</p>}
+            {resetError && <p className="text-xs text-red-500">{resetError}</p>}
 
             <button
               type="button"
@@ -193,8 +193,8 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
         ) : (
         <form onSubmit={handleSubmit} className="space-y-3 text-sm">
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">
-              Phone Number <span className="text-red-400">*</span>
+            <span className="text-muted text-xs uppercase font-bold">
+              Phone Number <span className="text-red-500">*</span>
             </span>
             <input
               value={phoneNumber}
@@ -202,42 +202,42 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
               inputMode="tel"
               autoFocus
               placeholder="0812xxxxxxx"
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
 
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">
-              Email <span className="text-red-400">*</span>
+            <span className="text-muted text-xs uppercase font-bold">
+              Email <span className="text-red-500">*</span>
             </span>
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
               placeholder="nama@email.com"
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
 
           <label className="block">
-            <span className="text-gray-500 text-xs uppercase font-bold">
-              Full Name <span className="text-red-400">*</span>
+            <span className="text-muted text-xs uppercase font-bold">
+              Full Name <span className="text-red-500">*</span>
             </span>
             <input
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Nama customer"
-              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sweat"
+              className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
 
           {duplicate && (
             <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-              <p className="text-yellow-400 text-xs font-bold uppercase">
+              <p className="text-yellow-600 text-xs font-bold uppercase">
                 Customer sudah terdaftar
               </p>
-              <p className="text-sm text-white mt-1">{memberDisplayName(duplicate)}</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm text-fg mt-1">{memberDisplayName(duplicate)}</p>
+              <p className="text-xs text-fg-soft">
                 {duplicate.phoneNumber || "-"} · {duplicate.email || "-"}
               </p>
               <button
@@ -251,7 +251,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
           )}
 
           {error && (
-            <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+            <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
               {error}
             </p>
           )}
@@ -268,7 +268,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="flex-1 bg-sidebar border border-border text-white py-2.5 rounded-lg text-sm disabled:opacity-60"
+              className="flex-1 bg-sidebar border border-border text-fg py-2.5 rounded-lg text-sm disabled:opacity-60"
             >
               Cancel
             </button>

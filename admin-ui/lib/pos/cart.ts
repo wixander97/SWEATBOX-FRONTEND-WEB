@@ -1,13 +1,17 @@
 import type { MembershipPlan } from "@/lib/api/membership-plans";
 import type { PtPackage } from "@/lib/api/pt-packages";
-import type { ApiClass } from "@/lib/api/classes";
 
 /**
  * POS cart model.
  *
  * A cart line is a *pending intent*; nothing is persisted until checkout, where
- * each priced line becomes a real backend payment and each free line (class
- * booking) is executed through its own existing endpoint.
+ * each line becomes a real backend payment.
+ *
+ * The cart holds only what money is taken for — memberships and PT packages.
+ * Classes are deliberately not sellable lines: a class is settled with the
+ * member's own entitlement, not with a payment, so it is booked directly
+ * through `POST /api/v1/class-bookings` (see `PosBookClassModal`) rather than
+ * being queued behind a checkout it would never take money for.
  */
 
 export type MembershipCartItem = {
@@ -33,26 +37,19 @@ export type PtCartItem = {
   branchName: string;
   /** Display only, read off the package record. */
   coachName: string;
+  /**
+   * True when this package was already assigned to the customer in Admin, as
+   * opposed to being taken from the open catalogue. The backend accepts both
+   * from the same endpoint; this only drives the label.
+   */
+  assignedToMember?: boolean;
 };
 
-export type ClassBookingCartItem = {
-  lineId: string;
-  kind: "class";
-  name: string;
-  /** Class bookings are settled with membership credits, not money. */
-  price: 0;
-  schedule: ApiClass;
-};
-
-export type CartItem = MembershipCartItem | PtCartItem | ClassBookingCartItem;
-
-/** Cart lines that produce a backend payment. */
-export type PayableCartItem = MembershipCartItem | PtCartItem;
+export type CartItem = MembershipCartItem | PtCartItem;
 
 export const CART_KIND_LABEL: Record<CartItem["kind"], string> = {
   membership: "Membership",
   pt: "PT Package",
-  class: "Class Booking",
 };
 
 export function newLineId(): string {
@@ -67,19 +64,13 @@ export function cartSubtotal(items: CartItem[]): number {
 }
 
 /** Lines that need money to change hands, in checkout order. */
-export function payableItems(items: CartItem[]): PayableCartItem[] {
-  return items.filter(
-    (item): item is PayableCartItem => item.kind !== "class" && item.price > 0
-  );
+export function payableItems(items: CartItem[]): CartItem[] {
+  return items.filter((item) => item.price > 0);
 }
 
-export function bookingItems(items: CartItem[]): ClassBookingCartItem[] {
-  return items.filter((item): item is ClassBookingCartItem => item.kind === "class");
-}
-
-/** Guard against booking the same class twice in one transaction. */
-export function hasClass(items: CartItem[], classScheduleId: string): boolean {
-  return items.some((item) => item.kind === "class" && item.schedule.id === classScheduleId);
+/** Guard against queueing the same PT package twice in one transaction. */
+export function hasPackage(items: CartItem[], packageId: string): boolean {
+  return items.some((item) => item.kind === "pt" && item.pkg.id === packageId);
 }
 
 export function formatRupiah(amount: number | null | undefined): string {

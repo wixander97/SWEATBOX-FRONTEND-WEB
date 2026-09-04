@@ -11,12 +11,15 @@ import {
   usePosCheckout,
   type PosPaymentChoice,
 } from "./use-pos-checkout";
+import { PosReceiptModal } from "./pos-receipt-modal";
 
 type Props = {
   items: CartItem[];
   customer: ApiMember;
+  /** Active POS branch, stamped onto the payment note. */
+  branchName?: string;
   onClose: () => void;
-  /** Called once the transaction settled, so the POS can reset the cart. */
+  /** Called once the transaction settled, so the POS can reset. */
   onCompleted: () => void;
   /** Reports whether a checkout is in flight, to lock the rest of the POS. */
   onBusyChange?: (busy: boolean) => void;
@@ -24,10 +27,10 @@ type Props = {
 
 function StatusPill({ label, tone }: { label: string; tone: "wait" | "ok" | "bad" | "idle" }) {
   const classes = {
-    wait: "bg-blue-500/10 text-blue-400 border-blue-500/30",
-    ok: "bg-green-500/10 text-green-400 border-green-500/30",
-    bad: "bg-red-500/10 text-red-400 border-red-500/30",
-    idle: "bg-gray-500/10 text-gray-400 border-gray-500/30",
+    wait: "bg-blue-500/10 text-blue-500 border-blue-500/30",
+    ok: "bg-green-500/10 text-green-600 border-green-500/30",
+    bad: "bg-red-500/10 text-red-500 border-red-500/30",
+    idle: "bg-muted/10 text-muted border-border",
   }[tone];
   return (
     <span
@@ -43,26 +46,28 @@ function StatusPill({ label, tone }: { label: string; tone: "wait" | "ok" | "bad
  *
  * QRIS hands off to the backend's AsteriPay page and waits for the callback.
  * EDC takes the reference from the terminal slip. Neither path ever decides on
- * its own that a payment succeeded — the backend status does.
+ * its own that a payment succeeded — the backend status does, and only a
+ * backend-confirmed Paid can produce a receipt.
  */
 export function PosCheckoutModal({
   items,
   customer,
+  branchName,
   onClose,
   onCompleted,
   onBusyChange,
 }: Props) {
-  const checkout = usePosCheckout(items, customer);
+  const checkout = usePosCheckout(items, customer, branchName);
   const [selected, setSelected] = useState<PosPaymentChoice>("qris");
   const [notes, setNotes] = useState("");
   /** EDC slip reference per payment line — never carried between payments. */
   const [edcNumbers, setEdcNumbers] = useState<Record<string, string>>({});
   const [qrisAvailable, setQrisAvailable] = useState<boolean | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
 
-  const { phase, steps, activeIndex, bookingResults, subtotal } = checkout;
+  const { phase, steps, activeIndex, subtotal, paidPaymentIds } = checkout;
   const running = phase !== "idle";
   const finished = phase === "done";
-  const bookingsFailed = bookingResults.some((b) => b.status === "failed");
 
   useEffect(() => {
     onBusyChange?.(running && !finished);
@@ -84,7 +89,7 @@ export function PosCheckoutModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget && !running) onClose();
       }}
@@ -92,16 +97,17 @@ export function PosCheckoutModal({
       <div className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl max-h-[92vh] overflow-y-auto">
         <div className="p-5 sm:p-6 border-b border-border flex justify-between items-start gap-3">
           <div className="min-w-0">
-            <h3 className="text-xl font-bold font-display uppercase text-white">Checkout</h3>
-            <p className="text-xs text-gray-500 truncate mt-0.5">
+            <h3 className="text-xl font-bold font-display uppercase text-fg">Pembayaran</h3>
+            <p className="text-xs text-muted truncate mt-0.5">
               {memberDisplayName(customer)} · {items.length} item
+              {branchName ? ` · ${branchName}` : ""}
             </p>
           </div>
           <button
             type="button"
             onClick={finished ? onCompleted : onClose}
-            disabled={phase === "paying" || phase === "booking"}
-            className="text-gray-400 hover:text-white text-xl leading-none disabled:opacity-30"
+            disabled={phase === "paying"}
+            className="text-muted hover:text-fg text-xl leading-none disabled:opacity-30"
             aria-label="Close"
           >
             ×
@@ -114,69 +120,60 @@ export function PosCheckoutModal({
             <>
               <div className="bg-sidebar border border-border rounded-lg px-4 py-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Total tagihan</span>
-                  <span className="text-lg font-bold text-sweat font-display">
+                  <span className="text-muted">Total tagihan</span>
+                  <span className="text-lg font-bold text-accent-ink font-display">
                     {formatRupiah(subtotal)}
                   </span>
                 </div>
-                {subtotal === 0 && (
-                  <p className="text-[11px] text-gray-500 mt-1">
-                    Tidak ada item berbayar — hanya booking class.
-                  </p>
-                )}
               </div>
 
-              {subtotal > 0 && (
-                <div>
-                  <p className="text-gray-500 text-xs uppercase font-bold mb-2">
-                    Select payment method
-                  </p>
-                  <div className="space-y-2">
-                    {POS_PAYMENT_CHOICES.map((c) => {
-                      const unavailable = c.value === "qris" && qrisAvailable === false;
-                      return (
-                        <button
-                          key={c.value}
-                          type="button"
-                          onClick={() => setSelected(c.value)}
-                          disabled={unavailable}
-                          className={`w-full flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition disabled:opacity-40 disabled:cursor-not-allowed ${
-                            selected === c.value
-                              ? "border-sweat bg-sweat/10"
-                              : "border-border bg-sidebar hover:border-gray-600"
-                          }`}
-                        >
-                          <i className={`fas ${c.icon} text-sweat w-5`} aria-hidden />
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-sm font-bold text-white">{c.label}</span>
-                            <span className="block text-[11px] text-gray-500">
-                              {unavailable
-                                ? "Tidak aktif di payment method settings"
-                                : c.hint}
-                            </span>
+              <div>
+                <p className="text-muted text-xs uppercase font-bold mb-2">
+                  Select payment method
+                </p>
+                <div className="space-y-2">
+                  {POS_PAYMENT_CHOICES.map((c) => {
+                    const unavailable = c.value === "qris" && qrisAvailable === false;
+                    return (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => setSelected(c.value)}
+                        disabled={unavailable}
+                        className={`w-full flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition disabled:opacity-40 disabled:cursor-not-allowed ${
+                          selected === c.value
+                            ? "border-sweat bg-sweat/10"
+                            : "border-border bg-sidebar hover:border-sweat/50"
+                        }`}
+                      >
+                        <i className={`fas ${c.icon} text-accent-ink w-5`} aria-hidden />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-bold text-fg">{c.label}</span>
+                          <span className="block text-[11px] text-muted">
+                            {unavailable ? "Tidak aktif di payment method settings" : c.hint}
                           </span>
-                          {selected === c.value && !unavailable && (
-                            <i className="fas fa-check text-sweat" aria-hidden />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                        </span>
+                        {selected === c.value && !unavailable && (
+                          <i className="fas fa-check text-accent-ink" aria-hidden />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
 
               <label className="block">
-                <span className="text-gray-500 text-xs uppercase font-bold">Notes</span>
+                <span className="text-muted text-xs uppercase font-bold">Notes</span>
                 <input
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Opsional — tercatat di payment"
-                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sweat"
+                  placeholder={`Opsional — default: Front Desk${branchName ? ` · ${branchName}` : ""} · <item>`}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-sweat"
                 />
               </label>
 
               {checkout.error && (
-                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+                <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
                   {checkout.error}
                 </p>
               )}
@@ -185,9 +182,9 @@ export function PosCheckoutModal({
                 type="button"
                 onClick={() => void checkout.start({ choice: selected, notes })}
                 disabled={checkout.isBusy()}
-                className="w-full bg-sweat text-black py-3 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-60"
+                className="w-full bg-sweat text-black py-3 rounded-lg text-sm font-bold hover:brightness-95 transition disabled:opacity-60"
               >
-                {subtotal > 0 ? `Bayar ${formatRupiah(subtotal)}` : "Konfirmasi booking"}
+                Bayar {formatRupiah(subtotal)}
               </button>
             </>
           )}
@@ -196,7 +193,7 @@ export function PosCheckoutModal({
           {steps.length > 0 && phase !== "idle" && (
             <div className="space-y-2">
               {steps.length > 1 && (
-                <p className="text-[11px] text-gray-500 uppercase tracking-wide">
+                <p className="text-[11px] text-muted uppercase tracking-wide">
                   Payment {Math.min(activeIndex + 1, steps.length)} dari {steps.length}
                 </p>
               )}
@@ -220,8 +217,8 @@ export function PosCheckoutModal({
                   >
                     <div className="flex justify-between items-start gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-white truncate">{step.label}</p>
-                        <p className="text-[11px] text-gray-500">
+                        <p className="text-sm font-semibold text-fg truncate">{step.label}</p>
+                        <p className="text-[11px] text-muted">
                           {formatRupiah(step.amount)}
                           {step.payment?.invoiceNo ? ` · ${step.payment.invoiceNo}` : ""}
                         </p>
@@ -242,18 +239,16 @@ export function PosCheckoutModal({
                       <div className="mt-3 space-y-3">
                         {isEdc(checkout.choice) ? (
                           <>
-                            <div className="bg-sidebar border border-border rounded-lg px-3 py-2">
-                              <p className="text-[11px] text-gray-500 uppercase">Payment amount</p>
-                              <p className="text-lg font-bold text-sweat font-display">
+                            <div className="bg-card border border-border rounded-lg px-3 py-2">
+                              <p className="text-[11px] text-muted uppercase">Payment amount</p>
+                              <p className="text-lg font-bold text-accent-ink font-display">
                                 {formatRupiah(step.amount)}
                               </p>
-                              <p className="text-[11px] text-gray-500 mt-1">
-                                Method: EDC
-                              </p>
+                              <p className="text-[11px] text-muted mt-1">Method: EDC</p>
                             </div>
                             <label className="block">
-                              <span className="text-gray-500 text-xs uppercase font-bold">
-                                EDC Transaction Number <span className="text-red-400">*</span>
+                              <span className="text-muted text-xs uppercase font-bold">
+                                EDC Transaction Number <span className="text-red-500">*</span>
                               </span>
                               <input
                                 value={edcNumbers[step.lineId] ?? ""}
@@ -265,9 +260,9 @@ export function PosCheckoutModal({
                                 }
                                 autoFocus
                                 placeholder="mis. EDC-123456"
-                                className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-sweat"
+                                className="mt-1 w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-fg font-mono focus:outline-none focus:border-sweat"
                               />
-                              <span className="block text-[11px] text-gray-600 mt-1">
+                              <span className="block text-[11px] text-muted mt-1">
                                 Salin nomor referensi dari struk mesin EDC. Jangan pernah
                                 memasukkan nomor kartu, CVV, PIN, atau masa berlaku.
                               </span>
@@ -280,7 +275,7 @@ export function PosCheckoutModal({
                               disabled={
                                 !(edcNumbers[step.lineId] ?? "").trim() || checkout.isBusy()
                               }
-                              className="w-full bg-sweat text-black py-2.5 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="w-full bg-sweat text-black py-2.5 rounded-lg text-sm font-bold hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Confirm Payment
                             </button>
@@ -289,7 +284,7 @@ export function PosCheckoutModal({
                           <>
                             <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                               <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-                              <p className="text-xs text-blue-300">
+                              <p className="text-xs text-blue-500">
                                 Waiting for QRIS payment… status dibaca dari backend.
                               </p>
                             </div>
@@ -300,8 +295,8 @@ export function PosCheckoutModal({
                                 rel="noopener noreferrer"
                                 className={`flex-1 text-center py-2.5 rounded-lg text-sm font-bold transition ${
                                   step.paymentUrl
-                                    ? "bg-sweat text-black hover:bg-yellow-400"
-                                    : "bg-sidebar border border-border text-gray-600 pointer-events-none"
+                                    ? "bg-sweat text-black hover:brightness-95"
+                                    : "bg-sidebar border border-border text-muted pointer-events-none"
                                 }`}
                               >
                                 <i className="fas fa-qrcode mr-2" aria-hidden />
@@ -310,7 +305,7 @@ export function PosCheckoutModal({
                               <button
                                 type="button"
                                 onClick={() => void checkout.refreshActivePayment()}
-                                className="px-3 bg-sidebar border border-border text-white rounded-lg text-sm"
+                                className="px-3 bg-sidebar border border-border text-fg rounded-lg text-sm"
                                 title="Cek status sekarang"
                               >
                                 <i className="fas fa-sync" aria-hidden />
@@ -319,7 +314,7 @@ export function PosCheckoutModal({
                             <button
                               type="button"
                               onClick={checkout.cancelWaiting}
-                              className="w-full bg-sidebar border border-border text-gray-300 py-2 rounded-lg text-xs"
+                              className="w-full bg-sidebar border border-border text-fg-soft py-2 rounded-lg text-xs"
                             >
                               Cancel
                             </button>
@@ -329,7 +324,7 @@ export function PosCheckoutModal({
                     )}
 
                     {step.error && (
-                      <p className="mt-2 text-xs text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+                      <p className="mt-2 text-xs text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
                         {step.error}
                       </p>
                     )}
@@ -339,7 +334,7 @@ export function PosCheckoutModal({
                         <button
                           type="button"
                           onClick={() => void checkout.retryActiveStep()}
-                          className="flex-1 bg-sidebar border border-border text-white py-2 rounded-lg text-xs"
+                          className="flex-1 bg-sidebar border border-border text-fg py-2 rounded-lg text-xs"
                         >
                           <i className="fas fa-redo mr-2" aria-hidden />
                           {step.payment ? "Cek ulang status" : "Coba lagi"}
@@ -347,7 +342,7 @@ export function PosCheckoutModal({
                         <button
                           type="button"
                           onClick={onClose}
-                          className="flex-1 bg-sidebar border border-border text-gray-300 py-2 rounded-lg text-xs"
+                          className="flex-1 bg-sidebar border border-border text-fg-soft py-2 rounded-lg text-xs"
                         >
                           Tutup
                         </button>
@@ -359,69 +354,28 @@ export function PosCheckoutModal({
             </div>
           )}
 
-          {/* ---------- Bookings ---------- */}
-          {bookingResults.length > 0 && phase !== "idle" && (
-            <div className="space-y-2">
-              <p className="text-[11px] text-gray-500 uppercase tracking-wide">Class booking</p>
-              {bookingResults.map((b) => (
-                <div
-                  key={b.lineId}
-                  className="rounded-lg border border-border bg-sidebar px-4 py-2.5 flex justify-between items-center gap-3"
-                >
-                  <span className="text-sm text-white truncate">{b.label}</span>
-                  <StatusPill
-                    label={
-                      b.status === "booked"
-                        ? "Booked"
-                        : b.status === "failed"
-                          ? "Failed"
-                          : b.status === "booking"
-                            ? "Booking…"
-                            : "Queued"
-                    }
-                    tone={b.status === "booked" ? "ok" : b.status === "failed" ? "bad" : "wait"}
-                  />
-                </div>
-              ))}
-              {bookingResults
-                .filter((b) => b.error)
-                .map((b) => (
-                  <p key={`${b.lineId}-err`} className="text-xs text-red-400">
-                    {b.label}: {b.error}
-                  </p>
-                ))}
-            </div>
-          )}
-
           {/* ---------- Done ---------- */}
           {finished && (
-            <div
-              className={`p-4 rounded-lg border ${
-                bookingsFailed
-                  ? "bg-yellow-500/10 border-yellow-500/30"
-                  : "bg-green-500/10 border-green-500/30"
-              }`}
-            >
-              <p
-                className={`font-bold text-sm ${
-                  bookingsFailed ? "text-yellow-400" : "text-green-400"
-                }`}
+            <div className="p-4 rounded-lg border bg-green-500/10 border-green-500/30">
+              <p className="font-bold text-sm text-green-600">✓ Payment Successful</p>
+              <p className="text-xs text-muted mt-1">
+                Semua payment sudah dikonfirmasi backend.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setReceiptOpen(true)}
+                disabled={paidPaymentIds.length === 0}
+                className="mt-3 w-full bg-sweat text-black py-2.5 rounded-lg text-sm font-bold hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {bookingsFailed
-                  ? "⚠ Transaksi selesai dengan sebagian booking gagal"
-                  : steps.length > 0
-                    ? "✓ Payment Successful"
-                    : "✓ Booking Confirmed"}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {steps.length > 0
-                  ? "Semua payment sudah dikonfirmasi backend."
-                  : "Booking tercatat di sistem."}
-              </p>
+                <i className="fas fa-print mr-2" aria-hidden />
+                Receipt · print / email
+              </button>
+
               <button
                 type="button"
                 onClick={onCompleted}
-                className="mt-3 w-full bg-sweat text-black py-2.5 rounded-lg text-sm font-bold hover:bg-yellow-400 transition"
+                className="mt-2 w-full bg-sidebar border border-border text-fg py-2.5 rounded-lg text-sm font-bold"
               >
                 Transaksi baru
               </button>
@@ -429,6 +383,14 @@ export function PosCheckoutModal({
           )}
         </div>
       </div>
+
+      {receiptOpen && (
+        <PosReceiptModal
+          paymentIds={paidPaymentIds}
+          defaultEmail={customer.email}
+          onClose={() => setReceiptOpen(false)}
+        />
+      )}
     </div>
   );
 }

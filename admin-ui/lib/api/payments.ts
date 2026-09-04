@@ -314,3 +314,66 @@ function sleep(ms: number, signal?: AbortSignal): Promise<boolean> {
     signal?.addEventListener("abort", onAbort, { once: true });
   });
 }
+
+/* -------------------------------------------------------------------------
+   Receipts
+   ------------------------------------------------------------------------- */
+
+/**
+ * Receipt projection returned by `GET /api/v1/payments/{id}/receipt`.
+ *
+ * Resolved backend-side from the payment record, so the printed slip and the
+ * emailed copy are rendered from identical data.
+ */
+export type PaymentReceipt = {
+  paymentId: string;
+  invoiceNo: string;
+  branchName: string;
+  memberName: string;
+  memberEmail: string;
+  memberCode: string;
+  itemName: string;
+  itemCategory: string;
+  amount: number;
+  discount: number;
+  tax: number;
+  finalAmount: number;
+  /** Display label, e.g. "QRIS" or "Card (EDC)". */
+  paymentMethod: string;
+  paymentStatus: string;
+  /** EDC slip number, or the gateway reference for an online rail. */
+  referenceNo?: string | null;
+  cashierName: string;
+  issuedAt: string;
+  paidAt?: string | null;
+  notes?: string | null;
+};
+
+export function getPaymentReceipt(
+  paymentId: string,
+  options?: RequestOptions
+): Promise<PaymentReceipt> {
+  return apiGet<PaymentReceipt>(
+    `/api/v1/payments/${encodeURIComponent(paymentId)}/receipt`,
+    { errorMessage: "Gagal memuat receipt", ...options }
+  );
+}
+
+/**
+ * Email the receipt to the member.
+ *
+ * `email` is optional and only overrides the recipient; the receipt body is
+ * always composed by the backend from the payment itself, so this can never be
+ * used to mail arbitrary content to a customer.
+ */
+export function emailPaymentReceipt(
+  paymentId: string,
+  email?: string,
+  options?: RequestOptions
+): Promise<{ message?: string; email?: string }> {
+  return apiPost<{ message?: string; email?: string }>(
+    `/api/v1/payments/${encodeURIComponent(paymentId)}/receipt/email`,
+    { email: email?.trim() || null },
+    { errorMessage: "Gagal mengirim receipt", ...options }
+  );
+}
