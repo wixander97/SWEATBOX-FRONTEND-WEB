@@ -8,16 +8,9 @@ import { useTheme } from "@/lib/theme";
 type Props = {
   /** Opens the drawer below `lg`, where the sidebar is not on screen. */
   onOpenMenu?: () => void;
-  /** Hides or shows the sidebar from `lg` up, where it is always on screen. */
-  onToggleCollapse?: () => void;
-  collapsed?: boolean;
 };
 
-export function AdminHeader({
-  onOpenMenu,
-  onToggleCollapse,
-  collapsed = false,
-}: Props) {
+export function AdminHeader({ onOpenMenu }: Props) {
   const pathname = usePathname();
   // The role is resolved by RoleProvider, which is mounted on every admin page
   // including the ones that do not render this header.
@@ -29,27 +22,16 @@ export function AdminHeader({
     <header className="min-h-16 bg-sidebar border-b border-border flex justify-between items-center px-4 sm:px-6 lg:px-8 gap-3">
       <div className="flex items-center gap-3 min-w-0">
         {/*
-          * Two buttons rather than one that inspects the viewport: the breakpoint
-          * is a CSS concern, and the actions genuinely differ — below `lg` the
-          * sidebar is a drawer to open, at `lg` and up it is a column to hide.
+          * Only the drawer trigger lives here. From `lg` up the sidebar keeps
+          * its own hamburger, so the control sits inside the menu it opens
+          * rather than beside the page title.
           */}
         <button
           type="button"
           onClick={onOpenMenu}
-          className="lg:hidden w-9 h-9 rounded-lg bg-card border border-border text-fg-soft hover:text-fg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sweat"
+          className="lg:hidden w-9 h-9 grid place-items-center rounded-lg bg-card border border-border text-fg-soft hover:text-fg transition shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-sweat"
           aria-label="Open menu"
           aria-controls="admin-sidebar"
-        >
-          <i className="fas fa-bars" aria-hidden />
-        </button>
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          className="hidden lg:grid place-items-center w-9 h-9 rounded-lg bg-card border border-border text-fg-soft hover:text-fg hover:border-sweat transition shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-sweat"
-          aria-label={collapsed ? "Show menu" : "Hide menu"}
-          aria-expanded={!collapsed}
-          aria-controls="admin-sidebar"
-          title={collapsed ? "Show menu" : "Hide menu"}
         >
           <i className="fas fa-bars" aria-hidden />
         </button>

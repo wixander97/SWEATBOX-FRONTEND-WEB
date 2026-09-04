@@ -14,7 +14,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   // Two independent things: the mobile drawer (transient) and the desktop
-  // collapse (a remembered preference).
+  // collapse to an icon rail (a remembered preference).
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { collapsed, toggleCollapsed } = useSidebarCollapsed();
   const pathname = usePathname();
@@ -42,13 +42,10 @@ export default function AdminLayout({
         open={sidebarOpen}
         collapsed={collapsed}
         onClose={() => setSidebarOpen(false)}
+        onToggleCollapse={toggleCollapsed}
       />
       <main className="flex-1 flex flex-col overflow-hidden relative min-w-0">
-        <AdminHeader
-          onOpenMenu={() => setSidebarOpen(true)}
-          onToggleCollapse={toggleCollapsed}
-          collapsed={collapsed}
-        />
+        <AdminHeader onOpenMenu={() => setSidebarOpen(true)} />
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 fade-in">
           {children}
         </div>
