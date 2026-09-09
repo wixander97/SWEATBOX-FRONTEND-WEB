@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import {
   MEMBERSHIP_SOURCE_OPTIONS,
+  UNLIMITED_CLASSES_LABEL,
   type Branch,
   type MemberFormState,
   type MembershipPlan,
@@ -55,6 +56,8 @@ export function CreateMemberModal({
       ...f,
       membershipPlanId: planId,
       remainingCredits: plan ? String(plan.credits) : f.remainingCredits,
+      // An unlimited plan has no credit quota, so the field stops showing one.
+      isUnlimitedClasses: plan ? plan.isUnlimitedClasses === true : f.isUnlimitedClasses,
       expiryDate: plan ? calculateExpiryDate(plan.validityDays) : f.expiryDate,
     }));
   }
@@ -347,7 +350,11 @@ export function CreateMemberModal({
                     <option value="">{membershipPlansLoading ? "Loading plans..." : "Select Membership Plan..."}</option>
                     {membershipPlans.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.planName} ({p.credits} credits)
+                        {p.planName} (
+                        {p.isUnlimitedClasses
+                          ? `${UNLIMITED_CLASSES_LABEL} classes`
+                          : `${p.credits} credits`}
+                        )
                       </option>
                     ))}
                     {!membershipPlansLoading && membershipPlans.length === 0 && (
@@ -362,14 +369,24 @@ export function CreateMemberModal({
                 </label>
                 <label className="block">
                   <span className="text-muted text-xs uppercase font-bold">Remaining Credits <span className="text-red-500">*</span></span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={form.remainingCredits}
-                    readOnly
-                    className="mt-1 w-full bg-fg/5 border border-border rounded-lg px-3 py-2 text-muted cursor-not-allowed"
-                    required
-                  />
+                  {form.isUnlimitedClasses ? (
+                    // Unlimited plans have no credit quota — never show "0" here.
+                    <input
+                      type="text"
+                      value={UNLIMITED_CLASSES_LABEL}
+                      readOnly
+                      className="mt-1 w-full bg-fg/5 border border-border rounded-lg px-3 py-2 text-muted cursor-not-allowed"
+                    />
+                  ) : (
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.remainingCredits}
+                      readOnly
+                      className="mt-1 w-full bg-fg/5 border border-border rounded-lg px-3 py-2 text-muted cursor-not-allowed"
+                      required
+                    />
+                  )}
                 </label>
                 <label className="block">
                   <span className="text-muted text-xs uppercase font-bold">Remaining PT Sessions</span>

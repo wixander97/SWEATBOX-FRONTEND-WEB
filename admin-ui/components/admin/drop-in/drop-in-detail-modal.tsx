@@ -7,6 +7,7 @@ import {
   dropInPassStatusMeta,
   type MemberDropInPass,
 } from "@/lib/api/drop-in-passes";
+import { formatClassCredits } from "@/components/admin/members/members.types";
 
 /** The pass model lives with its service now; re-exported for existing callers. */
 export type { MemberDropInPass };
@@ -138,7 +139,12 @@ export function DropInDetailModal({ memberId, memberName, onClose }: Props) {
                 <div className="bg-sidebar rounded-lg border border-border px-3 py-1">
                   <InfoRow label="Email" value={memberInfo?.email} />
                   <InfoRow label="Phone" value={memberInfo?.phoneNumber} />
-                  <InfoRow label="Remaining Credits" value={memberInfo?.remainingCredits} />
+                  <InfoRow
+                    label="Remaining Credits"
+                    value={
+                      memberInfo ? formatClassCredits(memberInfo, "") : undefined
+                    }
+                  />
                   <InfoRow label="Remaining PT Sessions" value={memberInfo?.remainingPtSessions} />
                   <InfoRow
                     label="Join Date"

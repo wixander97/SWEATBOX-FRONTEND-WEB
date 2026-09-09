@@ -8,6 +8,7 @@ import { authFetch } from "@/lib/auth/client-fetch";
 import { downloadXlsx } from "@/lib/export";
 import { EditMemberModal } from "@/components/admin/members/edit-member-modal";
 import {
+  formatClassCredits,
   type ApiMember,
   type Branch,
   type MembershipPlan,
@@ -278,7 +279,7 @@ export function MembersView() {
       val(m.membershipPlanName),
       val(m.membershipStatus),
       val(m.paymentStatus),
-      String(m.remainingCredits ?? 0),
+      formatClassCredits(m, "0"),
       String(m.remainingDropInVisits ?? 0),
       String(m.remainingPtSessions ?? 0),
       fmtDate(m.joinDate),
@@ -496,7 +497,7 @@ export function MembersView() {
                   <td className="px-6 py-4">{m.email || "—"}</td>
                   <td className="px-6 py-4">{m.homeClubBranchName || "—"}</td>
                   <td className="px-6 py-4">{m.membershipPlanName || "—"}</td>
-                  <td className="px-6 py-4">{String(m.remainingCredits) || "-"}</td>
+                  <td className="px-6 py-4">{formatClassCredits(m)}</td>
                   <td className="px-6 py-4">{m.remainingDropInVisits ?? "-"}</td>
                   <td className="px-6 py-4 font-bold text-accent-ink">
                     {m.membershipStatus ?? 0}

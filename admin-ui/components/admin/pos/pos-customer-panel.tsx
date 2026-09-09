@@ -17,6 +17,10 @@ import {
   type MembershipKind,
   type MembershipPlan,
 } from "@/lib/api/membership-plans";
+import {
+  UNLIMITED_CLASSES_LABEL,
+  hasUnlimitedClasses,
+} from "@/components/admin/members/members.types";
 import { PosQuickRegisterModal } from "./pos-quick-register-modal";
 
 type Props = {
@@ -68,14 +72,25 @@ function ContextRow({
   );
 }
 
-/** What the front desk needs to know about class entitlement, in one line. */
+/**
+ * What the front desk needs to know about class entitlement, in one line.
+ *
+ * The member record's own `isUnlimitedClasses` decides it: it is what the
+ * backend enforces bookings against, so it wins over the plan lookup, which
+ * stays as the fallback for a record the flag is absent from. It is never
+ * inferred from a zero credit balance.
+ */
 function creditsLabel(
-  kind: MembershipKind | null,
-  remainingCredits: number
+  member: ApiMember | null,
+  kind: MembershipKind | null
 ): { value: string; tone: "normal" | "warn" } {
+  if (hasUnlimitedClasses(member)) {
+    return { value: `${UNLIMITED_CLASSES_LABEL} · no credits used`, tone: "normal" };
+  }
+  const remainingCredits = member?.remainingCredits ?? 0;
   switch (kind) {
     case "unlimited":
-      return { value: "Unlimited · no credits used", tone: "normal" };
+      return { value: `${UNLIMITED_CLASSES_LABEL} · no credits used`, tone: "normal" };
     case "regular":
       return { value: "Gym access · cannot book classes", tone: "normal" };
     case "credit":
@@ -231,7 +246,7 @@ export function PosCustomerPanel({
 
   const m = detail ?? customer;
   const kind = membershipKindOf(plan);
-  const credits = creditsLabel(kind, m?.remainingCredits ?? 0);
+  const credits = creditsLabel(m, kind);
   const expired = m?.isExpired === true;
   const inactive = (m?.membershipStatus ?? "").toLowerCase() !== "active";
 

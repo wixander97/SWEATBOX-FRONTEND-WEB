@@ -10,6 +10,7 @@ import {
   type MemberDropInPass,
 } from "./drop-in-detail-modal";
 import { dropInPassStatusMeta } from "@/lib/api/drop-in-passes";
+import { formatClassCredits } from "@/components/admin/members/members.types";
 
 type PagedResponse<T> = {
   items?: T[];
@@ -140,7 +141,7 @@ export function DropInView() {
       val(p.member?.email),
       val(p.member?.phoneNumber),
       val(p.member?.membershipStatus),
-      String(p.member?.remainingCredits ?? 0),
+      formatClassCredits(p.member, "0"),
       String(p.member?.remainingPtSessions ?? 0),
       fmtDate(p.member?.joinDate),
       fmtDate(p.member?.expiryDate),

@@ -23,6 +23,8 @@ export type MemberDropInPass = {
     phoneNumber?: string;
     membershipStatus?: string;
     remainingCredits?: number;
+    /** Unlimited-class plan — `remainingCredits` is then not a quota. */
+    isUnlimitedClasses?: boolean;
     remainingPtSessions?: number;
     joinDate?: string;
     expiryDate?: string;

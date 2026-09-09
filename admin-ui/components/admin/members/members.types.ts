@@ -17,6 +17,12 @@ export type ApiMember = {
   membershipStatus?: string | null;
   paymentStatus?: string | null;
   remainingCredits?: number;
+  /**
+   * The member is on a plan that grants unlimited classes, so `remainingCredits`
+   * is not a quota and must not be shown as one. Strictly the backend's flag —
+   * never inferred from `remainingCredits === 0`.
+   */
+  isUnlimitedClasses?: boolean;
   remainingPtSessions?: number;
   remainingDropInVisits?: number;
   joinDate?: string | null;
@@ -50,6 +56,40 @@ export const MEMBERSHIP_SOURCE_OPTIONS = [
   "Others",
 ] as const;
 
+/** Shown in place of a credit count for a member on an unlimited-class plan. */
+export const UNLIMITED_CLASSES_LABEL = "Unlimited";
+
+/** Anything carrying the backend's class-entitlement pair. */
+export type ClassCreditsSource = {
+  remainingCredits?: number | null;
+  isUnlimitedClasses?: boolean | null;
+};
+
+/**
+ * Whether class bookings are unlimited for this member.
+ *
+ * The only source of truth is the backend's `isUnlimitedClasses`; a zero credit
+ * balance says nothing about it.
+ */
+export function hasUnlimitedClasses(
+  source: ClassCreditsSource | null | undefined
+): boolean {
+  return source?.isUnlimitedClasses === true;
+}
+
+/**
+ * Class entitlement as one display string: "Unlimited" for an unlimited plan,
+ * the existing credit count otherwise.
+ */
+export function formatClassCredits(
+  source: ClassCreditsSource | null | undefined,
+  fallback = "-"
+): string {
+  if (hasUnlimitedClasses(source)) return UNLIMITED_CLASSES_LABEL;
+  const credits = source?.remainingCredits;
+  return credits === null || credits === undefined ? fallback : String(credits);
+}
+
 export type Branch = {
   id: string;
   branchName: string;
@@ -64,6 +104,8 @@ export type MembershipPlan = {
   credits: number;
   validityDays: number;
   isActive: boolean;
+  /** Plans marked unlimited grant classes without spending credits. */
+  isUnlimitedClasses?: boolean;
 };
 
 export type MemberFormState = {
@@ -85,6 +127,8 @@ export type MemberFormState = {
   // Membership
   membershipSource: string;
   remainingCredits: string;
+  /** Display-only: mirrors the member's / selected plan's unlimited flag. */
+  isUnlimitedClasses: boolean;
   remainingPtSessions: string;
   expiryDate: string;
   homeClubBranchId: string;
@@ -136,6 +180,7 @@ export function emptyMemberForm(): MemberFormState {
     // Membership
     membershipSource: "",
     remainingCredits: "0",
+    isUnlimitedClasses: false,
     remainingPtSessions: "0",
     expiryDate: "",
     homeClubBranchId: "",
@@ -196,6 +241,7 @@ export function memberToForm(m: ApiMember): MemberFormState {
     // Membership
     membershipSource: m.membershipSource ?? "",
     remainingCredits: String(m.remainingCredits ?? 0),
+    isUnlimitedClasses: m.isUnlimitedClasses === true,
     remainingPtSessions: String(m.remainingPtSessions ?? 0),
     expiryDate: parseDate(m.expiryDate),
     homeClubBranchId: m.homeClubBranchId ?? "",
