@@ -10,6 +10,10 @@ import {
   registerMember,
   type ApiMember,
 } from "@/lib/api/members";
+import {
+  MEMBERSHIP_SOURCE_OPTIONS,
+  dateToIso,
+} from "@/components/admin/members/members.types";
 
 type Props = {
   /** Prefilled from whatever the staff already typed into the customer search. */
@@ -25,7 +29,9 @@ function looksLikeEmail(value: string): boolean {
 }
 
 /**
- * Front-desk quick registration: name, phone and email.
+ * Front-desk quick registration: name, phone and email, plus the optional
+ * profile details (gender, date of birth, emergency contact, injury/allergies
+ * and how they heard about us) when the front desk has time to take them.
  *
  * Uses the existing `POST /api/v1/auth/register-member`, which provisions the
  * User account and the Member record together — the POS has no customer model
@@ -38,11 +44,35 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
     looksLikeEmail(initialQuery) ? "" : initialQuery.trim()
   );
   const [email, setEmail] = useState(looksLikeEmail(initialQuery) ? initialQuery.trim() : "");
+  // Optional profile details, sent on registration when the front desk fills them in.
+  const [gender, setGender] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [emergencyContactName, setEmergencyContactName] = useState("");
+  const [emergencyContactRelation, setEmergencyContactRelation] = useState("");
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState("");
+  const [injuryAllergies, setInjuryAllergies] = useState("");
+  const [membershipSource, setMembershipSource] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [duplicate, setDuplicate] = useState<ApiMember | null>(null);
   /** Set once registration succeeded, so staff can hand over next steps. */
   const [registered, setRegistered] = useState<ApiMember | null>(null);
+
+  /** Only the details staff actually filled in, trimmed. */
+  function optionalDetails() {
+    const details: Record<string, string> = {};
+    const put = (key: string, value: string) => {
+      if (value.trim()) details[key] = value.trim();
+    };
+    put("gender", gender);
+    put("emergencyContactName", emergencyContactName);
+    put("emergencyContactPhone", emergencyContactPhone);
+    put("emergencyContactRelation", emergencyContactRelation);
+    put("injuryAllergies", injuryAllergies);
+    put("membershipSource", membershipSource);
+    const dob = dateToIso(dateOfBirth);
+    return dob ? { ...details, dateOfBirth: dob } : details;
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -77,6 +107,9 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
         phoneNumber: phoneNumber.trim(),
         // Backend requires >= 8 chars; the customer resets it via forgot-password.
         password: generateMemberPassword(),
+        // Optional details are omitted entirely when blank, so registration
+        // never overwrites anything with an empty value.
+        ...optionalDetails(),
       });
       if (!member) {
         setError(
@@ -99,7 +132,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
         if (e.target === e.currentTarget && !submitting) onClose();
       }}
     >
-      <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-2xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h3 className="text-xl font-bold font-display uppercase text-fg">
@@ -199,6 +232,111 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
               className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
             />
           </label>
+
+          <div className="pt-2 border-t border-border">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted mb-2">
+              Additional details (optional)
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-muted text-xs uppercase font-bold">Gender</span>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
+                >
+                  <option value="">Select...</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-muted text-xs uppercase font-bold">Date of Birth</span>
+                <input
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
+                  style={{ colorScheme: "dark" }}
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-muted text-xs uppercase font-bold">
+                  Emergency Contact Name
+                </span>
+                <input
+                  value={emergencyContactName}
+                  onChange={(e) => setEmergencyContactName(e.target.value)}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-muted text-xs uppercase font-bold">
+                  Emergency Contact Relation
+                </span>
+                <input
+                  value={emergencyContactRelation}
+                  onChange={(e) => setEmergencyContactRelation(e.target.value)}
+                  placeholder="e.g. Spouse, Parent, Friend"
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-muted text-xs uppercase font-bold">
+                  Emergency Contact Phone
+                </span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={13}
+                  value={emergencyContactPhone}
+                  onChange={(e) =>
+                    setEmergencyContactPhone(
+                      e.target.value.replace(/[^0-9]/g, "").slice(0, 13)
+                    )
+                  }
+                  placeholder="0812xxxxxxx"
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-muted text-xs uppercase font-bold">
+                  How did you hear about us?
+                </span>
+                <select
+                  value={membershipSource}
+                  onChange={(e) => setMembershipSource(e.target.value)}
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
+                >
+                  <option value="">Select...</option>
+                  {MEMBERSHIP_SOURCE_OPTIONS.map((source) => (
+                    <option key={source} value={source}>
+                      {source}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block sm:col-span-2">
+                <span className="text-muted text-xs uppercase font-bold">
+                  Injury / Allergies
+                </span>
+                <textarea
+                  value={injuryAllergies}
+                  onChange={(e) => setInjuryAllergies(e.target.value)}
+                  rows={2}
+                  placeholder="e.g. knee injury, peanut allergy — leave blank if none"
+                  className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat resize-y"
+                />
+              </label>
+            </div>
+          </div>
 
           {duplicate && (
             <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">

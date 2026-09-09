@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import {
+  MEMBERSHIP_SOURCE_OPTIONS,
   type Branch,
   type MemberFormState,
   type MembershipPlan,
@@ -203,6 +204,16 @@ export function CreateMemberModal({
                     required
                   />
                 </label>
+                <label className="block sm:col-span-2">
+                  <span className="text-muted text-xs uppercase font-bold">Injury / Allergies</span>
+                  <textarea
+                    value={form.injuryAllergies}
+                    onChange={(e) => setForm((f) => ({ ...f, injuryAllergies: e.target.value }))}
+                    rows={2}
+                    placeholder="e.g. knee injury, peanut allergy — leave blank if none"
+                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat resize-y"
+                  />
+                </label>
               </div>
             </div>
 
@@ -260,6 +271,15 @@ export function CreateMemberModal({
                     required
                   />
                 </label>
+                <label className="block sm:col-span-2">
+                  <span className="text-muted text-xs uppercase font-bold">Emergency Contact Relation</span>
+                  <input
+                    value={form.emergencyContactRelation}
+                    onChange={(e) => setForm((f) => ({ ...f, emergencyContactRelation: e.target.value }))}
+                    placeholder="e.g. Spouse, Parent, Friend"
+                    className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
+                  />
+                </label>
               </div>
             </div>
 
@@ -268,13 +288,27 @@ export function CreateMemberModal({
               <h4 className="text-xs uppercase font-bold text-accent-ink mb-3">Membership Details</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Membership Source <span className="text-red-500">*</span></span>
-                  <input
+                  <span className="text-muted text-xs uppercase font-bold">How did you hear about us? <span className="text-red-500">*</span></span>
+                  <select
                     value={form.membershipSource}
                     onChange={(e) => setForm((f) => ({ ...f, membershipSource: e.target.value }))}
                     className="mt-1 w-full bg-sidebar border border-border rounded-lg px-3 py-2 text-fg focus:outline-none focus:border-sweat"
                     required
-                  />
+                  >
+                    <option value="">Select...</option>
+                    {MEMBERSHIP_SOURCE_OPTIONS.map((source) => (
+                      <option key={source} value={source}>
+                        {source}
+                      </option>
+                    ))}
+                    {/* Keep a legacy free-text value selectable so editing never silently rewrites it. */}
+                    {form.membershipSource &&
+                      !MEMBERSHIP_SOURCE_OPTIONS.includes(
+                        form.membershipSource as (typeof MEMBERSHIP_SOURCE_OPTIONS)[number]
+                      ) && (
+                        <option value={form.membershipSource}>{form.membershipSource}</option>
+                      )}
+                  </select>
                 </label>
                 <label className="block">
                   <span className="text-muted text-xs uppercase font-bold">Home Club <span className="text-red-500">*</span></span>

@@ -72,6 +72,9 @@ export function EditMemberModal({
         dateOfBirth: dateToIso(form.dateOfBirth),
         emergencyContactName: form.emergencyContactName ?? "",
         emergencyContactPhone: form.emergencyContactPhone ?? "",
+        // Optional backend fields — sent as empty strings so clearing them sticks.
+        emergencyContactRelation: form.emergencyContactRelation ?? "",
+        injuryAllergies: form.injuryAllergies ?? "",
         membershipPlanId: form.membershipPlanId ?? "",
         membershipStatus: form.membershipStatus ?? "",
         paymentStatus: form.paymentStatus ?? "",

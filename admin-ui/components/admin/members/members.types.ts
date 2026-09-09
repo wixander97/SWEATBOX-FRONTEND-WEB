@@ -10,6 +10,8 @@ export type ApiMember = {
   dateOfBirth?: string | null;
   emergencyContactName?: string | null;
   emergencyContactPhone?: string | null;
+  emergencyContactRelation?: string | null;
+  injuryAllergies?: string | null;
   membershipPlanId?: string | null;
   membershipPlanName?: string | null;
   membershipStatus?: string | null;
@@ -36,6 +38,18 @@ export type ApiMember = {
   isActive?: boolean;
 };
 
+/**
+ * "How did you hear about us?" — stored in the existing `membershipSource`
+ * field. Static by design: there is no master-data endpoint for these, so the
+ * list lives in the front end until there is one.
+ */
+export const MEMBERSHIP_SOURCE_OPTIONS = [
+  "Instagram",
+  "Friend/Referral",
+  "Walk-in",
+  "Others",
+] as const;
+
 export type Branch = {
   id: string;
   branchName: string;
@@ -61,11 +75,13 @@ export type MemberFormState = {
   dateOfBirth: string;
   heightCm: string;
   weightKg: string;
+  injuryAllergies: string;
   address: string;
   city: string;
   // Emergency
   emergencyContactName: string;
   emergencyContactPhone: string;
+  emergencyContactRelation: string;
   // Membership
   membershipSource: string;
   remainingCredits: string;
@@ -110,11 +126,13 @@ export function emptyMemberForm(): MemberFormState {
     dateOfBirth: "",
     heightCm: "",
     weightKg: "",
+    injuryAllergies: "",
     address: "",
     city: "",
     // Emergency
     emergencyContactName: "",
     emergencyContactPhone: "",
+    emergencyContactRelation: "",
     // Membership
     membershipSource: "",
     remainingCredits: "0",
@@ -168,11 +186,13 @@ export function memberToForm(m: ApiMember): MemberFormState {
     dateOfBirth: parseDate(m.dateOfBirth),
     heightCm: String(m.heightCm ?? ""),
     weightKg: String(m.weightKg ?? ""),
+    injuryAllergies: m.injuryAllergies ?? "",
     address: m.address ?? "",
     city: m.city ?? "",
     // Emergency
     emergencyContactName: m.emergencyContactName ?? "",
     emergencyContactPhone: m.emergencyContactPhone ?? "",
+    emergencyContactRelation: m.emergencyContactRelation ?? "",
     // Membership
     membershipSource: m.membershipSource ?? "",
     remainingCredits: String(m.remainingCredits ?? 0),

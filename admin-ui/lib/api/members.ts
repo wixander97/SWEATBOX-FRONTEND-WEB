@@ -22,6 +22,20 @@ export type QuickRegisterMemberRequest = {
   email: string;
   phoneNumber: string;
   password: string;
+  /**
+   * Profile details the backend also accepts on registration. All optional:
+   * the front desk can register with name, phone and email alone and complete
+   * the rest later from the member edit form.
+   */
+  gender?: string;
+  /** ISO 8601 date-time, as produced by `dateToIso`. */
+  dateOfBirth?: string | null;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelation?: string;
+  injuryAllergies?: string;
+  /** "How did you hear about us?" — see `MEMBERSHIP_SOURCE_OPTIONS`. */
+  membershipSource?: string;
 };
 
 /** `GET /api/v1/members/search` — matches name, member code, phone and email. */

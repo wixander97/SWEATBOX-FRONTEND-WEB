@@ -355,6 +355,21 @@ export function PosCustomerPanel({
                   label="Drop in"
                   value={`${m?.remainingDropInVisits ?? 0} visits remaining`}
                 />
+                {(m?.emergencyContactName || m?.emergencyContactPhone) && (
+                  <ContextRow
+                    label="Emergency"
+                    value={[
+                      m?.emergencyContactName,
+                      m?.emergencyContactRelation,
+                      m?.emergencyContactPhone,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  />
+                )}
+                {m?.injuryAllergies && (
+                  <ContextRow label="Injury / allergies" value={m.injuryAllergies} tone="warn" />
+                )}
 
                 <div className="pt-1 mt-1 border-t border-border/60">
                   <p className="text-[11px] text-muted uppercase tracking-wide mb-1">
