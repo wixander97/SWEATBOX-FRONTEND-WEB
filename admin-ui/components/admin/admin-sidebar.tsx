@@ -17,10 +17,13 @@ type ProfileData = {
   profileImageUrl?: string | null;
 };
 
-const mainNav: { href: string; label: string; icon: string; id: string }[] = [
+type NavItem = { href: string; label: string; icon: string; id: string };
+
+const mainNav: NavItem[] = [
   { href: adminPaths.dashboard, label: "Dashboard", icon: "fa-chart-pie", id: "dashboard" },
   { href: adminPaths.pos, label: "Front Desk POS", icon: "fa-cash-register", id: "pos" },
   { href: adminPaths.classes, label: "Class Schedule", icon: "fa-calendar-alt", id: "classes" },
+  { href: adminPaths.workout, label: "Workout", icon: "fa-dumbbell", id: "workout" },
   { href: adminPaths.members, label: "Memberships", icon: "fa-users", id: "members" },
   { href: adminPaths.reports, label: "Attendance Reports", icon: "fa-clipboard-check", id: "reports" },
   { href: adminPaths.users, label: "User Management", icon: "fa-user-shield", id: "users" },
@@ -31,19 +34,24 @@ const mainNav: { href: string; label: string; icon: string; id: string }[] = [
   { href: adminPaths.promoBanners, label: "Promo Banners", icon: "fa-bullhorn", id: "promo-banners" },
 ];
 
-const dataNav: { href: string; label: string; icon: string; id: string }[] = [
+const dataNav: NavItem[] = [
   { href: adminPaths.membershipPlans, label: "Membership Plans", icon: "fa-ticket-alt", id: "membership-plans" },
+  { href: adminPaths.invoices, label: "Payments & Invoices", icon: "fa-receipt", id: "invoices" },
   { href: adminPaths.payments, label: "Payments", icon: "fa-credit-card", id: "payments" },
   { href: adminPaths.paymentMethods, label: "Payment Method", icon: "fa-wallet", id: "payment-methods" },
-  // { href: adminPaths.workout, label: "Workout Master", icon: "fa-running", id: "workout" },
-  // { href: adminPaths.payroll, label: "Coaches Payroll", icon: "fa-file-invoice-dollar", id: "payroll" },
+  { href: adminPaths.payroll, label: "Coaches Payroll", icon: "fa-file-invoice-dollar", id: "payroll" },
   { href: adminPaths.history, label: "History", icon: "fa-history", id: "history" },
-  { href: adminPaths.systemSettings, label: "System Settings", icon: "fa-cog", id: "system-settings" },
+];
 
+const configNav: NavItem[] = [
+  { href: adminPaths.coachRates, label: "Coach Rates", icon: "fa-money-bill-wave", id: "coach-rates" },
+  { href: adminPaths.agreements, label: "Agreement Documents", icon: "fa-file-signature", id: "agreements" },
+  { href: adminPaths.settings, label: "Brand Settings", icon: "fa-sliders", id: "settings" },
+  { href: adminPaths.systemSettings, label: "System Settings", icon: "fa-cog", id: "system-settings" },
 ];
 
 /* Help is available to every role, so it is not filtered like the lists above. */
-const supportNav: { href: string; label: string; icon: string; id: string }[] = [
+const supportNav: NavItem[] = [
   { href: adminPaths.help, label: "Help & Support", icon: "fa-circle-question", id: "help" },
 ];
 
@@ -82,7 +90,7 @@ export function AdminSidebar({
   onToggleCollapse,
 }: Props) {
   const pathname = usePathname();
-  const { displayName, displayRole, currentRole } = useRole();
+  const { displayName, displayRole, currentRole, isPreviewing, can } = useRole();
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
   const isSuperadmin = currentRole === "superadmin";
@@ -92,10 +100,27 @@ export function AdminSidebar({
     (item) => item.id !== "pos" || currentRole !== "member"
   );
 
+  /*
+   * Each destination is hidden from a role the API would refuse anyway. The
+   * ledger screens stay superadmin-only as before; the newer screens follow the
+   * permission that guards their own actions, so the nav and the buttons inside
+   * it cannot disagree.
+   */
   const filteredDataNav = dataNav.filter((item) => {
     if (!isSuperadmin && (item.id === "payments" || item.id === "payment-methods")) {
       return false;
     }
+    if (item.id === "invoices") return can("payment.read");
+    if (item.id === "payroll") return can("finance.read");
+    return true;
+  });
+
+  const filteredConfigNav = configNav.filter((item) => {
+    // Pay rates are a superadmin concern: `coachRate.write` is theirs alone.
+    if (item.id === "coach-rates") return isSuperadmin;
+    if (item.id === "agreements") return can("agreement.readMember");
+    if (item.id === "settings") return can("settings.write");
+    if (item.id === "system-settings") return can("settings.write");
     return true;
   });
 
@@ -121,7 +146,7 @@ export function AdminSidebar({
     window.location.replace("/login");
   }
 
-  function renderNavItem(item: { href: string; label: string; icon: string; id: string }) {
+  function renderNavItem(item: NavItem) {
     return (
       <Link
         key={item.href}
@@ -134,6 +159,21 @@ export function AdminSidebar({
         <i className={`fas ${item.icon} w-5 shrink-0 text-center`} aria-hidden />
         <span className={navLabelClasses(collapsed)}>{item.label}</span>
       </Link>
+    );
+  }
+
+  function renderGroup(items: NavItem[], heading: string) {
+    if (items.length === 0) return null;
+    return (
+      <div className="pt-4 mt-2 border-t border-border">
+        <p
+          className={`px-4 text-[10px] text-muted font-bold uppercase tracking-wider mb-2 ${collapsed ? "lg:hidden" : ""
+            }`}
+        >
+          {heading}
+        </p>
+        {items.map(renderNavItem)}
+      </div>
     );
   }
 
@@ -209,15 +249,8 @@ export function AdminSidebar({
           >
             {filteredMainNav.map(renderNavItem)}
 
-            <div className="pt-4 mt-2 border-t border-border">
-              <p
-                className={`px-4 text-[10px] text-muted font-bold uppercase tracking-wider mb-2 ${collapsed ? "lg:hidden" : ""
-                  }`}
-              >
-                Data &amp; Finance
-              </p>
-              {filteredDataNav.map(renderNavItem)}
-            </div>
+            {renderGroup(filteredDataNav, "Data & Finance")}
+            {renderGroup(filteredConfigNav, "Configuration")}
 
             <div className="pt-4 mt-2 border-t border-border">
               {supportNav.map(renderNavItem)}
@@ -245,6 +278,7 @@ export function AdminSidebar({
               </p>
               <p className="text-xs text-muted truncate" id="logged-in-role">
                 {role}
+                {isPreviewing ? " (preview)" : ""}
               </p>
             </div>
           </div>

@@ -250,7 +250,11 @@ function CompactStatCard({
 }
 
 export function DashboardView() {
-  const { currentRole } = useRole();
+  // Revenue is the same figure the API guards behind SuperAdmin/Admin on
+  // `GET /payments/summary`, so finance tiles follow that rule rather than a
+  // client-side notion of "owner".
+  const { can } = useRole();
+  const canSeeFinance = can("finance.read");
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [memberStats, setMemberStats] = useState<MembersStatsPayload | null>(null);
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummaryPayload | null>(null);
@@ -436,7 +440,7 @@ export function DashboardView() {
           href={adminPaths.members}
           growth={growthPlaceholder} // FR-002: Placeholder growth indicator
         />
-        {currentRole === "superadmin" ? (
+        {canSeeFinance ? (
           <StatCard
             label="Total Revenue" // FR-003: Changed from "Revenue Total" to "Revenue Monthly"
             value={totalRevenue != null ? formatRupiah(totalRevenue) : "—"}
@@ -489,7 +493,7 @@ export function DashboardView() {
           loading={loading}
           href={`${adminPaths.users}?tab=coach&active=true`}
         />
-        {currentRole === "superadmin" ? (
+        {canSeeFinance ? (
           <CompactStatCard
             label="Pending Payments"
             value={pendingCount ?? "—"}
@@ -614,8 +618,8 @@ export function DashboardView() {
       </div>
 
       {/* ── Recent Transactions + Today's Classes ────────────────────────── */}
-      <div className={`grid grid-cols-1 ${currentRole === "superadmin" ? "lg:grid-cols-2" : ""} gap-6`}>
-        {currentRole === "superadmin" && (
+      <div className={`grid grid-cols-1 ${canSeeFinance ? "lg:grid-cols-2" : ""} gap-6`}>
+        {canSeeFinance && (
           <div className="bg-card rounded-xl border border-border overflow-hidden">
             <div className="p-5 border-b border-border flex justify-between items-center">
               <h4 className="font-bold text-lg">Recent Transactions</h4>

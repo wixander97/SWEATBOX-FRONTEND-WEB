@@ -20,7 +20,10 @@ export async function GET(
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    return NextResponse.json({ message: data?.message ?? "Failed to fetch member" }, { status: res.status });
+    return NextResponse.json(
+      { message: data?.message ?? "Failed to fetch member" },
+      { status: res.status }
+    );
   }
   return NextResponse.json(data);
 }

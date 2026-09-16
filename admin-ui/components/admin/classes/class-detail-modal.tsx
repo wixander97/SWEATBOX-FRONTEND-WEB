@@ -463,6 +463,29 @@ export function ClassDetailModal({ cls, onClose }: Props) {
               <SectionHeader icon="fas fa-users" label="People & Place" />
               <div className="bg-sidebar rounded-lg border border-border px-3 py-1">
                 <Row label="Coach" value={c.coachName ?? c.coachId ?? null} />
+                <Row label="Coach Rate Tier" value={c.coachRateTierName ?? (c.coachRateTierId ? c.coachRateTierId : "Branch default")} />
+                <Row
+                  label="Assistant Coaches"
+                  value={
+                    (c.assistantCoaches ?? []).length === 0
+                      ? "None"
+                      : (c.assistantCoaches ?? [])
+                          .map((a) =>
+                            a.rateTierName
+                              ? `${a.coachName ?? a.coachId} (${a.rateTierName})`
+                              : (a.coachName ?? a.coachId)
+                          )
+                          .join(", ")
+                  }
+                />
+                <Row
+                  label="Workout"
+                  value={
+                    c.workoutId
+                      ? `${c.workoutTitle || "Attached"}${c.workoutStatus ? ` · ${c.workoutStatus}` : ""}`
+                      : "Not set"
+                  }
+                />
                 <Row label="Branch" value={c.branchName ?? c.branchId ?? null} />
                 <Row label="Room" value={c.roomName ?? null} />
               </div>

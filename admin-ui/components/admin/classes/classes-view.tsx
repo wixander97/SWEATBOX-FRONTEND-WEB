@@ -37,6 +37,28 @@ import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { downloadXlsx } from "@/lib/export";
 import { createRecurringClassSchedules } from "@/lib/api/classes";
 import type { RecurrenceRule } from "@/lib/classes/recurrence";
+import { WorkoutFormModal } from "@/components/admin/workout-form-modal";
+import { useToast } from "@/components/ui/toast";
+import { useRole } from "@/contexts/role-context";
+import { apiRequest, errorMessage } from "@/lib/api/client";
+import type { ClassSchedule } from "@/lib/class-schedules";
+import type { Workout, WorkoutRequest } from "@/lib/workouts";
+
+/**
+ * The workout form works on the class-schedule model; the list here carries the
+ * looser `ApiClass`. Only the fields that differ in optionality need filling.
+ */
+function toClassSchedule(c: ApiClass): ClassSchedule {
+  const bookedCount =
+    c.bookedCount ?? Math.max(0, c.capacity - (c.remainingSlots ?? c.capacity));
+  return {
+    ...c,
+    bookedCount,
+    remainingSlots: c.remainingSlots ?? Math.max(0, c.capacity - bookedCount),
+    isCancelled: c.isCancelled ?? false,
+    isCompleted: c.isCompleted ?? false,
+  };
+}
 
 
 // Match the backend's accepted date format (ISO 8601 UTC), used elsewhere
@@ -85,6 +107,20 @@ const BRANCH_COLOR_FALLBACK = {
 };
 
 export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
+  const toast = useToast();
+  const { can } = useRole();
+  const canWriteClass = can("class.write");
+  const canDeleteClass = can("class.delete");
+  const canWriteWorkout = can("workout.write");
+  /*
+   * Programming belongs to one class on one date, so it is opened from the
+   * occurrence rather than typed into the schedule — the same recurring class
+   * can run a different workout every day without duplicating the schedule.
+   */
+  const [workoutOpen, setWorkoutOpen] = useState(false);
+  const [workoutTarget, setWorkoutTarget] = useState<ClassSchedule | null>(null);
+  const [existingWorkout, setExistingWorkout] = useState<Workout | null>(null);
+  const [workoutLoadingId, setWorkoutLoadingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   /** Bumped after any mutation so the calendar refetches its own data. */
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
@@ -383,6 +419,42 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
     await loadClasses(1, keyword);
   }
 
+  /** Opens the workout for one occurrence, editing the one already attached. */
+  async function manageWorkout(cls: ApiClass) {
+    setWorkoutLoadingId(cls.id);
+    setWorkoutTarget(toClassSchedule(cls));
+    try {
+      const workout = await apiRequest<Workout>(
+        `/api/workouts/class-schedule/${cls.id}`
+      );
+      setExistingWorkout(workout);
+    } catch {
+      // A 404 simply means nothing has been written for this class yet.
+      setExistingWorkout(null);
+    } finally {
+      setWorkoutLoadingId(null);
+      setWorkoutOpen(true);
+    }
+  }
+
+  async function saveWorkout(values: WorkoutRequest) {
+    try {
+      if (existingWorkout) {
+        await apiRequest(`/api/workouts/${existingWorkout.id}`, {
+          method: "PUT",
+          body: values,
+        });
+        toast.success("Workout updated.");
+      } else {
+        await apiRequest("/api/workouts", { method: "POST", body: values });
+        toast.success("Workout saved for this class.");
+      }
+    } catch (err) {
+      throw new Error(errorMessage(err));
+    }
+    await loadClasses(page, keyword);
+  }
+
   async function deleteClass(id: string) {
     setDeleteLoading(true);
     setDeleteError("");
@@ -504,7 +576,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
             </button>
           ))}
         </div>
-        {viewMode === "calendar" && (
+        {viewMode === "calendar" && canWriteClass && (
           <button
             type="button"
             onClick={() => setModalOpen(true)}
@@ -699,6 +771,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
               <i className="fas fa-file-export" aria-hidden />
               Export
             </button>
+            {canWriteClass && (
             <button
               type="button"
               onClick={() => setModalOpen(true)}
@@ -708,6 +781,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
               <i className="fas fa-plus" aria-hidden />
               Create New Class
             </button>
+            )}
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -818,6 +892,23 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         >
                           <i className="fas fa-eye" aria-hidden />
                         </button>
+                        {canWriteWorkout && (
+                          <button
+                            type="button"
+                            className={`mx-1 ${c.workoutId ? "text-accent-ink" : "text-muted"} hover:text-fg disabled:opacity-50`}
+                            aria-label={c.workoutId ? "Edit Workout" : "Add Workout"}
+                            title={
+                              c.workoutId
+                                ? `Workout: ${c.workoutTitle || "attached"}${c.workoutStatus ? ` (${c.workoutStatus})` : ""}`
+                                : "Add workout for this date"
+                            }
+                            disabled={workoutLoadingId === c.id}
+                            onClick={() => void manageWorkout(c)}
+                          >
+                            <i className="fas fa-dumbbell" aria-hidden />
+                          </button>
+                        )}
+                        {canWriteClass && (
                         <button
                           type="button"
                           className="text-fg hover:text-accent-ink mx-1"
@@ -829,7 +920,8 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         >
                           <i className="fas fa-edit" aria-hidden />
                         </button>
-                        {statusTab !== "cancelled" && !c.isCancelled && (
+                        )}
+                        {canWriteClass && statusTab !== "cancelled" && !c.isCancelled && (
                           <button
                             type="button"
                             className="text-yellow-500 hover:text-warning mx-1"
@@ -843,6 +935,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                             <i className="fas fa-ban" aria-hidden />
                           </button>
                         )}
+                        {canDeleteClass && (
                         <button
                           type="button"
                           className="text-red-500 hover:text-danger mx-1"
@@ -854,6 +947,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         >
                           <i className="fas fa-trash" aria-hidden />
                         </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -907,6 +1001,28 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
           setCalendarRefreshKey((k) => k + 1);
           void loadClasses(page, keyword);
         }}
+        onManageWorkout={
+          canWriteWorkout
+            ? (cls) => {
+                setEditOpen(false);
+                setEditClass(null);
+                void manageWorkout(cls);
+              }
+            : undefined
+        }
+      />
+
+      <WorkoutFormModal
+        open={workoutOpen}
+        onClose={() => {
+          setWorkoutOpen(false);
+          setWorkoutTarget(null);
+          setExistingWorkout(null);
+        }}
+        workout={existingWorkout}
+        classes={workoutTarget ? [workoutTarget] : []}
+        defaultClassScheduleId={workoutTarget?.id ?? null}
+        onSubmit={saveWorkout}
       />
 
       {detailTarget && (

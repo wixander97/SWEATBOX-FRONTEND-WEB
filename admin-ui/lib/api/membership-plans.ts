@@ -18,7 +18,58 @@ export type MembershipPlan = {
   planCategory?: string | null;
   registrationFee?: number;
   allowMultiBranchAccess?: boolean;
+  /**
+   * Which kind of membership this is — "Unlimited", "DropIn", "DayPass",
+   * "Limited" and so on. The backend keys its access and discount rules on it.
+   */
+  membershipType?: string | null;
+  /** Backend-computed: whether the plan is inside its sales window right now. */
+  isOnSale?: boolean;
+  isAvailableForSale?: boolean;
+  salesStartDate?: string | null;
+  salesEndDate?: string | null;
+  /**
+   * The price an existing member pays. Computed by the backend from
+   * `memberDiscountPercent`; never derived here.
+   */
+  memberPrice?: number;
+  memberDiscountPercent?: number;
 };
+
+/**
+ * Whether the cross-branch member discount can ever apply to this plan type.
+ *
+ * Mirrors `MembershipTypes.IsDiscountEligible` on the backend: a member holding
+ * an active membership pays the member rate for a drop-in or a day pass at
+ * *either* branch, not only their home club.
+ */
+export function isDiscountEligibleType(value?: string | null): boolean {
+  return value === "DropIn" || value === "DayPass";
+}
+
+/**
+ * What this customer is quoted for this plan.
+ *
+ * Display only. The amount actually charged is whatever `POST /payments`
+ * returns, because the backend prices the sale itself — this exists so the
+ * counter shows the same number the receipt will.
+ */
+export function quotedPrice(
+  plan: MembershipPlan,
+  customerIsMember: boolean
+): { amount: number; wasDiscounted: boolean } {
+  const listPrice = plan.price ?? 0;
+  const memberPrice = plan.memberPrice;
+  const discountable =
+    customerIsMember &&
+    isDiscountEligibleType(plan.membershipType) &&
+    typeof memberPrice === "number" &&
+    memberPrice < listPrice;
+
+  return discountable
+    ? { amount: memberPrice as number, wasDiscounted: true }
+    : { amount: listPrice, wasDiscounted: false };
+}
 
 export async function listMembershipPlans(options?: RequestOptions): Promise<MembershipPlan[]> {
   const payload = await apiGet<MembershipPlan[] | PagedResponse<MembershipPlan>>(

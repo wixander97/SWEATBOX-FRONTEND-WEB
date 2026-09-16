@@ -1,47 +1,37 @@
-import { NextResponse } from "next/server";
-import { API_BASE_URL } from "@/lib/auth/constants";
-import { getAuthTokenFromCookie } from "@/lib/auth/server-token";
+import { forwardJson, queryFrom, readJsonBody } from "@/lib/api/backend";
 
-function unauthorized() {
-  return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-}
-
+/**
+ * Lists payments.
+ *
+ * `status` selects one of the backend's pre-filtered collections rather than
+ * being passed through as a query parameter — those are separate endpoints on
+ * the API. Any other filter (paging, search, date range) forwards untouched.
+ */
 export async function GET(req: Request) {
-  const token = await getAuthTokenFromCookie();
-  if (!token) return unauthorized();
+  const query = queryFrom(req);
+  const { status, ...rest } = query;
 
-  const url = new URL(req.url);
-  const status = url.searchParams.get("status") ?? "";
+  const byStatus: Record<string, string> = {
+    paid: "/api/v1/payments/paid",
+    pending: "/api/v1/payments/pending",
+    failed: "/api/v1/payments/failed",
+  };
+  const path = byStatus[status ?? ""] ?? "/api/v1/payments";
 
-  let backendPath = "/api/v1/payments";
-  if (status === "paid") backendPath = "/api/v1/payments/paid";
-  else if (status === "pending") backendPath = "/api/v1/payments/pending";
-  else if (status === "failed") backendPath = "/api/v1/payments/failed";
-
-  const res = await fetch(`${API_BASE_URL}${backendPath}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  });
-  const data = await res.json().catch(() => []);
-  if (!res.ok) {
-    return NextResponse.json({ message: "Failed to fetch payments" }, { status: res.status });
-  }
-  return NextResponse.json(data);
+  // A recognised status is expressed by the path, so it is not forwarded twice.
+  return forwardJson(path, { query: path === "/api/v1/payments" ? query : rest });
 }
 
+/**
+ * Records a sale.
+ *
+ * The amount is not sent: the backend prices the plan itself, applies the
+ * cross-branch member discount and rejects a plan outside its sales window, so
+ * what is charged is what the API decided — the POS screen only reports it.
+ */
 export async function POST(req: Request) {
-  const token = await getAuthTokenFromCookie();
-  if (!token) return unauthorized();
-
-  const body = await req.json();
-  const res = await fetch(`${API_BASE_URL}/api/v1/payments`, {
+  return forwardJson("/api/v1/payments", {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify(body),
+    body: await readJsonBody(req),
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    return NextResponse.json({ message: data?.message ?? "Failed to create payment" }, { status: res.status });
-  }
-  return NextResponse.json(data);
 }

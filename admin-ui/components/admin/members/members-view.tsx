@@ -7,6 +7,8 @@ import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { downloadXlsx } from "@/lib/export";
 import { EditMemberModal } from "@/components/admin/members/edit-member-modal";
+import { QuickRegisterModal } from "@/components/admin/quick-register-modal";
+import { useRole } from "@/contexts/role-context";
 import {
   formatClassCredits,
   type ApiMember,
@@ -20,6 +22,12 @@ type SortKey = keyof ApiMember;
 type SortDir = "asc" | "desc";
 
 export function MembersView() {
+  const { can } = useRole();
+  // Registration goes through `POST /members/register`, which requires the
+  // waiver, the house rules and a signature; editing is a separate permission.
+  const canRegister = can("member.register");
+  const canEdit = can("member.write");
+  const [registerOpen, setRegisterOpen] = useState(false);
   const [memberFilterTab, setMemberFilterTab] = useState<FilterTab>("all");
   const [keyword, setKeyword] = useState("");
   const [members, setMembers] = useState<ApiMember[]>([]);
@@ -418,6 +426,17 @@ export function MembersView() {
             <i className="fas fa-file-export mr-2" aria-hidden />
             Export
           </button>
+
+          {canRegister && (
+            <button
+              type="button"
+              onClick={() => setRegisterOpen(true)}
+              className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition"
+            >
+              <i className="fas fa-user-plus mr-2" aria-hidden />
+              Register Customer
+            </button>
+          )}
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -508,14 +527,18 @@ export function MembersView() {
 
 
                   <td className="px-6 py-4 text-right">
-                    <button
-                      type="button"
-                      onClick={() => setMemberModal({ mode: "edit", member: m })}
-                      className="bg-sweat text-black px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-yellow-400 transition inline-flex items-center gap-1.5"
-                    >
-                      <i className="fas fa-edit" aria-hidden />
-                      Edit
-                    </button>
+                    {canEdit ? (
+                      <button
+                        type="button"
+                        onClick={() => setMemberModal({ mode: "edit", member: m })}
+                        className="bg-sweat text-black px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-yellow-400 transition inline-flex items-center gap-1.5"
+                      >
+                        <i className="fas fa-edit" aria-hidden />
+                        Edit
+                      </button>
+                    ) : (
+                      <span className="text-xs text-muted">-</span>
+                    )}
                   </td>
                 </tr>
               )))}
@@ -557,6 +580,17 @@ export function MembersView() {
           onSuccess={() => void loadMembers(keyword, memberFilterTab, page)}
         />
       )}
+
+      <QuickRegisterModal
+        open={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+        branches={branches}
+        submitLabel="Register Customer"
+        onRegistered={() => {
+          setPage(1);
+          void loadMembers(keyword, memberFilterTab, 1);
+        }}
+      />
     </div>
   );
 }

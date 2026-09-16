@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { errorMessageOf } from "@/lib/api/http";
 import {
+  isDiscountEligibleType,
   isDropInPlan,
   listMembershipPlans,
+  quotedPrice,
   type MembershipPlan,
 } from "@/lib/api/membership-plans";
 import {
@@ -348,12 +350,23 @@ export function PosCatalog({
     visibleMemberPackages.length === 0 &&
     visibleClasses.length === 0;
 
+  /*
+   * A customer holding an active membership pays the member rate for a drop-in
+   * or a day pass, and does so at either branch — the discount follows the
+   * member, not their home club. The backend applies it when the sale is
+   * posted; quoting it here only keeps the card and the receipt in agreement.
+   */
+  const customerIsMember =
+    !!customer &&
+    customer.isExpired !== true &&
+    (customer.membershipStatus ?? "").toLowerCase() === "active";
+
   function addPlan(plan: MembershipPlan) {
     const item: MembershipCartItem = {
       lineId: newLineId(),
       kind: "membership",
       name: plan.planName,
-      price: plan.price ?? 0,
+      price: quotedPrice(plan, customerIsMember).amount,
       plan,
     };
     onAdd(item);
@@ -468,19 +481,34 @@ export function PosCatalog({
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
                   {visiblePlans.map((plan) => {
                     const queued = queuedPlanIds.includes(plan.id);
+                    const quote = quotedPrice(plan, customerIsMember);
+                    // `isOnSale` is the backend's own answer to "inside its sales
+                    // window?" — the payment would be refused, so the card is too.
+                    // Absent on older API builds, which never had a window.
+                    const offSale = plan.isOnSale === false;
                     return (
                       <Card
                         key={plan.id}
                         title={plan.planName}
                         subtitle={planSubtitle(plan)}
                         meta={
-                          plan.isPtIncluded
-                            ? `Includes ${plan.ptSessions ?? 0} PT sessions`
-                            : plan.planCategory
+                          quote.wasDiscounted
+                            ? `Member rate · was ${formatRupiah(plan.price ?? 0)}`
+                            : plan.isPtIncluded
+                              ? `Includes ${plan.ptSessions ?? 0} PT sessions`
+                              : isDiscountEligibleType(plan.membershipType)
+                                ? "Member rate applies at any branch"
+                                : plan.planCategory
                         }
-                        price={formatRupiah(plan.price ?? 0)}
-                        disabled={disabled || queued}
-                        disabledLabel={queued ? "Already in transaction" : undefined}
+                        price={formatRupiah(quote.amount)}
+                        disabled={disabled || queued || offSale}
+                        disabledLabel={
+                          queued
+                            ? "Already in transaction"
+                            : offSale
+                              ? "Outside sales period"
+                              : undefined
+                        }
                         onClick={() => addPlan(plan)}
                       />
                     );

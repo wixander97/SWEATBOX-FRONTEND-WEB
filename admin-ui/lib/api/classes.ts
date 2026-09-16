@@ -1,4 +1,5 @@
 import { ApiError, apiGet, apiPost, toList, type PagedResponse, type RequestOptions } from "./http";
+import type { AssistantCoachAssignment } from "@/lib/class-schedules";
 import type { ApiClass } from "@/components/admin/classes/classes.types";
 import {
   expandRecurrence,
@@ -22,6 +23,10 @@ export type ClassSchedulePayload = {
   classType: string;
   difficultyLevel: string;
   isActive: boolean;
+  /** Assistant coaches on the occurrence, each with an optional rate tier. */
+  assistantCoaches?: AssistantCoachAssignment[];
+  /** The primary coach's rate tier; null lets the branch default apply. */
+  coachRateTierId?: string | null;
 };
 
 export async function listClassSchedules(options?: RequestOptions): Promise<ApiClass[]> {

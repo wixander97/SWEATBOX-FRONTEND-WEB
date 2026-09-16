@@ -1,3 +1,8 @@
+import type {
+  AssistantCoach,
+  AssistantCoachAssignment,
+} from "@/lib/class-schedules";
+
 export type ApiClass = {
   id: string;
   className: string;
@@ -22,6 +27,15 @@ export type ApiClass = {
   isSessionActive?: boolean;
   createdAt?: string;
   updatedAt?: string | null;
+  /** Assistants on this occurrence, each with the tier they are paid at. */
+  assistantCoaches?: AssistantCoach[] | null;
+  /** The primary coach's rate tier; null means the branch default applies. */
+  coachRateTierId?: string | null;
+  coachRateTierName?: string | null;
+  /** The workout attached to this occurrence, when one exists. */
+  workoutId?: string | null;
+  workoutTitle?: string | null;
+  workoutStatus?: string | null;
 };
 
 export type ApiCoach = {
@@ -43,6 +57,8 @@ export type ClassFormValues = {
   classType: string;
   difficultyLevel: string;
   isActive: boolean;
+  assistantCoaches?: AssistantCoachAssignment[];
+  coachRateTierId?: string | null;
 };
 
 export type PagedResponse<T> = {
@@ -70,5 +86,15 @@ export function classToFormValues(c: ApiClass): Partial<ClassFormValues> {
     description: c.description || "",
     classType: c.classType || "",
     difficultyLevel: c.difficultyLevel || "",
+    assistantCoaches: toAssistantAssignments(c),
+    coachRateTierId: c.coachRateTierId ?? null,
   };
+}
+
+/** The assistants on a loaded class, in the shape a create/update request sends. */
+export function toAssistantAssignments(c: ApiClass): AssistantCoachAssignment[] {
+  return (c.assistantCoaches ?? []).map((assistant) => ({
+    coachId: assistant.coachId,
+    coachRateTierId: assistant.coachRateTierId ?? null,
+  }));
 }

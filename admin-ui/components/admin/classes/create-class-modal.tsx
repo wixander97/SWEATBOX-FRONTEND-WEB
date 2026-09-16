@@ -1,11 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { formatCountInput, parseCountInput } from "@/lib/number-input";
 import { RecurrenceFields } from "@/components/admin/classes/recurrence-fields";
+import { AssistantCoachSelector } from "@/components/admin/assistant-coach-selector";
+import { apiRequest } from "@/lib/api/client";
+import type { AssistantCoachAssignment } from "@/lib/class-schedules";
+import { RATE_TYPES, tiersFor, type CoachRateTier } from "@/lib/coach-rates";
+import { formatCurrency } from "@/lib/format";
 import {
   emptyRecurrence,
   expandRecurrence,
@@ -27,6 +32,10 @@ export type ClassFormValues = {
   classType: string;
   difficultyLevel: string;
   isActive: boolean;
+  /** Assistants on the occurrence; the API accepts none, one or several. */
+  assistantCoaches: AssistantCoachAssignment[];
+  /** Primary coach's rate tier; null lets the branch default apply. */
+  coachRateTierId: string | null;
 };
 
 type Props = {
@@ -34,6 +43,11 @@ type Props = {
   onClose: () => void;
   title?: string;
   initialValues?: Partial<ClassFormValues>;
+  /**
+   * Present when editing an existing occurrence: offers the workout for that
+   * date, which is programmed in the workout module rather than here.
+   */
+  onManageWorkout?: () => void;
   submitLabel?: string;
   trainerOptions: Array<{ id: string; name: string }>;
   /**
@@ -62,6 +76,7 @@ type ClassFormState = {
   description: string;
   classType: string;
   difficultyLevel: string;
+  coachRateTierId: string;
 };
 
 const WORKOUT_PLACEHOLDER = `Warm Up
@@ -90,6 +105,7 @@ function emptyClassForm(): ClassFormState {
     description: "",
     classType: "",
     difficultyLevel: "",
+    coachRateTierId: "",
   };
 }
 
@@ -115,6 +131,7 @@ export function CreateClassModal({
   initialValues,
   trainerOptions,
   allowRecurrence = false,
+  onManageWorkout,
   onSubmit,
 }: Props) {
   const [submitting, setSubmitting] = useState(false);
@@ -123,6 +140,28 @@ export function CreateClassModal({
   const [branches, setBranches] = useState<Branch[]>([]);
   const [branchesLoading, setBranchesLoading] = useState(true);
   const [recurrence, setRecurrence] = useState<RecurrenceRule>(emptyRecurrence());
+  const [assistants, setAssistants] = useState<AssistantCoachAssignment[]>([]);
+  const [rateTiers, setRateTiers] = useState<CoachRateTier[]>([]);
+  // Rate tiers are optional on a class: without them the backend falls back to
+  // the branch default, so a failed load only hides the choice.
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    apiRequest<CoachRateTier[]>("/api/coach-rate-tiers", { query: { isActive: true } })
+      .then((data) => {
+        if (!cancelled) setRateTiers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setRateTiers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+  const coachTiers = useMemo(
+    () => tiersFor(rateTiers, RATE_TYPES.coach, form.branchId),
+    [rateTiers, form.branchId]
+  );
   // Load branches
   useEffect(() => {
     async function loadBranches() {
@@ -158,9 +197,12 @@ export function CreateClassModal({
         description: initialValues.description ?? "",
         classType: initialValues.classType ?? "",
         difficultyLevel: initialValues.difficultyLevel ?? "",
+        coachRateTierId: initialValues.coachRateTierId ?? "",
       });
+      setAssistants(initialValues.assistantCoaches ?? []);
     } else {
       setForm(emptyClassForm());
+      setAssistants([]);
     }
     setRecurrence(emptyRecurrence());
   }, [open, initialValues]);
@@ -182,6 +224,16 @@ export function CreateClassModal({
           return;
         }
       }
+      // The API rejects a duplicate coach rather than de-duplicating, so it is
+      // caught here too — the selector should already have made it impossible.
+      const seen = new Set<string>([form.coachId]);
+      for (const assistant of assistants) {
+        if (!assistant.coachId || seen.has(assistant.coachId)) {
+          setError("Each coach can only be on the class once.");
+          return;
+        }
+        seen.add(assistant.coachId);
+      }
       setSubmitting(true);
 
       const payload: ClassFormValues = {
@@ -190,6 +242,8 @@ export function CreateClassModal({
         startTime: normalizeTime(form.startTime),
         endTime: normalizeTime(form.endTime),
         isActive: true,
+        coachRateTierId: form.coachRateTierId || null,
+        assistantCoaches: assistants,
       };
 
       try {
@@ -205,7 +259,7 @@ export function CreateClassModal({
         setSubmitting(false);
       }
     },
-    [onClose, onSubmit, form, allowRecurrence, recurrence]
+    [onClose, onSubmit, form, allowRecurrence, recurrence, assistants]
   );
 
   if (!open) return null;
@@ -410,6 +464,38 @@ export function CreateClassModal({
                 />
               </div>
 
+              {/* Coach pay: the primary coach's tier, then any assistants */}
+              <div>
+                <label className="block text-muted text-sm mb-1">
+                  Coach Rate Tier
+                </label>
+                <select
+                  className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                  name="coachRateTierId"
+                  value={form.coachRateTierId}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, coachRateTierId: e.target.value }))
+                  }
+                >
+                  <option value="">Branch default</option>
+                  {coachTiers.map((tier) => (
+                    <option key={tier.id} value={tier.id}>
+                      {tier.name} · {formatCurrency(tier.rate)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <AssistantCoachSelector
+                value={assistants}
+                onChange={setAssistants}
+                coaches={trainerOptions}
+                tiers={rateTiers}
+                branchId={form.branchId}
+                primaryCoachId={form.coachId}
+                disabled={submitting}
+              />
+
               {/* Class Type + Difficulty */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -469,6 +555,17 @@ export function CreateClassModal({
                   down. Saved to the existing description field.
                 </p>
               </div>
+
+              {onManageWorkout && (
+                <button
+                  type="button"
+                  onClick={onManageWorkout}
+                  className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg text-sm hover:bg-fg/5 transition"
+                >
+                  <i className="fas fa-dumbbell mr-2" aria-hidden />
+                  Manage workout for this date
+                </button>
+              )}
 
               {/* Recurrence (create only) */}
               {allowRecurrence && (

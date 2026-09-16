@@ -5,7 +5,7 @@ import { CreateClassModal, type ClassFormValues } from "./create-class-modal";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
-import type { ApiClass } from "./classes.types";
+import { toAssistantAssignments, type ApiClass } from "./classes.types";
 
 type Props = {
   cls: ApiClass | null;
@@ -13,9 +13,18 @@ type Props = {
   onClose: () => void;
   trainerOptions: Array<{ id: string; name: string }>;
   onSuccess: () => void;
+  /** Opens the workout for this occurrence, when the viewer may write one. */
+  onManageWorkout?: (cls: ApiClass) => void;
 };
 
-export function EditClassModal({ cls, open, onClose, trainerOptions, onSuccess }: Props) {
+export function EditClassModal({
+  cls,
+  open,
+  onClose,
+  trainerOptions,
+  onSuccess,
+  onManageWorkout,
+}: Props) {
   const handleSubmit = useCallback(
     async (values: ClassFormValues) => {
       if (!cls) return;
@@ -47,6 +56,8 @@ export function EditClassModal({ cls, open, onClose, trainerOptions, onSuccess }
       description: cls.description || "",
       classType: cls.classType || "",
       difficultyLevel: cls.difficultyLevel || "",
+      assistantCoaches: toAssistantAssignments(cls),
+      coachRateTierId: cls.coachRateTierId ?? null,
     }
     : undefined;
 
@@ -58,6 +69,9 @@ export function EditClassModal({ cls, open, onClose, trainerOptions, onSuccess }
       submitLabel="Save Changes"
       initialValues={initialValues}
       trainerOptions={trainerOptions}
+      onManageWorkout={
+        cls && onManageWorkout ? () => onManageWorkout(cls) : undefined
+      }
       onSubmit={handleSubmit}
     />
   );

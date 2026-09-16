@@ -28,7 +28,10 @@ function formatRupiah(amount: number): string {
 }
 
 export function PayrollView() {
-  const { currentRole } = useRole();
+  // Payroll figures are finance data; the API guards the equivalent summary
+  // behind SuperAdmin/Admin, so the page follows the same rule.
+  const { can } = useRole();
+  const canSeeFinance = can("finance.read");
   const [rows, setRows] = useState<PayrollRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -74,8 +77,9 @@ export function PayrollView() {
   }, []);
 
   useEffect(() => {
+    if (!canSeeFinance) return;
     void loadPayroll();
-  }, [loadPayroll]);
+  }, [loadPayroll, canSeeFinance]);
 
   const sorted = useMemo(() => {
     if (!sortKey) return rows;
@@ -90,13 +94,13 @@ export function PayrollView() {
     });
   }, [rows, sortKey, sortDir]);
 
-  if (currentRole !== "superadmin") {
+  if (!canSeeFinance) {
     return (
       <div className="bg-card rounded-xl border border-dashed border-red-500 p-6 sm:p-12 text-center">
         <i className="fas fa-lock text-red-500 text-5xl mb-4" aria-hidden />
         <h3 className="text-2xl font-bold text-fg mb-2">Access Denied</h3>
         <p className="text-muted">
-          You do not have permission to view the Finance &amp; Payroll page.
+          Your role does not have permission to view Finance &amp; Payroll.
         </p>
       </div>
     );
