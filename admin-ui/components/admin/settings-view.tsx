@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import Image from "next/image";
 import { Field, FormError, InfoNote, inputClass } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/modal";
@@ -8,11 +8,15 @@ import { PanelCard } from "@/components/ui/table-states";
 import { useToast } from "@/components/ui/toast";
 import { ApiError, apiRequest, errorMessage } from "@/lib/api/client";
 import { useRole } from "@/contexts/role-context";
+import type { Branch } from "@/lib/branches";
 import {
   BRAND_FIELDS,
   DROP_IN_DISCOUNT_KEY,
   READ_ONLY_BRAND_FIELDS,
+  brandBranchToken,
+  brandKeyFor,
   toSettingMap,
+  type BrandScope,
   type SystemSetting,
 } from "@/lib/system-settings";
 
@@ -20,9 +24,13 @@ import {
  * Brand and letterhead configuration.
  *
  * These values are what the backend prints on invoices, receipts and the signed
- * agreement PDFs. A branch that carries its own address and phone still wins
- * over them — an invoice has to name the club the customer actually paid at —
- * so these are the fallback and the company-wide details.
+ * agreement PDFs. They are kept per branch — PIK2 and Kedoya each have their
+ * own rows — with a company-wide default underneath: a field a branch leaves
+ * blank is printed from the default, so a document always names the club the
+ * customer actually paid at without every detail being repeated per branch.
+ *
+ * The branch list comes from the branches API, so a new branch appears here
+ * without a code change.
  *
  * Nothing secret is on this screen and nothing secret is ever fetched into it:
  * SMTP credentials, the Xendit secret key and webhook token, and the AsteriPay
@@ -35,6 +43,9 @@ export function SettingsView() {
   const canWrite = can("settings.write");
 
   const [settings, setSettings] = useState<Record<string, SystemSetting>>({});
+  const [branches, setBranches] = useState<Branch[]>([]);
+  /** Which letterhead is being edited: "" is the company-wide default. */
+  const [scopeId, setScopeId] = useState("");
   const [values, setValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -45,15 +56,25 @@ export function SettingsView() {
     setLoading(true);
     setLoadError(null);
     try {
-      const data = await apiRequest<SystemSetting[]>("/api/system-settings");
+      const [data, branchData] = await Promise.all([
+        apiRequest<SystemSetting[]>("/api/system-settings"),
+        // Without the branch list only the default letterhead can be edited,
+        // which is exactly what the screen offered before.
+        apiRequest<Branch[]>("/api/branches").catch(() => [] as Branch[]),
+      ]);
       const list = Array.isArray(data) ? data : [];
+      const activeBranches = (Array.isArray(branchData) ? branchData : []).filter(
+        (b) => b.isActive
+      );
       const map = toSettingMap(list);
       setSettings(map);
+      setBranches(activeBranches);
       setValues(
         Object.fromEntries(
-          [...BRAND_FIELDS.map((f) => f.key), DROP_IN_DISCOUNT_KEY].map(
-            (key) => [key, map[key]?.value ?? ""]
-          )
+          [...brandKeys(activeBranches), DROP_IN_DISCOUNT_KEY].map((key) => [
+            key,
+            map[key]?.value ?? "",
+          ])
         )
       );
     } catch (err) {
@@ -66,6 +87,8 @@ export function SettingsView() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const scopes = useMemo(() => scopesFor(branches), [branches]);
 
   function set(key: string, value: string) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -120,10 +143,21 @@ export function SettingsView() {
     setError(null);
     setSaving(true);
     try {
-      for (const field of BRAND_FIELDS) {
-        const current = settings[field.key]?.value ?? "";
-        if (values[field.key] === current) continue;
-        await writeSetting(field.key, values[field.key], field.hint);
+      // Every scope is saved, so edits made on one branch tab are not lost by
+      // switching to another before saving. Each key belongs to one scope, so
+      // no scope's write can land on another's row.
+      for (const scope of scopesFor(branches)) {
+        for (const field of BRAND_FIELDS) {
+          const key = brandKeyFor(field.key, scope);
+          const current = settings[key]?.value ?? "";
+          const next = values[key] ?? "";
+          if (next === current) continue;
+          await writeSetting(
+            key,
+            next,
+            scope ? `${field.label} for ${scope.branchName}.` : field.hint
+          );
+        }
       }
 
       const currentDiscount = settings[DROP_IN_DISCOUNT_KEY]?.value ?? "";
@@ -173,7 +207,12 @@ export function SettingsView() {
     );
   }
 
-  const logoUrl = values.BRAND_LOGO_URL?.trim();
+  const scope = scopes.find((s) => (s?.branchId ?? "") === scopeId) ?? null;
+  const valueOf = (fieldKey: string, forScope: BrandScope) =>
+    values[brandKeyFor(fieldKey, forScope)] ?? "";
+  const logoUrl = (
+    valueOf("BRAND_LOGO_URL", scope).trim() || valueOf("BRAND_LOGO_URL", null)
+  ).trim();
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -184,48 +223,99 @@ export function SettingsView() {
           </h3>
           <p className="text-xs text-muted mt-1 max-w-2xl">
             Printed on invoices, receipts and the signed waiver and house rules.
-            A branch with its own address and phone number overrides these — the
-            invoice names the club the customer actually paid at.
+            Each branch has its own letterhead; any field a branch leaves blank
+            is printed from the default.
           </p>
         </div>
 
         <div className="p-4 sm:p-6 space-y-4">
+          {branches.length > 0 ? (
+            <div
+              role="tablist"
+              aria-label="Letterhead scope"
+              className="flex flex-wrap gap-2"
+            >
+              {scopes.map((s) => {
+                const id = s?.branchId ?? "";
+                const active = id === scopeId;
+                return (
+                  <button
+                    key={id || "default"}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setScopeId(id)}
+                    className={`px-4 py-2 rounded-lg text-sm border transition ${
+                      active
+                        ? "bg-sweat text-black font-bold border-sweat"
+                        : "bg-fg/5 hover:bg-fg/10 text-fg border-border"
+                    }`}
+                  >
+                    {s ? s.branchName : "Default (all branches)"}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {scope ? (
+            <InfoNote>
+              Editing the letterhead for <strong>{scope.branchName}</strong>.
+              Only this branch&apos;s documents use these values. Leave a field
+              blank to print the default shown as its placeholder.
+            </InfoNote>
+          ) : null}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {BRAND_FIELDS.map((field) => (
-              <Field
-                key={field.key}
-                label={field.label}
-                htmlFor={`bs-${field.key}`}
-                hint={field.hint}
-                className={field.kind === "textarea" ? "lg:col-span-2" : ""}
-              >
-                {field.kind === "textarea" ? (
-                  <textarea
-                    id={`bs-${field.key}`}
-                    rows={3}
-                    className={inputClass()}
-                    value={values[field.key] ?? ""}
-                    onChange={(e) => set(field.key, e.target.value)}
-                    disabled={!canWrite}
-                  />
-                ) : (
-                  <input
-                    id={`bs-${field.key}`}
-                    type={
-                      field.kind === "email"
-                        ? "email"
-                        : field.kind === "url"
-                          ? "url"
-                          : "text"
-                    }
-                    className={inputClass()}
-                    value={values[field.key] ?? ""}
-                    onChange={(e) => set(field.key, e.target.value)}
-                    disabled={!canWrite}
-                  />
-                )}
-              </Field>
-            ))}
+            {BRAND_FIELDS.map((field) => {
+              const key = brandKeyFor(field.key, scope);
+              const inputId = `bs-${key}`;
+              const fallback = scope ? valueOf(field.key, null) : "";
+              const placeholder = scope
+                ? fallback || "Not set — uses server configuration"
+                : undefined;
+              return (
+                <Field
+                  key={key}
+                  label={field.label}
+                  htmlFor={inputId}
+                  hint={
+                    scope
+                      ? `${scope.branchName} only. Blank uses the default.`
+                      : field.hint
+                  }
+                  className={field.kind === "textarea" ? "lg:col-span-2" : ""}
+                >
+                  {field.kind === "textarea" ? (
+                    <textarea
+                      id={inputId}
+                      rows={3}
+                      className={inputClass()}
+                      value={values[key] ?? ""}
+                      placeholder={placeholder}
+                      onChange={(e) => set(key, e.target.value)}
+                      disabled={!canWrite}
+                    />
+                  ) : (
+                    <input
+                      id={inputId}
+                      type={
+                        field.kind === "email"
+                          ? "email"
+                          : field.kind === "url"
+                            ? "url"
+                            : "text"
+                      }
+                      className={inputClass()}
+                      value={values[key] ?? ""}
+                      placeholder={placeholder}
+                      onChange={(e) => set(key, e.target.value)}
+                      disabled={!canWrite}
+                    />
+                  )}
+                </Field>
+              );
+            })}
           </div>
 
           {logoUrl ? (
@@ -330,5 +420,26 @@ export function SettingsView() {
         )}
       </div>
     </form>
+  );
+}
+
+/**
+ * The default letterhead first, then one per branch. A branch whose name has no
+ * letters or digits has no key of its own, so it is not offered rather than
+ * silently editing the default.
+ */
+function scopesFor(branches: Branch[]): BrandScope[] {
+  return [
+    null,
+    ...branches
+      .filter((b) => brandBranchToken(b.branchName ?? "") !== "")
+      .map((b) => ({ branchId: b.id, branchName: b.branchName })),
+  ];
+}
+
+/** Every letterhead key across the default and every branch. */
+function brandKeys(branches: Branch[]): string[] {
+  return scopesFor(branches).flatMap((scope) =>
+    BRAND_FIELDS.map((field) => brandKeyFor(field.key, scope))
   );
 }

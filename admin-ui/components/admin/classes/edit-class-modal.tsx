@@ -67,6 +67,7 @@ export function EditClassModal({
       onClose={onClose}
       title="Edit Class"
       submitLabel="Save Changes"
+      allowRateOverride
       initialValues={initialValues}
       trainerOptions={trainerOptions}
       onManageWorkout={

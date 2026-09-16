@@ -65,6 +65,29 @@ export const BRAND_FIELDS: BrandField[] = [
 ];
 
 /**
+ * Letterhead scope: the company-wide default, or one branch.
+ *
+ * Mirrors `BrandSettingKeys` in the API. A branch's value lives in its own row,
+ * the company-wide key followed by the branch token — `BRAND_ADDRESS_PIK2`,
+ * `BRAND_ADDRESS_KEDOYA` — the same per-branch convention the drop-in prices
+ * use. Saving one branch therefore never touches another, and a value a branch
+ * leaves blank falls back to the company-wide one when a document is rendered.
+ */
+export type BrandScope = { branchId: string; branchName: string } | null;
+
+/** "PIK 2", "pik2" and "PIK-2" all become "PIK2". Same rule as the API. */
+export function brandBranchToken(branchName: string): string {
+  return branchName.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+/** The setting key a letterhead field is stored under for a scope. */
+export function brandKeyFor(key: string, scope: BrandScope): string {
+  if (!scope) return key;
+  const token = brandBranchToken(scope.branchName);
+  return token ? `${key}_${token}` : key;
+}
+
+/**
  * The drop-in discount percentage the backend applies to a single visit or day
  * pass bought by an existing member.
  */

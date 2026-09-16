@@ -11,7 +11,10 @@ import {
 import type { AssistantCoachAssignment } from "@/lib/class-schedules";
 
 /**
- * The assistant coaches on a class, and what each is paid.
+ * The assistant coaches on a class, and — when editing — what each is paid.
+ *
+ * Without `tiers` the selector picks people only: creating a schedule never
+ * asks for a rate, and each assistant seat is paid the branch default.
  *
  * A class may have none, one, or several. A coach already on the class — as
  * primary or as another assistant — is not offered again: the backend rejects a
@@ -33,13 +36,15 @@ export function AssistantCoachSelector({
   value: AssistantCoachAssignment[];
   onChange: (next: AssistantCoachAssignment[]) => void;
   coaches: CoachOption[];
-  tiers: CoachRateTier[];
+  /** Rate tiers to offer per assistant; omit to hide rate selection. */
+  tiers?: CoachRateTier[];
   branchId: string;
   primaryCoachId: string;
   disabled?: boolean;
 }) {
+  const showRates = tiers !== undefined;
   const assistantTiers = useMemo(
-    () => tiersFor(tiers, RATE_TYPES.assistant, branchId),
+    () => (tiers ? tiersFor(tiers, RATE_TYPES.assistant, branchId) : []),
     [tiers, branchId]
   );
 
@@ -97,7 +102,9 @@ export function AssistantCoachSelector({
           {value.map((assignment, index) => (
             <li
               key={`${assignment.coachId}-${index}`}
-              className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-start bg-sidebar border border-border rounded-lg p-3"
+              className={`grid grid-cols-1 ${
+                showRates ? "sm:grid-cols-[1fr_1fr_auto]" : "sm:grid-cols-[1fr_auto]"
+              } gap-2 items-start bg-sidebar border border-border rounded-lg p-3`}
             >
               <div>
                 <label
@@ -121,30 +128,32 @@ export function AssistantCoachSelector({
                 </select>
               </div>
 
-              <div>
-                <label className="sr-only" htmlFor={`assistant-tier-${index}`}>
-                  Rate tier for assistant {index + 1}
-                </label>
-                <select
-                  id={`assistant-tier-${index}`}
-                  className={`${FIELD_CLASS} !py-2 text-sm`}
-                  value={assignment.coachRateTierId ?? ""}
-                  onChange={(e) =>
-                    update(index, {
-                      coachRateTierId: e.target.value || null,
-                    })
-                  }
-                  disabled={disabled}
-                >
-                  <option value="">Branch default rate</option>
-                  {assistantTiers.map((tier) => (
-                    <option key={tier.id} value={tier.id}>
-                      {tier.name} — {formatCurrency(tier.rate)}
-                      {tier.isDefault ? " (default)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {showRates && (
+                <div>
+                  <label className="sr-only" htmlFor={`assistant-tier-${index}`}>
+                    Rate tier for assistant {index + 1}
+                  </label>
+                  <select
+                    id={`assistant-tier-${index}`}
+                    className={`${FIELD_CLASS} !py-2 text-sm`}
+                    value={assignment.coachRateTierId ?? ""}
+                    onChange={(e) =>
+                      update(index, {
+                        coachRateTierId: e.target.value || null,
+                      })
+                    }
+                    disabled={disabled}
+                  >
+                    <option value="">Branch default rate</option>
+                    {assistantTiers.map((tier) => (
+                      <option key={tier.id} value={tier.id}>
+                        {tier.name} — {formatCurrency(tier.rate)}
+                        {tier.isDefault ? " (default)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <button
                 type="button"
@@ -161,7 +170,7 @@ export function AssistantCoachSelector({
         </ul>
       )}
 
-      {assistantTiers.length === 0 ? (
+      {showRates && assistantTiers.length === 0 ? (
         <p className="text-xs text-muted">
           No assistant rate tiers are configured for this branch. Assistants will
           be paid at the branch default, or at their own payroll rate.

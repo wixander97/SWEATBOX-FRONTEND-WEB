@@ -59,14 +59,22 @@ export type Permission =
   | "member.write"
   /** MembersController: DELETE /members/{id}. */
   | "member.delete"
-  /** PaymentsController: listing, invoice PDF, receipt email. */
+  /** PaymentsController: the payment ledger (GET /payments, /paid, /pending, /failed). */
   | "payment.read"
   /** PaymentsController: creating a sale. */
   | "payment.write"
   /** SystemSettingsController: PUT/POST (any authenticated caller). */
   | "settings.write"
-  /** PaymentsController: GET /payments/summary — revenue and payroll figures. */
-  | "finance.read";
+  /**
+   * PaymentsController: GET /payments/summary, payment method admin;
+   * CoachesController: GET /coaches/{id}/payroll-summary.
+   */
+  | "finance.read"
+  /**
+   * The Data & Finance area of the portal: Membership Plans, Payments &
+   * Invoices, Payments, Payment Method, Coaches Payroll and History.
+   */
+  | "dataFinance.view";
 
 /**
  * Roles permitted per action, copied from the controller attributes.
@@ -87,10 +95,15 @@ const ALLOWED: Record<Permission, Role[]> = {
   "member.register": ["SuperAdmin", "Admin", "Staff"],
   "member.write": ["SuperAdmin", "Admin", "Staff"],
   "member.delete": ["SuperAdmin", "Admin"],
-  "payment.read": ["SuperAdmin", "Admin", "Staff"],
+  // Data & Finance is not an Admin area. Staff keeps the ledger access it
+  // already had for reprinting invoices at the desk.
+  "payment.read": ["SuperAdmin", "Staff"],
   "payment.write": ["SuperAdmin", "Admin", "Staff"],
   "settings.write": ["SuperAdmin", "Admin"],
-  "finance.read": ["SuperAdmin", "Admin"],
+  "finance.read": ["SuperAdmin"],
+  // Every role that could open the section before, minus Admin. Pages inside
+  // still apply their own narrower permission on top of this.
+  "dataFinance.view": ["SuperAdmin", "Staff", "Coach", "Member"],
 };
 
 export function roleCan(role: Role, permission: Permission): boolean {
@@ -100,3 +113,24 @@ export function roleCan(role: Role, permission: Permission): boolean {
 /** The line shown in place of an action the current role cannot take. */
 export const PERMISSION_DENIED_MESSAGE =
   "You do not have permission to perform this action.";
+
+/**
+ * Portal paths in the Data & Finance section, guarded by `dataFinance.view`.
+ *
+ * Shared by the sidebar, the page guards and `middleware.ts`, so a direct URL
+ * is refused by the same rule that hides the link.
+ */
+export const DATA_FINANCE_PATHS = [
+  "/admin/membership-plans",
+  "/admin/invoices",
+  "/admin/payments",
+  "/admin/payment-methods",
+  "/admin/payroll",
+  "/admin/history",
+] as const;
+
+export function isDataFinancePath(pathname: string): boolean {
+  return DATA_FINANCE_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
+}

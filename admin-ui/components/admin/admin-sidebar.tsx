@@ -106,7 +106,8 @@ export function AdminSidebar({
    * permission that guards their own actions, so the nav and the buttons inside
    * it cannot disagree.
    */
-  const filteredDataNav = dataNav.filter((item) => {
+  // Data & Finance is withheld as a whole (Admin), so no empty heading is left.
+  const filteredDataNav = !can("dataFinance.view") ? [] : dataNav.filter((item) => {
     if (!isSuperadmin && (item.id === "payments" || item.id === "payment-methods")) {
       return false;
     }

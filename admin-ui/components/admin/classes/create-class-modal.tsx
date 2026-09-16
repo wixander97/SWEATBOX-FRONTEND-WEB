@@ -8,7 +8,10 @@ import { formatCountInput, parseCountInput } from "@/lib/number-input";
 import { RecurrenceFields } from "@/components/admin/classes/recurrence-fields";
 import { AssistantCoachSelector } from "@/components/admin/assistant-coach-selector";
 import { apiRequest } from "@/lib/api/client";
-import type { AssistantCoachAssignment } from "@/lib/class-schedules";
+import type {
+  AssistantCoachAssignment,
+  AssistantCoachSelection,
+} from "@/lib/class-schedules";
 import { RATE_TYPES, tiersFor, type CoachRateTier } from "@/lib/coach-rates";
 import { formatCurrency } from "@/lib/format";
 import {
@@ -32,10 +35,17 @@ export type ClassFormValues = {
   classType: string;
   difficultyLevel: string;
   isActive: boolean;
-  /** Assistants on the occurrence; the API accepts none, one or several. */
-  assistantCoaches: AssistantCoachAssignment[];
-  /** Primary coach's rate tier; null lets the branch default apply. */
-  coachRateTierId: string | null;
+  /**
+   * Assistants on the occurrence; the API accepts none, one or several.
+   * Creating a class sends only who they are — each seat is paid the branch
+   * default — while editing also carries each seat's tier override.
+   */
+  assistantCoaches: Array<AssistantCoachSelection | AssistantCoachAssignment>;
+  /**
+   * Primary coach's rate tier; null lets the branch default apply. Sent only
+   * when editing: scheduling a class never asks for a rate.
+   */
+  coachRateTierId?: string | null;
 };
 
 type Props = {
@@ -55,6 +65,12 @@ type Props = {
    * single occurrence never rewrites a whole series.
    */
   allowRecurrence?: boolean;
+  /**
+   * Offer the per-class rate tier overrides. Only the edit form sets this:
+   * creating a schedule never asks for a rate, and every seat on a new class
+   * is paid the default tier for its branch and date.
+   */
+  allowRateOverride?: boolean;
   onSubmit: (values: ClassFormValues, recurrence?: RecurrenceRule) => Promise<void>;
 };
 
@@ -131,6 +147,7 @@ export function CreateClassModal({
   initialValues,
   trainerOptions,
   allowRecurrence = false,
+  allowRateOverride = false,
   onManageWorkout,
   onSubmit,
 }: Props) {
@@ -143,9 +160,10 @@ export function CreateClassModal({
   const [assistants, setAssistants] = useState<AssistantCoachAssignment[]>([]);
   const [rateTiers, setRateTiers] = useState<CoachRateTier[]>([]);
   // Rate tiers are optional on a class: without them the backend falls back to
-  // the branch default, so a failed load only hides the choice.
+  // the branch default, so a failed load only hides the choice. Only the edit
+  // form offers them, so creating a class does not load them at all.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !allowRateOverride) return;
     let cancelled = false;
     apiRequest<CoachRateTier[]>("/api/coach-rate-tiers", { query: { isActive: true } })
       .then((data) => {
@@ -157,7 +175,7 @@ export function CreateClassModal({
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, allowRateOverride]);
   const coachTiers = useMemo(
     () => tiersFor(rateTiers, RATE_TYPES.coach, form.branchId),
     [rateTiers, form.branchId]
@@ -199,7 +217,13 @@ export function CreateClassModal({
         difficultyLevel: initialValues.difficultyLevel ?? "",
         coachRateTierId: initialValues.coachRateTierId ?? "",
       });
-      setAssistants(initialValues.assistantCoaches ?? []);
+      setAssistants(
+        (initialValues.assistantCoaches ?? []).map((assistant) => ({
+          coachId: assistant.coachId,
+          coachRateTierId:
+            "coachRateTierId" in assistant ? assistant.coachRateTierId : null,
+        }))
+      );
     } else {
       setForm(emptyClassForm());
       setAssistants([]);
@@ -236,15 +260,26 @@ export function CreateClassModal({
       }
       setSubmitting(true);
 
-      const payload: ClassFormValues = {
-        ...form,
+      const { coachRateTierId, ...fields } = form;
+      const base = {
+        ...fields,
         classDate: toIsoDate(form.classDate),
         startTime: normalizeTime(form.startTime),
         endTime: normalizeTime(form.endTime),
         isActive: true,
-        coachRateTierId: form.coachRateTierId || null,
-        assistantCoaches: assistants,
       };
+      // Creating sends no rate at all; editing keeps each seat's tier so an
+      // existing override is neither lost nor changed by an unrelated edit.
+      const payload: ClassFormValues = allowRateOverride
+        ? {
+            ...base,
+            coachRateTierId: coachRateTierId || null,
+            assistantCoaches: assistants,
+          }
+        : {
+            ...base,
+            assistantCoaches: assistants.map(({ coachId }) => ({ coachId })),
+          };
 
       try {
         await onSubmit(
@@ -259,7 +294,7 @@ export function CreateClassModal({
         setSubmitting(false);
       }
     },
-    [onClose, onSubmit, form, allowRecurrence, recurrence, assistants]
+    [onClose, onSubmit, form, allowRecurrence, allowRateOverride, recurrence, assistants]
   );
 
   if (!open) return null;
@@ -464,33 +499,35 @@ export function CreateClassModal({
                 />
               </div>
 
-              {/* Coach pay: the primary coach's tier, then any assistants */}
-              <div>
-                <label className="block text-muted text-sm mb-1">
-                  Coach Rate Tier
-                </label>
-                <select
-                  className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
-                  name="coachRateTierId"
-                  value={form.coachRateTierId}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, coachRateTierId: e.target.value }))
-                  }
-                >
-                  <option value="">Branch default</option>
-                  {coachTiers.map((tier) => (
-                    <option key={tier.id} value={tier.id}>
-                      {tier.name} · {formatCurrency(tier.rate)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Coach pay override: edit only. A new class uses the branch default. */}
+              {allowRateOverride && (
+                <div>
+                  <label className="block text-muted text-sm mb-1">
+                    Coach Rate Tier
+                  </label>
+                  <select
+                    className="w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat"
+                    name="coachRateTierId"
+                    value={form.coachRateTierId}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, coachRateTierId: e.target.value }))
+                    }
+                  >
+                    <option value="">Branch default</option>
+                    {coachTiers.map((tier) => (
+                      <option key={tier.id} value={tier.id}>
+                        {tier.name} · {formatCurrency(tier.rate)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <AssistantCoachSelector
                 value={assistants}
                 onChange={setAssistants}
                 coaches={trainerOptions}
-                tiers={rateTiers}
+                tiers={allowRateOverride ? rateTiers : undefined}
                 branchId={form.branchId}
                 primaryCoachId={form.coachId}
                 disabled={submitting}

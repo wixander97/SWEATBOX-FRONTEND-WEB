@@ -51,3 +51,7 @@ export const pageTitleByPath: Record<string, string> = {
   [adminPaths.promoBanners]: "Promo Banners",
   [adminPaths.help]: "Help & Support",
 };
+
+/** Shown when a role without Data & Finance access opens one of its pages. */
+export const DATA_FINANCE_DENIED =
+  "Data & Finance is only available to Super Admin.";

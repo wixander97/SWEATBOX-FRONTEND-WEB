@@ -52,9 +52,13 @@ export type ClassSchedule = {
   workoutPublished?: boolean;
 };
 
-/** One assistant seat, as the create/update request carries it. */
-export type AssistantCoachAssignment = {
+/** One assistant picked when creating a class: the person only, no rate. */
+export type AssistantCoachSelection = {
   coachId: string;
+};
+
+/** One assistant seat on an update, with its optional tier override. */
+export type AssistantCoachAssignment = AssistantCoachSelection & {
   coachRateTierId: string | null;
 };
 
@@ -71,8 +75,10 @@ export type ClassScheduleRequest = {
   classType: string;
   difficultyLevel: string;
   isActive: boolean;
-  assistantCoaches: AssistantCoachAssignment[];
-  coachRateTierId: string | null;
+  /** Create sends selections only; update carries each seat's tier. */
+  assistantCoaches: Array<AssistantCoachSelection | AssistantCoachAssignment>;
+  /** Update only; creating a class never names a rate. */
+  coachRateTierId?: string | null;
   /** Update only; the API rejects a booked count above capacity. */
   bookedCount?: number;
   isCancelled?: boolean;

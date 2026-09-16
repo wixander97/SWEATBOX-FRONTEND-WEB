@@ -250,9 +250,10 @@ function CompactStatCard({
 }
 
 export function DashboardView() {
-  // Revenue is the same figure the API guards behind SuperAdmin/Admin on
+  // Revenue is the same figure the API guards behind SuperAdmin on
   // `GET /payments/summary`, so finance tiles follow that rule rather than a
-  // client-side notion of "owner".
+  // client-side notion of "owner". For other roles those calls answer 403 and
+  // are simply left empty.
   const { can } = useRole();
   const canSeeFinance = can("finance.read");
   const [stats, setStats] = useState<DashboardStats | null>(null);

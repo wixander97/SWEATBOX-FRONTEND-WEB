@@ -29,7 +29,7 @@ function formatRupiah(amount: number): string {
 
 export function PayrollView() {
   // Payroll figures are finance data; the API guards the equivalent summary
-  // behind SuperAdmin/Admin, so the page follows the same rule.
+  // behind SuperAdmin, so the page follows the same rule.
   const { can } = useRole();
   const canSeeFinance = can("finance.read");
   const [rows, setRows] = useState<PayrollRow[]>([]);
