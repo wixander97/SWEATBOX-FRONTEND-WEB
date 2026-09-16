@@ -277,7 +277,7 @@ export function QuickRegisterModal({
     >
       <form id="quick-register-form" onSubmit={handleSubmit} className="space-y-6">
         <section className="space-y-4">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
             Member Details
           </h4>
 
@@ -420,7 +420,7 @@ export function QuickRegisterModal({
         </section>
 
         <section className="space-y-4">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
             Emergency Contact
           </h4>
 
@@ -503,7 +503,7 @@ export function QuickRegisterModal({
         </section>
 
         <section className="space-y-4">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
             Agreements &amp; Signature
           </h4>
 
@@ -544,7 +544,7 @@ export function QuickRegisterModal({
       </form>
 
       <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-6">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted">
           {ready
             ? "Agreements accepted and signature captured."
             : "Waiver, house rules and signature are all required."}

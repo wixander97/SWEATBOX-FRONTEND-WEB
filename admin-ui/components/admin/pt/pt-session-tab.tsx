@@ -577,7 +577,7 @@ export function PtSessionTab() {
                           type="button"
                           title="Cancel Session"
                           onClick={() => setCancelTarget(s)}
-                          className="text-red-500 hover:text-danger mx-1"
+                          className="text-danger hover:text-danger mx-1"
                         >
                           <i className="fas fa-ban" aria-hidden />
                         </button>

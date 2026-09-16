@@ -62,7 +62,7 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-start sm:items-center justify-center backdrop-blur-sm overflow-y-auto p-3 sm:p-6"
+      className="fixed inset-0 bg-overlay z-50 flex items-start sm:items-center justify-center backdrop-blur-sm overflow-y-auto p-3 sm:p-6"
       role="presentation"
       onClick={(ev) => {
         if (ev.target === ev.currentTarget && !busy) onClose();
@@ -77,20 +77,20 @@ export function Modal({
         <div className="flex justify-between items-start gap-4 p-4 sm:p-6 border-b border-border">
           <div className="min-w-0">
             <h3
-              className="text-lg sm:text-xl font-bold font-display uppercase text-white"
+              className="text-lg sm:text-xl font-bold font-display uppercase text-fg"
               id={titleId}
             >
               {title}
             </h3>
             {subtitle ? (
-              <div className="text-xs text-gray-500 mt-1">{subtitle}</div>
+              <div className="text-xs text-muted mt-1">{subtitle}</div>
             ) : null}
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="text-gray-400 hover:text-white text-2xl leading-none disabled:opacity-40 shrink-0"
+            className="text-muted hover:text-fg text-2xl leading-none disabled:opacity-40 shrink-0"
             aria-label="Close"
           >
             ×
@@ -174,7 +174,7 @@ export function SecondaryButton({
       form={form}
       onClick={onClick}
       disabled={disabled}
-      className={`bg-white/5 hover:bg-white/10 text-white px-5 py-3 rounded-lg text-sm border border-border transition disabled:opacity-50 ${className}`}
+      className={`bg-fg/5 hover:bg-fg/10 text-fg px-5 py-3 rounded-lg text-sm border border-border transition disabled:opacity-50 ${className}`}
     >
       {children}
     </button>
@@ -206,7 +206,7 @@ export function ConfirmDialog({
 }) {
   return (
     <Modal open={open} onClose={onCancel} title={title} busy={busy}>
-      <div className="text-sm text-gray-300 leading-relaxed">{message}</div>
+      <div className="text-sm text-fg-soft leading-relaxed">{message}</div>
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
         <SecondaryButton onClick={onCancel} disabled={busy}>
           Cancel

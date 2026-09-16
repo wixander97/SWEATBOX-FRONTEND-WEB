@@ -22,15 +22,15 @@ export type PaymentStatusMeta = {
 export const PAYMENT_STATUS_META: Record<PaymentStatus, PaymentStatusMeta> = {
   [PaymentStatus.Pending]: {
     label: "Pending",
-    class: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    class: "bg-yellow-500/10 text-warning border-yellow-500/20",
   },
   [PaymentStatus.Paid]: {
     label: "Paid",
-    class: "bg-green-500/10 text-green-500 border-green-500/20",
+    class: "bg-green-500/10 text-success border-green-500/20",
   },
   [PaymentStatus.Failed]: {
     label: "Failed",
-    class: "bg-red-500/10 text-red-500 border-red-500/20",
+    class: "bg-red-500/10 text-danger border-red-500/20",
   },
   [PaymentStatus.Expired]: {
     label: "Expired",
@@ -38,17 +38,17 @@ export const PAYMENT_STATUS_META: Record<PaymentStatus, PaymentStatusMeta> = {
   },
   [PaymentStatus.Refunded]: {
     label: "Refunded",
-    class: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    class: "bg-blue-500/10 text-info border-blue-500/20",
   },
   [PaymentStatus.Cancelled]: {
     label: "Cancelled",
-    class: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+    class: "bg-gray-500/10 text-muted border-gray-500/20",
   },
 };
 
 const UNKNOWN_META: PaymentStatusMeta = {
   label: "Unknown",
-  class: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+  class: "bg-gray-500/10 text-muted border-gray-500/20",
 };
 
 /** Resolve label + badge class for a numeric payment status. Unknown → "Unknown". */

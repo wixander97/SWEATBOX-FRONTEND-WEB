@@ -322,7 +322,7 @@ export function PosReceiptModal({ paymentIds, orderRef, defaultEmail, onClose }:
 
         <div className="receipt-print-hide bg-card border-x border-border px-5 py-3 space-y-3">
           {error && (
-            <p className="text-xs text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+            <p className="text-xs text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
               {error}
             </p>
           )}
@@ -373,8 +373,8 @@ export function PosReceiptModal({ paymentIds, orderRef, defaultEmail, onClose }:
                 This member has no email on file — enter one manually to send.
               </p>
             )}
-            {sent && <p className="text-xs text-green-500 mt-1">{sent}</p>}
-            {emailError && <p className="text-xs text-red-500 mt-1">{emailError}</p>}
+            {sent && <p className="text-xs text-success mt-1">{sent}</p>}
+            {emailError && <p className="text-xs text-danger mt-1">{emailError}</p>}
           </div>
         </div>
 

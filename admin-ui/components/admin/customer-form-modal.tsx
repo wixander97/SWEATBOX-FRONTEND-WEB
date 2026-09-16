@@ -20,8 +20,8 @@ type Props = {
 };
 
 const FIELD_CLASS =
-  "w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat";
-const LABEL_CLASS = "block text-gray-400 text-sm mb-1";
+  "w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat";
+const LABEL_CLASS = "block text-muted text-sm mb-1";
 
 /**
  * Editing an existing customer.
@@ -89,7 +89,7 @@ export function CustomerFormModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center backdrop-blur-sm"
       role="presentation"
       onClick={(ev) => {
         if (ev.target === ev.currentTarget) onClose();
@@ -110,7 +110,7 @@ export function CustomerFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl"
+            className="text-muted hover:text-fg text-xl"
             aria-label="Close"
           >
             ×
@@ -208,7 +208,7 @@ export function CustomerFormModal({
                   disabled={!creating}
                 />
                 {!creating ? (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted mt-1">
                     Email cannot be changed here.
                   </p>
                 ) : null}
@@ -233,7 +233,7 @@ export function CustomerFormModal({
             ) : null}
 
             <fieldset className="border border-border rounded-lg p-4 space-y-4">
-              <legend className="px-2 text-sm font-bold text-white uppercase font-display">
+              <legend className="px-2 text-sm font-bold text-fg uppercase font-display">
                 Emergency Contact
               </legend>
               <div>
@@ -331,7 +331,7 @@ export function CustomerFormModal({
             </div>
 
             {error ? (
-              <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+              <p className="text-sm text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
                 {error}
               </p>
             ) : null}

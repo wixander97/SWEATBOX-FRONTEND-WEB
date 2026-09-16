@@ -319,7 +319,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
               <button
                 type="button"
                 onClick={() => setDeleteId(p.id)}
-                className="text-red-500 hover:text-danger mx-1"
+                className="text-danger hover:text-danger mx-1"
                 aria-label="Delete"
                 title="Delete"
               >
@@ -342,7 +342,7 @@ export function PaymentsView({ initialStatus }: { initialStatus?: StatusTab }) {
       ? paymentStatusMeta(PaymentStatus.Paid)
       : {
           label: `${paidCount}/${group.length} Paid`,
-          class: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+          class: "bg-yellow-500/10 text-warning border-yellow-500/20",
         };
     const items = group
       .map((p) => p.membershipPlanName)

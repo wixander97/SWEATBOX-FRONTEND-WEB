@@ -155,8 +155,8 @@ export function CoachRatesView() {
   function renderTable(list: CoachRateTier[], rateType: RateType) {
     return (
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[860px] text-left text-sm text-gray-400">
-          <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+        <table className="w-full min-w-[860px] text-left text-sm text-muted">
+          <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
             <tr>
               <th className="px-6 py-4">Name</th>
               <th className="px-6 py-4">Rate</th>
@@ -191,7 +191,7 @@ export function CoachRatesView() {
               list.map((tier) => (
                 <tr key={tier.id} className="table-row transition">
                   <td className="px-6 py-4">
-                    <span className="text-white font-medium">{tier.name}</span>
+                    <span className="text-fg font-medium">{tier.name}</span>
                     {tier.isDefault ? (
                       <span className="ml-2">
                         <Badge tone="accent" icon="fa-star">
@@ -200,11 +200,11 @@ export function CoachRatesView() {
                       </span>
                     ) : null}
                   </td>
-                  <td className="px-6 py-4 text-white font-bold whitespace-nowrap">
+                  <td className="px-6 py-4 text-fg font-bold whitespace-nowrap">
                     {formatCurrency(tier.rate)}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="bg-gray-800 px-2 py-1 rounded text-xs text-gray-300">
+                    <span className="bg-fg/10 px-2 py-1 rounded text-xs text-fg-soft">
                       {tier.branchName || "All branches"}
                     </span>
                   </td>
@@ -243,7 +243,7 @@ export function CoachRatesView() {
                               setFormRateType(tier.rateType as RateType);
                               setFormOpen(true);
                             }}
-                            className="text-gray-400 hover:text-white px-2 py-1"
+                            className="text-muted hover:text-fg px-2 py-1"
                             aria-label={`Edit ${tier.name}`}
                             title="Edit"
                           >
@@ -253,7 +253,7 @@ export function CoachRatesView() {
                             type="button"
                             onClick={() => void toggleActive(tier)}
                             disabled={busyId === tier.id}
-                            className="text-gray-400 hover:text-white px-2 py-1 disabled:opacity-40"
+                            className="text-muted hover:text-fg px-2 py-1 disabled:opacity-40"
                             aria-label={`${tier.isActive ? "Deactivate" : "Activate"} ${tier.name}`}
                             title={tier.isActive ? "Deactivate" : "Activate"}
                           >
@@ -270,7 +270,7 @@ export function CoachRatesView() {
                           </button>
                         </>
                       ) : (
-                        <span className="text-xs text-gray-600">View only</span>
+                        <span className="text-xs text-muted">View only</span>
                       )}
                     </div>
                   </td>
@@ -288,10 +288,10 @@ export function CoachRatesView() {
       <PanelCard>
         <div className="p-4 sm:p-6 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
           <div>
-            <h3 className="text-lg font-bold font-display uppercase text-white">
+            <h3 className="text-lg font-bold font-display uppercase text-fg">
               Coach Rates
             </h3>
-            <p className="text-xs text-gray-500 mt-1 max-w-xl">
+            <p className="text-xs text-muted mt-1 max-w-xl">
               What each seat on a class is paid. A class schedule points at a
               tier rather than carrying a number, so a rate change does not mean
               editing every class.
@@ -311,7 +311,7 @@ export function CoachRatesView() {
                 </option>
               ))}
             </select>
-            <label className="flex items-center gap-2 text-xs text-gray-400 whitespace-nowrap px-1">
+            <label className="flex items-center gap-2 text-xs text-muted whitespace-nowrap px-1">
               <input
                 type="checkbox"
                 checked={showInactive}
@@ -325,7 +325,7 @@ export function CoachRatesView() {
       </PanelCard>
 
       {!canWrite ? (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted">
           <i className="fas fa-lock mr-1.5" aria-hidden />
           Rate tiers are pay configuration and can only be changed by a Super
           Admin. You can see them here.
@@ -335,14 +335,14 @@ export function CoachRatesView() {
       <PanelCard>
         <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-lg bg-sweat/10 text-sweat flex items-center justify-center">
+            <span className="w-9 h-9 rounded-lg bg-sweat/10 text-accent-ink flex items-center justify-center">
               <i className="fas fa-user-tie" aria-hidden />
             </span>
             <div>
-              <h4 className="text-base font-bold text-white uppercase font-display">
+              <h4 className="text-base font-bold text-fg uppercase font-display">
                 Coach Rate
               </h4>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 Paid to the primary coach leading the class.
               </p>
             </div>
@@ -364,14 +364,14 @@ export function CoachRatesView() {
       <PanelCard>
         <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+            <span className="w-9 h-9 rounded-lg bg-blue-500/10 text-info flex items-center justify-center">
               <i className="fas fa-user-group" aria-hidden />
             </span>
             <div>
-              <h4 className="text-base font-bold text-white uppercase font-display">
+              <h4 className="text-base font-bold text-fg uppercase font-display">
                 Assistant Coach Rate
               </h4>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 Paid to each assistant coach assigned to the class.
               </p>
             </div>
@@ -380,7 +380,7 @@ export function CoachRatesView() {
             <button
               type="button"
               onClick={() => openCreate(RATE_TYPES.assistant)}
-              className="bg-white/5 hover:bg-white/10 text-white border border-border px-4 py-2 rounded-lg text-sm font-bold transition flex items-center justify-center gap-2"
+              className="bg-fg/5 hover:bg-fg/10 text-fg border border-border px-4 py-2 rounded-lg text-sm font-bold transition flex items-center justify-center gap-2"
             >
               <i className="fas fa-plus" aria-hidden />
               New Assistant Rate

@@ -104,7 +104,7 @@ export function PosPtOptionsModal({
         )}
 
         {!branchId && (
-          <p className="text-xs text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded mb-3">
+          <p className="text-xs text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded mb-3">
             No branch selected in the POS — the backend rejects PT package purchases without a branch.
           </p>
         )}

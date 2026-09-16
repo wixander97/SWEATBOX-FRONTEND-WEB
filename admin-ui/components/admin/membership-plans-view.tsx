@@ -265,10 +265,10 @@ export function MembershipPlansView() {
         <div className="p-4 sm:p-6 border-b border-border flex flex-col gap-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h3 className="text-lg font-bold font-display uppercase text-white">
+              <h3 className="text-lg font-bold font-display uppercase text-fg">
                 Membership Plans
               </h3>
-              <p className="text-xs text-gray-500 mt-1 max-w-2xl">
+              <p className="text-xs text-muted mt-1 max-w-2xl">
                 Price, validity, access rules and the sales window. Everything
                 configured here is enforced by the backend when a member books
                 or buys.
@@ -303,7 +303,7 @@ export function MembershipPlansView() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="relative">
               <i
-                className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
+                className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm"
                 aria-hidden
               />
               <input
@@ -345,8 +345,8 @@ export function MembershipPlansView() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1180px] text-left text-sm text-gray-400">
-            <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+          <table className="w-full min-w-[1180px] text-left text-sm text-muted">
+            <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
               <tr>
                 <th className="px-6 py-4">Plan</th>
                 <th className="px-6 py-4">Branch</th>
@@ -381,10 +381,10 @@ export function MembershipPlansView() {
                   return (
                     <tr key={plan.id} className="table-row transition">
                       <td className="px-6 py-4">
-                        <span className="text-white font-medium block">
+                        <span className="text-fg font-medium block">
                           {plan.planName}
                         </span>
-                        <span className="text-xs text-gray-500 line-clamp-1">
+                        <span className="text-xs text-muted line-clamp-1">
                           {plan.description || "No description"}
                         </span>
                         <span className="flex flex-wrap gap-1.5 mt-1.5">
@@ -403,7 +403,7 @@ export function MembershipPlansView() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="bg-gray-800 px-2 py-1 rounded text-xs text-gray-300 whitespace-nowrap">
+                        <span className="bg-fg/10 px-2 py-1 rounded text-xs text-fg-soft whitespace-nowrap">
                           {plan.branchName || "-"}
                         </span>
                       </td>
@@ -411,46 +411,46 @@ export function MembershipPlansView() {
                         {membershipTypeLabel(plan.membershipType)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-white font-bold block">
+                        <span className="text-fg font-bold block">
                           {formatCurrency(plan.price)}
                         </span>
                         {plan.memberPrice !== plan.price ? (
-                          <span className="text-xs text-sweat">
+                          <span className="text-xs text-accent-ink">
                             Member {formatCurrency(plan.memberPrice)}
                           </span>
                         ) : null}
                         {plan.registrationFee > 0 ? (
-                          <span className="block text-xs text-gray-500">
+                          <span className="block text-xs text-muted">
                             + {formatCurrency(plan.registrationFee)} joining
                           </span>
                         ) : null}
                       </td>
                       <td className="px-6 py-4 text-xs whitespace-nowrap">
-                        <span className="block text-white">
+                        <span className="block text-fg">
                           {plan.isUnlimitedClasses
                             ? "Unlimited classes"
                             : `${plan.credits} credit${plan.credits === 1 ? "" : "s"}`}
                         </span>
-                        <span className="text-gray-500">
+                        <span className="text-muted">
                           {plan.validityDays} day
                           {plan.validityDays === 1 ? "" : "s"}
                           {plan.expiresAtEndOfDay ? " • ends at midnight" : ""}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-xs">
-                        <span className="block text-white">
+                        <span className="block text-fg">
                           {formatAccessDays(plan.accessDaysOfWeek)}
                         </span>
-                        <span className="text-gray-500 block">
+                        <span className="text-muted block">
                           {formatAccessWindow(plan)}
                         </span>
                         {plan.lastSessionStartTime ? (
-                          <span className="text-gray-500 block">
+                          <span className="text-muted block">
                             Last start{" "}
                             {formatTime(plan.lastSessionStartTime)}
                           </span>
                         ) : null}
-                        <span className="text-gray-500 block mt-0.5">
+                        <span className="text-muted block mt-0.5">
                           {plan.allowsClassAccess ? "Classes" : "No classes"} •{" "}
                           {plan.allowsOpenGymAccess
                             ? "Open gym"
@@ -460,12 +460,12 @@ export function MembershipPlansView() {
                       <td className="px-6 py-4 text-xs whitespace-nowrap">
                         {plan.salesStartDate || plan.salesEndDate ? (
                           <>
-                            <span className="block text-white">
+                            <span className="block text-fg">
                               {plan.salesStartDate
                                 ? formatDate(plan.salesStartDate)
                                 : "Open"}
                             </span>
-                            <span className="text-gray-500">
+                            <span className="text-muted">
                               →{" "}
                               {plan.salesEndDate
                                 ? formatDate(plan.salesEndDate)
@@ -473,7 +473,7 @@ export function MembershipPlansView() {
                             </span>
                           </>
                         ) : (
-                          <span className="text-gray-500">No limit</span>
+                          <span className="text-muted">No limit</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
@@ -486,7 +486,7 @@ export function MembershipPlansView() {
                                   setEditing(plan);
                                   setFormOpen(true);
                                 }}
-                                className="text-gray-400 hover:text-white px-2 py-1"
+                                className="text-muted hover:text-fg px-2 py-1"
                                 aria-label={`Edit ${plan.planName}`}
                                 title="Edit"
                               >
@@ -498,7 +498,7 @@ export function MembershipPlansView() {
                                   void toggleFlag(plan, "isAvailableForSale")
                                 }
                                 disabled={busy}
-                                className="text-gray-400 hover:text-white px-2 py-1 disabled:opacity-40"
+                                className="text-muted hover:text-fg px-2 py-1 disabled:opacity-40"
                                 aria-label={`${plan.isAvailableForSale ? "Stop selling" : "Start selling"} ${plan.planName}`}
                                 title={
                                   plan.isAvailableForSale
@@ -521,7 +521,7 @@ export function MembershipPlansView() {
                                 type="button"
                                 onClick={() => void toggleFlag(plan, "isActive")}
                                 disabled={busy}
-                                className="text-gray-400 hover:text-white px-2 py-1 disabled:opacity-40"
+                                className="text-muted hover:text-fg px-2 py-1 disabled:opacity-40"
                                 aria-label={`${plan.isActive ? "Deactivate" : "Activate"} ${plan.planName}`}
                                 title={
                                   plan.isActive ? "Deactivate" : "Activate"
@@ -538,7 +538,7 @@ export function MembershipPlansView() {
                               </button>
                             </>
                           ) : (
-                            <span className="text-xs text-gray-600">
+                            <span className="text-xs text-muted">
                               View only
                             </span>
                           )}
@@ -547,7 +547,7 @@ export function MembershipPlansView() {
                               type="button"
                               onClick={() => setDeleting(plan)}
                               disabled={busy}
-                              className="text-red-500 hover:text-red-400 px-2 py-1 disabled:opacity-40"
+                              className="text-danger hover:text-danger px-2 py-1 disabled:opacity-40"
                               aria-label={`Delete ${plan.planName}`}
                               title="Delete"
                             >
@@ -566,7 +566,7 @@ export function MembershipPlansView() {
       </PanelCard>
 
       {!canWrite ? (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted">
           <i className="fas fa-lock mr-1.5" aria-hidden />
           Plans set price and access, so creating or changing one is reserved for
           a Super Admin. You can review them here.
@@ -592,7 +592,7 @@ export function MembershipPlansView() {
         busy={busyId === deleting?.id}
         message={
           <>
-            <strong className="text-white">{deleting?.planName}</strong> will be
+            <strong className="text-fg">{deleting?.planName}</strong> will be
             removed from the catalogue. If members currently hold it, deactivate
             it instead — that keeps their membership intact while taking it off
             sale.

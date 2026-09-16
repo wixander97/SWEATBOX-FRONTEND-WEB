@@ -409,13 +409,13 @@ export function DashboardView() {
       {/* ── Expiry Alert ─────────────────────────────────────────────────── */}
       {!loading && (expiringCount ?? 0) > 0 && (
         <div data-help-target="dashboard-expiry-alert" className="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-xl mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-lg">
-          <div className="flex items-start sm:items-center gap-4 text-yellow-500">
+          <div className="flex items-start sm:items-center gap-4 text-warning">
             <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center shrink-0">
               <i className="fas fa-exclamation-triangle text-xl" aria-hidden />
             </div>
             <div>
               <p className="font-bold text-sm uppercase tracking-wide">Upcoming Expiry Alert</p>
-              <p className="text-xs text-yellow-500/80 mt-1">
+              <p className="text-xs text-warning/80 mt-1">
                 <strong>{expiringCount} members</strong> have memberships expiring in the next 5 days.
               </p>
             </div>
@@ -651,7 +651,7 @@ export function DashboardView() {
                       const statusLabel = p.paymentStatus === 1 ? "Paid" : p.paymentStatus === 0 ? "Pending" : "Failed";
                       const badgeCls =
                         p.paymentStatus === 1
-                          ? "bg-green-500/10 text-green-500"
+                          ? "bg-green-500/10 text-success"
                           : p.paymentStatus === 0
                             ? "bg-yellow-500/10 text-warning"
                             : "bg-red-500/10 text-danger";

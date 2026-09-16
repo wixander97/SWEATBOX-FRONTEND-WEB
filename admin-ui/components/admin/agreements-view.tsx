@@ -235,21 +235,21 @@ export function AgreementsView() {
             <PanelCard key={type.value}>
               <div className="p-4 sm:p-5 flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="text-xs uppercase tracking-wider text-gray-500 font-bold">
+                  <p className="text-xs uppercase tracking-wider text-muted font-bold">
                     Current {type.label}
                   </p>
                   {active ? (
                     <>
-                      <p className="text-white font-bold mt-1 truncate">
+                      <p className="text-fg font-bold mt-1 truncate">
                         {active.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-xs text-muted mt-0.5">
                         Version {active.version} • effective{" "}
                         {formatDate(active.effectiveFrom)}
                       </p>
                     </>
                   ) : (
-                    <p className="text-sm text-yellow-500 mt-1">
+                    <p className="text-sm text-warning mt-1">
                       No active version — registration cannot present this
                       document.
                     </p>
@@ -259,7 +259,7 @@ export function AgreementsView() {
                   <button
                     type="button"
                     onClick={() => openCreate(type.value)}
-                    className="shrink-0 bg-white/5 hover:bg-white/10 text-white border border-border px-3 py-2 rounded-lg text-xs font-bold transition"
+                    className="shrink-0 bg-fg/5 hover:bg-fg/10 text-fg border border-border px-3 py-2 rounded-lg text-xs font-bold transition"
                   >
                     <i className="fas fa-plus mr-1.5" aria-hidden />
                     New version
@@ -274,10 +274,10 @@ export function AgreementsView() {
       <PanelCard>
         <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h3 className="text-lg font-bold font-display uppercase text-white">
+            <h3 className="text-lg font-bold font-display uppercase text-fg">
               Agreement Documents
             </h3>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted mt-1">
               Every version, kept so a member&apos;s acceptance can be traced to
               the text they read.
             </p>
@@ -298,8 +298,8 @@ export function AgreementsView() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[840px] text-left text-sm text-gray-400">
-            <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+          <table className="w-full min-w-[840px] text-left text-sm text-muted">
+            <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
               <tr>
                 <th className="px-6 py-4">Document Type</th>
                 <th className="px-6 py-4">Version</th>
@@ -342,10 +342,10 @@ export function AgreementsView() {
                         {documentTypeLabel(document.documentType)}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-white font-bold whitespace-nowrap">
+                    <td className="px-6 py-4 text-fg font-bold whitespace-nowrap">
                       {document.version}
                     </td>
-                    <td className="px-6 py-4 text-white">{document.title}</td>
+                    <td className="px-6 py-4 text-fg">{document.title}</td>
                     <td className="px-6 py-4">
                       <Badge
                         tone={document.isActive ? "success" : "neutral"}
@@ -364,7 +364,7 @@ export function AgreementsView() {
                         <button
                           type="button"
                           onClick={() => setViewing(document)}
-                          className="text-gray-400 hover:text-white px-2 py-1"
+                          className="text-muted hover:text-fg px-2 py-1"
                           aria-label={`View ${document.title}`}
                           title="View content"
                         >
@@ -375,7 +375,7 @@ export function AgreementsView() {
                             <button
                               type="button"
                               onClick={() => openEdit(document)}
-                              className="text-gray-400 hover:text-white px-2 py-1"
+                              className="text-muted hover:text-fg px-2 py-1"
                               aria-label={`Edit ${document.title}`}
                               title="Edit"
                             >
@@ -385,7 +385,7 @@ export function AgreementsView() {
                               type="button"
                               onClick={() => void toggleActive(document)}
                               disabled={busyId === document.id}
-                              className="text-gray-400 hover:text-white px-2 py-1 disabled:opacity-40"
+                              className="text-muted hover:text-fg px-2 py-1 disabled:opacity-40"
                               aria-label={`${document.isActive ? "Deactivate" : "Activate"} ${document.title}`}
                               title={
                                 document.isActive ? "Deactivate" : "Activate"
@@ -404,7 +404,7 @@ export function AgreementsView() {
                             </button>
                           </>
                         ) : (
-                          <span className="text-xs text-gray-600">
+                          <span className="text-xs text-muted">
                             View only
                           </span>
                         )}
@@ -419,7 +419,7 @@ export function AgreementsView() {
       </PanelCard>
 
       {!canWrite ? (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted">
           <i className="fas fa-lock mr-1.5" aria-hidden />
           Agreement text is legal wording, so editing it is reserved for a Super
           Admin.
@@ -551,7 +551,7 @@ export function AgreementsView() {
             : undefined
         }
       >
-        <pre className="bg-sidebar border border-border rounded-lg p-4 text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
+        <pre className="bg-sidebar border border-border rounded-lg p-4 text-sm text-fg-soft whitespace-pre-wrap leading-relaxed">
           {viewing?.content}
         </pre>
       </Modal>

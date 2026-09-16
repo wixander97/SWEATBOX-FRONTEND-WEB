@@ -250,7 +250,7 @@ export function PosBookClassModal({
 
         {done ? (
           <>
-            <p className="text-sm text-green-500 bg-green-500/10 border border-green-500/30 px-3 py-2.5 rounded">
+            <p className="text-sm text-success bg-green-500/10 border border-green-500/30 px-3 py-2.5 rounded">
               ✓ Class booked successfully. The booking appears in the member app immediately.
               {dropInPaid ? " The drop-in has been paid and recorded in Payments." : ""}
             </p>
@@ -265,19 +265,19 @@ export function PosBookClassModal({
         ) : (
           <>
             {duplicate && (
-              <p className="text-xs text-yellow-500 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded mb-3">
+              <p className="text-xs text-warning bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded mb-3">
                 This member already has a booking for that class.
               </p>
             )}
 
             {error && (
-              <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded mb-3">
+              <p className="text-sm text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded mb-3">
                 {error}
               </p>
             )}
 
             {dropInPaid && !done && (
-              <p className="text-xs text-yellow-600 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded mb-3">
+              <p className="text-xs text-warning bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded mb-3">
                 The drop-in has been paid. If the booking is still rejected, do not charge
                 again — check the pass in the Drop In menu, then retry the booking.
               </p>
@@ -302,7 +302,7 @@ export function PosBookClassModal({
                 </p>
 
                 {offer.warning && (
-                  <p className="text-[11px] text-yellow-600 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded mb-2">
+                  <p className="text-[11px] text-warning bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded mb-2">
                     {offer.warning}
                   </p>
                 )}

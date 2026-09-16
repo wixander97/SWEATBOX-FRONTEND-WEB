@@ -108,7 +108,7 @@ export function CreateMemberModal({
               <h4 className="text-xs uppercase font-bold text-accent-ink mb-3">Basic Information</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Full Name <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Full Name <span className="text-danger">*</span></span>
                   <input
                     value={form.fullName}
                     onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
@@ -117,7 +117,7 @@ export function CreateMemberModal({
                   />
                 </label>
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Phone Number <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Phone Number <span className="text-danger">*</span></span>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -161,7 +161,7 @@ export function CreateMemberModal({
               <h4 className="text-xs uppercase font-bold text-accent-ink mb-3">Personal Details</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Gender <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Gender <span className="text-danger">*</span></span>
                   <select
                     value={form.gender}
                     onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
@@ -175,7 +175,7 @@ export function CreateMemberModal({
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Date of Birth <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Date of Birth <span className="text-danger">*</span></span>
                   <input
                     type="date"
                     value={form.dateOfBirth}
@@ -186,7 +186,7 @@ export function CreateMemberModal({
                   />
                 </label>
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Height (cm) <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Height (cm) <span className="text-danger">*</span></span>
                   <input
                     type="number"
                     min={0}
@@ -197,7 +197,7 @@ export function CreateMemberModal({
                   />
                 </label>
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Weight (kg) <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Weight (kg) <span className="text-danger">*</span></span>
                   <input
                     type="number"
                     min={0}
@@ -225,7 +225,7 @@ export function CreateMemberModal({
               <h4 className="text-xs uppercase font-bold text-accent-ink mb-3">Address</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Address <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Address <span className="text-danger">*</span></span>
                   <textarea
                     value={form.address}
                     onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
@@ -235,7 +235,7 @@ export function CreateMemberModal({
                   />
                 </label>
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">City <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">City <span className="text-danger">*</span></span>
                   <input
                     value={form.city}
                     onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
@@ -251,7 +251,7 @@ export function CreateMemberModal({
               <h4 className="text-xs uppercase font-bold text-accent-ink mb-3">Emergency Contact</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Emergency Contact Name <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Emergency Contact Name <span className="text-danger">*</span></span>
                   <input
                     value={form.emergencyContactName}
                     onChange={(e) => setForm((f) => ({ ...f, emergencyContactName: e.target.value }))}
@@ -260,7 +260,7 @@ export function CreateMemberModal({
                   />
                 </label>
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Emergency Contact Phone <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Emergency Contact Phone <span className="text-danger">*</span></span>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -291,7 +291,7 @@ export function CreateMemberModal({
               <h4 className="text-xs uppercase font-bold text-accent-ink mb-3">Membership Details</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">How did you hear about us? <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">How did you hear about us? <span className="text-danger">*</span></span>
                   <select
                     value={form.membershipSource}
                     onChange={(e) => setForm((f) => ({ ...f, membershipSource: e.target.value }))}
@@ -314,7 +314,7 @@ export function CreateMemberModal({
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Home Club <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Home Club <span className="text-danger">*</span></span>
                   <select
                     value={form.homeClubBranchId}
                     onChange={(e) => setForm((f) => ({ ...f, homeClubBranchId: e.target.value }))}
@@ -339,7 +339,7 @@ export function CreateMemberModal({
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Membership Plan <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Membership Plan <span className="text-danger">*</span></span>
                   <select
                     value={form.membershipPlanId}
                     onChange={(e) => handleMembershipPlanChange(e.target.value)}
@@ -368,7 +368,7 @@ export function CreateMemberModal({
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-muted text-xs uppercase font-bold">Remaining Credits <span className="text-red-500">*</span></span>
+                  <span className="text-muted text-xs uppercase font-bold">Remaining Credits <span className="text-danger">*</span></span>
                   {form.isUnlimitedClasses ? (
                     // Unlimited plans have no credit quota — never show "0" here.
                     <input

@@ -271,7 +271,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
                 <div className="flex items-center gap-3">
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
                   <div>
-                    <p className="text-blue-500 font-semibold text-sm">Waiting for payment...</p>
+                    <p className="text-info font-semibold text-sm">Waiting for payment...</p>
                     <p className="text-muted text-xs mt-1">Please complete payment in the AsteriPay tab</p>
                   </div>
                 </div>
@@ -281,9 +281,9 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
             {pollingStatus === 'success' && (
               <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="text-green-500 text-2xl">✓</div>
+                  <div className="text-success text-2xl">✓</div>
                   <div>
-                    <p className="text-green-500 font-semibold text-sm">Payment successful!</p>
+                    <p className="text-success font-semibold text-sm">Payment successful!</p>
                     <p className="text-muted text-xs mt-1">This window will close automatically...</p>
                   </div>
                 </div>
@@ -293,9 +293,9 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
             {pollingStatus === 'failed' && (
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="text-red-500 text-2xl">✗</div>
+                  <div className="text-danger text-2xl">✗</div>
                   <div>
-                    <p className="text-red-500 font-semibold text-sm">Payment failed</p>
+                    <p className="text-danger font-semibold text-sm">Payment failed</p>
                     <p className="text-muted text-xs mt-1">This window will close automatically...</p>
                   </div>
                 </div>
@@ -305,9 +305,9 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
             {pollingStatus === 'timeout' && (
               <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="text-yellow-500 text-2xl">⏱</div>
+                  <div className="text-warning text-2xl">⏱</div>
                   <div>
-                    <p className="text-yellow-500 font-semibold text-sm">Payment timeout</p>
+                    <p className="text-warning font-semibold text-sm">Payment timeout</p>
                     <p className="text-muted text-xs mt-1">Please check payment status manually in the payment list</p>
                   </div>
                 </div>
@@ -369,7 +369,7 @@ export function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalPro
 
             {/* Error Message */}
             {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-sm">
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded text-danger text-sm">
                 {error}
               </div>
             )}

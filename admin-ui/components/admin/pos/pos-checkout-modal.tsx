@@ -34,9 +34,9 @@ type Props = {
 
 function StatusPill({ label, tone }: { label: string; tone: "wait" | "ok" | "bad" | "idle" }) {
   const classes = {
-    wait: "bg-blue-500/10 text-blue-500 border-blue-500/30",
-    ok: "bg-green-500/10 text-green-600 border-green-500/30",
-    bad: "bg-red-500/10 text-red-500 border-red-500/30",
+    wait: "bg-blue-500/10 text-info border-blue-500/30",
+    ok: "bg-green-500/10 text-success border-green-500/30",
+    bad: "bg-red-500/10 text-danger border-red-500/30",
     idle: "bg-muted/10 text-muted border-border",
   }[tone];
   return (
@@ -184,7 +184,7 @@ export function PosCheckoutModal({
               </label>
 
               {checkout.error && (
-                <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+                <p className="text-sm text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
                   {checkout.error}
                 </p>
               )}
@@ -259,7 +259,7 @@ export function PosCheckoutModal({
                             </div>
                             <label className="block">
                               <span className="text-muted text-xs uppercase font-bold">
-                                EDC Transaction Number <span className="text-red-500">*</span>
+                                EDC Transaction Number <span className="text-danger">*</span>
                               </span>
                               <input
                                 value={edcNumbers[step.lineId] ?? ""}
@@ -295,7 +295,7 @@ export function PosCheckoutModal({
                           <>
                             <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                               <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-                              <p className="text-xs text-blue-500">
+                              <p className="text-xs text-info">
                                 Waiting for QRIS payment… status is read from the backend.
                               </p>
                             </div>
@@ -335,7 +335,7 @@ export function PosCheckoutModal({
                     )}
 
                     {step.error && (
-                      <p className="mt-2 text-xs text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+                      <p className="mt-2 text-xs text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
                         {step.error}
                       </p>
                     )}
@@ -348,13 +348,13 @@ export function PosCheckoutModal({
                       </p>
                     )}
                     {step.dropInCheck === "issued" && (
-                      <p className="mt-2 text-[11px] text-green-600 bg-green-500/10 border border-green-500/30 px-3 py-2 rounded">
+                      <p className="mt-2 text-[11px] text-success bg-green-500/10 border border-green-500/30 px-3 py-2 rounded">
                         <i className="fas fa-check mr-1.5" aria-hidden />
                         Drop-in pass issued to the member&apos;s account.
                       </p>
                     )}
                     {step.dropInCheck === "not-credited" && (
-                      <p className="mt-2 text-[11px] text-yellow-600 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded">
+                      <p className="mt-2 text-[11px] text-warning bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded">
                         <i className="fas fa-triangle-exclamation mr-1.5" aria-hidden />
                         The pass was issued, but the member&apos;s drop-in quota did not increase, so
                         class booking will still be rejected (&quot;No remaining drop-in
@@ -363,7 +363,7 @@ export function PosCheckoutModal({
                       </p>
                     )}
                     {step.dropInCheck === "missing" && (
-                      <p className="mt-2 text-[11px] text-yellow-600 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded">
+                      <p className="mt-2 text-[11px] text-warning bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded">
                         <i className="fas fa-triangle-exclamation mr-1.5" aria-hidden />
                         The payment is Paid, but the drop-in pass is not yet visible on the
                         member&apos;s account. Do not repeat the payment — check the Drop In menu
@@ -404,12 +404,12 @@ export function PosCheckoutModal({
           {/* ---------- Done ---------- */}
           {finished && (
             <div className="p-4 rounded-lg border bg-green-500/10 border-green-500/30">
-              <p className="font-bold text-sm text-green-600">✓ Payment Successful</p>
+              <p className="font-bold text-sm text-success">✓ Payment Successful</p>
               <p className="text-xs text-muted mt-1">
                 All payments have been confirmed by the backend.
               </p>
               {steps.some((s) => s.dropInCheck === "missing") && (
-                <p className="text-[11px] text-yellow-700 mt-2">
+                <p className="text-[11px] text-warning mt-2">
                   Some drop-in passes are not yet verified as issued — open the Drop In menu
                   to confirm before the customer leaves.
                 </p>

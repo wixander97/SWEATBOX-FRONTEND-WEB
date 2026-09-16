@@ -364,7 +364,7 @@ export function MembershipPlanFormModal({
     >
       <form id="plan-form" onSubmit={handleSubmit} className="space-y-6">
         <section className="space-y-4">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
             Plan
           </h4>
 
@@ -458,7 +458,7 @@ export function MembershipPlanFormModal({
         </section>
 
         <section className="space-y-4">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
             Pricing &amp; Validity
           </h4>
 
@@ -565,7 +565,7 @@ export function MembershipPlanFormModal({
         </section>
 
         <section className="space-y-4">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
             Access
           </h4>
 
@@ -612,7 +612,7 @@ export function MembershipPlanFormModal({
                     className={`px-3 py-2 rounded-lg text-xs font-bold border transition ${
                       active
                         ? "bg-sweat text-black border-sweat"
-                        : "bg-sidebar text-gray-400 border-border hover:border-gray-600"
+                        : "bg-sidebar text-muted border-border hover:border-muted"
                     }`}
                   >
                     {day.short}
@@ -620,7 +620,7 @@ export function MembershipPlanFormModal({
                 );
               })}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted mt-1">
               {form.accessDays.length === 0
                 ? "No days selected — the plan is usable every day."
                 : `Usable on ${form.accessDays.length} day${form.accessDays.length === 1 ? "" : "s"} a week.`}
@@ -676,7 +676,7 @@ export function MembershipPlanFormModal({
         </section>
 
         <section className="space-y-4">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
             Sales Period
           </h4>
 
@@ -756,9 +756,9 @@ export function MembershipPlanFormModal({
                 disabled={!discountEligible}
               />
               {discountPreview !== null ? (
-                <span className="text-xs text-gray-400 whitespace-nowrap">
+                <span className="text-xs text-muted whitespace-nowrap">
                   Member pays{" "}
-                  <strong className="text-sweat">
+                  <strong className="text-accent-ink">
                     {formatCurrency(discountPreview)}
                   </strong>
                 </span>

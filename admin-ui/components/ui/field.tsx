@@ -10,12 +10,12 @@ import type { ReactNode } from "react";
  */
 
 export const FIELD_CLASS =
-  "w-full bg-sidebar border border-border text-white px-4 py-3 rounded-lg focus:outline-none focus:border-sweat disabled:opacity-60 disabled:cursor-not-allowed";
+  "w-full bg-sidebar border border-border text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-sweat disabled:opacity-60 disabled:cursor-not-allowed";
 
-export const LABEL_CLASS = "block text-gray-400 text-sm mb-1";
+export const LABEL_CLASS = "block text-muted text-sm mb-1";
 
 export const INVALID_FIELD_CLASS =
-  "w-full bg-sidebar border border-red-500/70 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-red-400";
+  "w-full bg-sidebar border border-red-500/70 text-fg px-4 py-3 rounded-lg focus:outline-none focus:border-red-400";
 
 type FieldProps = {
   label: ReactNode;
@@ -42,7 +42,7 @@ export function Field({
       <label className={LABEL_CLASS} htmlFor={htmlFor}>
         {label}
         {required ? (
-          <span className="text-sweat ml-1" aria-hidden>
+          <span className="text-accent-ink ml-1" aria-hidden>
             *
           </span>
         ) : null}
@@ -50,9 +50,9 @@ export function Field({
       </label>
       {children}
       {error ? (
-        <p className="text-xs text-red-400 mt-1">{error}</p>
+        <p className="text-xs text-danger mt-1">{error}</p>
       ) : hint ? (
-        <p className="text-xs text-gray-500 mt-1">{hint}</p>
+        <p className="text-xs text-muted mt-1">{hint}</p>
       ) : null}
     </div>
   );
@@ -65,8 +65,8 @@ export function inputClass(hasError?: boolean) {
 /** The boxed explanation used where a field needs more than a one-line hint. */
 export function InfoNote({ children }: { children: ReactNode }) {
   return (
-    <p className="text-xs text-gray-400 bg-sweat/5 border border-sweat/20 rounded-lg px-3 py-2">
-      <i className="fas fa-circle-info text-sweat mr-2" aria-hidden />
+    <p className="text-xs text-muted bg-sweat/5 border border-sweat/20 rounded-lg px-3 py-2">
+      <i className="fas fa-circle-info text-accent-ink mr-2" aria-hidden />
       {children}
     </p>
   );
@@ -78,7 +78,7 @@ export function FormError({ message }: { message?: string | null }) {
   return (
     <p
       role="alert"
-      className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded"
+      className="text-sm text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded"
     >
       {message}
     </p>
@@ -107,7 +107,7 @@ export function ToggleRow({
     <label
       htmlFor={id}
       className={`flex items-start gap-3 bg-sidebar border border-border rounded-lg px-4 py-3 ${
-        disabled ? "opacity-60" : "cursor-pointer hover:border-gray-600"
+        disabled ? "opacity-60" : "cursor-pointer hover:border-muted"
       }`}
     >
       <input
@@ -120,9 +120,9 @@ export function ToggleRow({
         className="mt-0.5 w-4 h-4 accent-[#ffd700] shrink-0"
       />
       <span className="min-w-0">
-        <span className="block text-sm text-white font-medium">{label}</span>
+        <span className="block text-sm text-fg font-medium">{label}</span>
         {description ? (
-          <span className="block text-xs text-gray-500 mt-0.5">
+          <span className="block text-xs text-muted mt-0.5">
             {description}
           </span>
         ) : null}

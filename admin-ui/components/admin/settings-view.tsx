@@ -148,8 +148,8 @@ export function SettingsView() {
   if (loading) {
     return (
       <PanelCard>
-        <p className="p-8 text-center text-sm text-gray-400">
-          <i className="fas fa-circle-notch fa-spin text-sweat mr-2" aria-hidden />
+        <p className="p-8 text-center text-sm text-muted">
+          <i className="fas fa-circle-notch fa-spin text-accent-ink mr-2" aria-hidden />
           Loading settings…
         </p>
       </PanelCard>
@@ -160,11 +160,11 @@ export function SettingsView() {
     return (
       <PanelCard>
         <div className="p-8 text-center space-y-3">
-          <p className="text-sm text-red-400">{loadError}</p>
+          <p className="text-sm text-danger">{loadError}</p>
           <button
             type="button"
             onClick={() => void load()}
-            className="text-xs text-white bg-white/5 hover:bg-white/10 border border-border px-4 py-2 rounded-lg"
+            className="text-xs text-fg bg-fg/5 hover:bg-fg/10 border border-border px-4 py-2 rounded-lg"
           >
             Try again
           </button>
@@ -179,10 +179,10 @@ export function SettingsView() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <PanelCard>
         <div className="p-4 sm:p-6 border-b border-border">
-          <h3 className="text-lg font-bold font-display uppercase text-white">
+          <h3 className="text-lg font-bold font-display uppercase text-fg">
             Brand &amp; Letterhead
           </h3>
-          <p className="text-xs text-gray-500 mt-1 max-w-2xl">
+          <p className="text-xs text-muted mt-1 max-w-2xl">
             Printed on invoices, receipts and the signed waiver and house rules.
             A branch with its own address and phone number overrides these — the
             invoice names the club the customer actually paid at.
@@ -230,7 +230,7 @@ export function SettingsView() {
 
           {logoUrl ? (
             <div className="rounded-xl border border-border bg-sidebar/40 p-4">
-              <p className="text-xs text-gray-500 mb-2">Logo preview</p>
+              <p className="text-xs text-muted mb-2">Logo preview</p>
               <Image
                 src={logoUrl}
                 alt="Brand logo preview"
@@ -249,18 +249,18 @@ export function SettingsView() {
           ) : null}
 
           <div className="rounded-xl border border-border bg-sidebar/40 p-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
               Set in server configuration
             </p>
             <dl className="space-y-1 text-xs">
               {READ_ONLY_BRAND_FIELDS.map((field) => (
                 <div key={field.configKey} className="flex justify-between gap-4">
-                  <dt className="text-gray-400">{field.label}</dt>
-                  <dd className="text-gray-500 font-mono">{field.configKey}</dd>
+                  <dt className="text-muted">{field.label}</dt>
+                  <dd className="text-muted font-mono">{field.configKey}</dd>
                 </div>
               ))}
             </dl>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-muted mt-2">
               These two have no System Settings override, so they are changed in
               the API&apos;s configuration rather than here. An input that
               silently saved nothing would be worse than saying so.
@@ -271,10 +271,10 @@ export function SettingsView() {
 
       <PanelCard>
         <div className="p-4 sm:p-6 border-b border-border">
-          <h3 className="text-lg font-bold font-display uppercase text-white">
+          <h3 className="text-lg font-bold font-display uppercase text-fg">
             Drop-In Member Discount
           </h3>
-          <p className="text-xs text-gray-500 mt-1 max-w-2xl">
+          <p className="text-xs text-muted mt-1 max-w-2xl">
             Applied by the backend to a Drop In or 1 Day Pass bought by a
             customer who already holds an active membership at either branch.
           </p>
@@ -312,7 +312,7 @@ export function SettingsView() {
       <FormError message={error} />
 
       <div className="flex items-center justify-between gap-4">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted">
           <i className="fas fa-shield-halved mr-1.5" aria-hidden />
           Payment keys, webhook tokens and SMTP credentials are never exposed to
           this portal.
@@ -323,7 +323,7 @@ export function SettingsView() {
             Save Settings
           </SubmitButton>
         ) : (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted">
             <i className="fas fa-lock mr-1.5" aria-hidden />
             View only for your role.
           </p>

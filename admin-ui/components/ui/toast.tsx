@@ -39,19 +39,19 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 const TONE: Record<ToastTone, { class: string; icon: string }> = {
   success: {
-    class: "border-green-500/40 bg-green-500/10 text-green-300",
+    class: "border-green-500/40 bg-green-500/10 text-success",
     icon: "fa-circle-check",
   },
   error: {
-    class: "border-red-500/40 bg-red-500/10 text-red-300",
+    class: "border-red-500/40 bg-red-500/10 text-danger",
     icon: "fa-circle-exclamation",
   },
   info: {
-    class: "border-blue-500/40 bg-blue-500/10 text-blue-300",
+    class: "border-blue-500/40 bg-blue-500/10 text-info",
     icon: "fa-circle-info",
   },
   warning: {
-    class: "border-yellow-500/40 bg-yellow-500/10 text-yellow-300",
+    class: "border-yellow-500/40 bg-yellow-500/10 text-warning",
     icon: "fa-triangle-exclamation",
   },
 };

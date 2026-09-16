@@ -236,10 +236,10 @@ export function WorkoutsView() {
         <div className="p-4 sm:p-6 border-b border-border flex flex-col gap-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h3 className="text-lg font-bold font-display uppercase text-white">
+              <h3 className="text-lg font-bold font-display uppercase text-fg">
                 Workouts
               </h3>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted mt-1">
                 One workout per class occurrence. The same recurring class can
                 run a different workout every day.
               </p>
@@ -262,7 +262,7 @@ export function WorkoutsView() {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
             <div className="relative sm:col-span-2 xl:col-span-1">
               <i
-                className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
+                className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm"
                 aria-hidden
               />
               <input
@@ -323,7 +323,7 @@ export function WorkoutsView() {
             <button
               type="button"
               onClick={resetFilters}
-              className="text-xs text-gray-400 hover:text-white self-start"
+              className="text-xs text-muted hover:text-fg self-start"
             >
               <i className="fas fa-times mr-1.5" aria-hidden />
               Clear filters
@@ -332,8 +332,8 @@ export function WorkoutsView() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1000px] text-left text-sm text-gray-400">
-            <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+          <table className="w-full min-w-[1000px] text-left text-sm text-muted">
+            <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
               <tr>
                 <th className="px-6 py-4">Date</th>
                 <th className="px-6 py-4">Class</th>
@@ -372,29 +372,29 @@ export function WorkoutsView() {
                   return (
                     <tr key={workout.id} className="table-row transition">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-white font-bold">
+                        <span className="text-fg font-bold">
                           {formatDate(workout.workoutDate)}
                         </span>
                         {workout.classStartTime ? (
-                          <span className="block text-xs text-gray-500">
+                          <span className="block text-xs text-muted">
                             {formatTime(workout.classStartTime)}
                           </span>
                         ) : null}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-white">{classLabel(workout)}</span>
+                        <span className="text-fg">{classLabel(workout)}</span>
                         {workout.coachName ? (
-                          <span className="block text-xs text-gray-500">
+                          <span className="block text-xs text-muted">
                             {workout.coachName}
                           </span>
                         ) : null}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="bg-gray-800 px-2 py-1 rounded text-xs text-gray-300">
+                        <span className="bg-fg/10 px-2 py-1 rounded text-xs text-fg-soft">
                           {workout.branchName || "-"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-white font-medium">
+                      <td className="px-6 py-4 text-fg font-medium">
                         {workout.title}
                       </td>
                       <td className="px-6 py-4">
@@ -416,7 +416,7 @@ export function WorkoutsView() {
                           <button
                             type="button"
                             onClick={() => setViewing(workout)}
-                            className="text-gray-400 hover:text-white px-2 py-1"
+                            className="text-muted hover:text-fg px-2 py-1"
                             aria-label={`View ${workout.title}`}
                             title="View"
                           >
@@ -432,7 +432,7 @@ export function WorkoutsView() {
                                   setFormOpen(true);
                                 }}
                                 disabled={busy}
-                                className="text-gray-400 hover:text-white px-2 py-1 disabled:opacity-40"
+                                className="text-muted hover:text-fg px-2 py-1 disabled:opacity-40"
                                 aria-label={`Edit ${workout.title}`}
                                 title="Edit"
                               >
@@ -451,7 +451,7 @@ export function WorkoutsView() {
                                     )
                                   }
                                   disabled={busy}
-                                  className="text-green-500 hover:text-green-400 px-2 py-1 disabled:opacity-40"
+                                  className="text-success hover:text-success px-2 py-1 disabled:opacity-40"
                                   aria-label={`Publish ${workout.title}`}
                                   title="Publish now"
                                 >
@@ -473,7 +473,7 @@ export function WorkoutsView() {
                                     )
                                   }
                                   disabled={busy}
-                                  className="text-yellow-500 hover:text-yellow-400 px-2 py-1 disabled:opacity-40"
+                                  className="text-warning hover:opacity-80 px-2 py-1 disabled:opacity-40"
                                   aria-label={`Unpublish ${workout.title}`}
                                   title="Unpublish"
                                 >
@@ -489,7 +489,7 @@ export function WorkoutsView() {
                                   type="button"
                                   onClick={() => setArchiving(workout)}
                                   disabled={busy}
-                                  className="text-gray-400 hover:text-red-400 px-2 py-1 disabled:opacity-40"
+                                  className="text-muted hover:text-danger px-2 py-1 disabled:opacity-40"
                                   aria-label={`Archive ${workout.title}`}
                                   title="Archive"
                                 >
@@ -552,41 +552,41 @@ export function WorkoutsView() {
               >
                 {viewing.effectiveStatus}
               </Badge>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted">
                 {statusDescription(viewing)}
               </span>
             </div>
 
             <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div>
-                <dt className="text-gray-500">Publish at</dt>
-                <dd className="text-white mt-0.5">
+                <dt className="text-muted">Publish at</dt>
+                <dd className="text-fg mt-0.5">
                   {formatDateTime(viewing.publishAt)}
                 </dd>
               </div>
               <div>
-                <dt className="text-gray-500">Published at</dt>
-                <dd className="text-white mt-0.5">
+                <dt className="text-muted">Published at</dt>
+                <dd className="text-fg mt-0.5">
                   {formatDateTime(viewing.publishedAt)}
                 </dd>
               </div>
               <div>
-                <dt className="text-gray-500">Created by</dt>
-                <dd className="text-white mt-0.5 break-all">
+                <dt className="text-muted">Created by</dt>
+                <dd className="text-fg mt-0.5 break-all">
                   {viewing.createdBy || "-"}
                 </dd>
               </div>
               <div>
-                <dt className="text-gray-500">Last updated by</dt>
-                <dd className="text-white mt-0.5 break-all">
+                <dt className="text-muted">Last updated by</dt>
+                <dd className="text-fg mt-0.5 break-all">
                   {viewing.updatedBy || "-"}
                 </dd>
               </div>
             </dl>
 
             <div>
-              <p className="text-gray-400 text-sm mb-1">Workout Content</p>
-              <pre className="bg-sidebar border border-border rounded-lg p-4 text-sm text-gray-200 whitespace-pre-wrap font-mono leading-relaxed overflow-x-auto">
+              <p className="text-muted text-sm mb-1">Workout Content</p>
+              <pre className="bg-sidebar border border-border rounded-lg p-4 text-sm text-fg-soft whitespace-pre-wrap font-mono leading-relaxed overflow-x-auto">
                 {viewing.content}
               </pre>
             </div>
@@ -602,7 +602,7 @@ export function WorkoutsView() {
         busy={busyId === archiving?.id}
         message={
           <>
-            <strong className="text-white">{archiving?.title}</strong> will stop
+            <strong className="text-fg">{archiving?.title}</strong> will stop
             being shown to members and cannot be published again. Archiving also
             frees its class occurrence to receive a replacement workout.
           </>
@@ -616,7 +616,7 @@ export function WorkoutsView() {
       />
 
       {!canWrite ? (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted">
           <i className="fas fa-lock mr-1.5" aria-hidden />
           Your role can view workouts but not change them.
         </p>

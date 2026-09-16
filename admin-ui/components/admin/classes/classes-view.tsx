@@ -924,7 +924,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         {canWriteClass && statusTab !== "cancelled" && !c.isCancelled && (
                           <button
                             type="button"
-                            className="text-yellow-500 hover:text-warning mx-1"
+                            className="text-warning hover:text-warning mx-1"
                             aria-label="Cancel Class"
                             title="Cancel Class"
                             onClick={() => {
@@ -938,7 +938,7 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         {canDeleteClass && (
                         <button
                           type="button"
-                          className="text-red-500 hover:text-danger mx-1"
+                          className="text-danger hover:text-danger mx-1"
                           aria-label="Delete"
                           onClick={() => {
                             setDeleteId(c.id);

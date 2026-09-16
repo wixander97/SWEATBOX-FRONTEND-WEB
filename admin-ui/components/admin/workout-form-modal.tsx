@@ -350,7 +350,7 @@ export function WorkoutFormModal({
                   className={`cursor-pointer rounded-lg border px-4 py-3 transition ${
                     active
                       ? "border-sweat bg-sweat/10"
-                      : "border-border bg-sidebar hover:border-gray-600"
+                      : "border-border bg-sidebar hover:border-muted"
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -364,15 +364,15 @@ export function WorkoutFormModal({
                     />
                     <i
                       className={`fas ${option.icon} ${
-                        active ? "text-sweat" : "text-gray-500"
+                        active ? "text-accent-ink" : "text-muted"
                       }`}
                       aria-hidden
                     />
-                    <span className="text-sm font-bold text-white">
+                    <span className="text-sm font-bold text-fg">
                       {option.label}
                     </span>
                   </span>
-                  <span className="block text-xs text-gray-500 mt-1.5">
+                  <span className="block text-xs text-muted mt-1.5">
                     {option.description}
                   </span>
                 </label>

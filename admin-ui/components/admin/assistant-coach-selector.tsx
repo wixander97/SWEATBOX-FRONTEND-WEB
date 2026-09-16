@@ -81,7 +81,7 @@ export function AssistantCoachSelector({
           type="button"
           onClick={add}
           disabled={disabled || available.length === 0}
-          className="text-xs bg-white/5 hover:bg-white/10 text-white border border-border px-3 py-1.5 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
+          className="text-xs bg-fg/5 hover:bg-fg/10 text-fg border border-border px-3 py-1.5 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <i className="fas fa-plus mr-1.5" aria-hidden />
           Add assistant
@@ -89,7 +89,7 @@ export function AssistantCoachSelector({
       </div>
 
       {value.length === 0 ? (
-        <p className="text-xs text-gray-500 border border-dashed border-border rounded-lg px-4 py-3">
+        <p className="text-xs text-muted border border-dashed border-border rounded-lg px-4 py-3">
           No assistant coaches. A class can run with the primary coach alone.
         </p>
       ) : (
@@ -150,7 +150,7 @@ export function AssistantCoachSelector({
                 type="button"
                 onClick={() => remove(index)}
                 disabled={disabled}
-                className="text-red-500 hover:text-red-400 px-3 py-2 disabled:opacity-40 justify-self-end"
+                className="text-danger hover:text-danger px-3 py-2 disabled:opacity-40 justify-self-end"
                 aria-label={`Remove assistant coach ${index + 1}`}
                 title="Remove"
               >
@@ -162,7 +162,7 @@ export function AssistantCoachSelector({
       )}
 
       {assistantTiers.length === 0 ? (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted">
           No assistant rate tiers are configured for this branch. Assistants will
           be paid at the branch default, or at their own payroll rate.
         </p>

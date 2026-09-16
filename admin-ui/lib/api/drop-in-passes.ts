@@ -97,7 +97,7 @@ export const DROP_IN_PASS_STATUS_META: Record<
   },
   inactive: {
     label: "Inactive",
-    class: "bg-yellow-500/10 text-yellow-500 border-yellow-500/30",
+    class: "bg-yellow-500/10 text-warning border-yellow-500/30",
   },
 };
 

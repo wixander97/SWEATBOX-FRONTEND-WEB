@@ -425,7 +425,7 @@ export function PosCatalog({
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-6">
         {error && (
-          <p className="text-xs text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+          <p className="text-xs text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
             {error}
           </p>
         )}
@@ -470,7 +470,7 @@ export function PosCatalog({
             )}
 
             {memberPackagesError && (
-              <p className="text-xs text-red-500">{memberPackagesError}</p>
+              <p className="text-xs text-danger">{memberPackagesError}</p>
             )}
 
             {visiblePlans.length > 0 && (

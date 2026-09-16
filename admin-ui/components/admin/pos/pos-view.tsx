@@ -189,7 +189,7 @@ export function PosView() {
 
       <div className="flex-1 min-h-0 p-3 sm:p-4 flex flex-col">
         {branchError && (
-          <p className="mb-3 text-xs text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+          <p className="mb-3 text-xs text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
             {branchError}
           </p>
         )}
@@ -197,7 +197,7 @@ export function PosView() {
         {notice && (
           <div className="mb-3 bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 rounded flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs text-yellow-600 font-semibold">
+              <p className="text-xs text-warning font-semibold">
                 {notice.title}
               </p>
               {notice.detail && (

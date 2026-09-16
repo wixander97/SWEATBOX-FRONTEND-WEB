@@ -420,7 +420,7 @@ export function HistoryView() {
             <TableSkeleton rows={6} />
           ) : selectedCoachId && attendanceError ? (
             <div className="text-center py-12">
-              <i className="fas fa-exclamation-triangle text-red-500 text-5xl mb-4" aria-hidden />
+              <i className="fas fa-exclamation-triangle text-danger text-5xl mb-4" aria-hidden />
               <h5 className="text-lg font-bold text-danger mb-2">Error Loading History</h5>
               <p className="text-sm text-muted">{attendanceError}</p>
             </div>
@@ -452,11 +452,11 @@ export function HistoryView() {
                       <td className="px-4 py-3">{record.branchName || "—"}</td>
                       <td className="px-4 py-3 text-center">
                         {record.isPresent ? (
-                          <span className="text-green-500">
+                          <span className="text-success">
                             <i className="fas fa-check" aria-hidden />
                           </span>
                         ) : (
-                          <span className="text-red-500">
+                          <span className="text-danger">
                             <i className="fas fa-times" aria-hidden />
                           </span>
                         )}
@@ -522,7 +522,7 @@ export function HistoryView() {
             <BookingTableSkeleton rows={6} />
           ) : selectedMemberId && bookingError ? (
             <div className="text-center py-12">
-              <i className="fas fa-exclamation-triangle text-red-500 text-5xl mb-4" aria-hidden />
+              <i className="fas fa-exclamation-triangle text-danger text-5xl mb-4" aria-hidden />
               <h5 className="text-lg font-bold text-danger mb-2">Error Loading History</h5>
               <p className="text-sm text-muted">{bookingError}</p>
             </div>

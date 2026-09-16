@@ -463,7 +463,7 @@ export function PtPackageTab() {
                       type="button"
                       title="Delete"
                       onClick={() => void handleDelete(pkg)}
-                      className="text-red-500 hover:text-danger mx-1"
+                      className="text-danger hover:text-danger mx-1"
                     >
                       <i className="fas fa-trash" aria-hidden />
                     </button>

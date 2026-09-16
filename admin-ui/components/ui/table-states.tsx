@@ -29,8 +29,8 @@ export function TableStateRow({
 export function LoadingState({ colSpan }: { colSpan: number }) {
   return (
     <TableStateRow colSpan={colSpan}>
-      <div className="flex items-center justify-center gap-3 text-gray-400 text-sm">
-        <i className="fas fa-circle-notch fa-spin text-sweat" aria-hidden />
+      <div className="flex items-center justify-center gap-3 text-muted text-sm">
+        <i className="fas fa-circle-notch fa-spin text-accent-ink" aria-hidden />
         Loading…
       </div>
     </TableStateRow>
@@ -50,15 +50,15 @@ export function ErrorState({
     <TableStateRow colSpan={colSpan}>
       <div className="flex flex-col items-center gap-3 text-center">
         <i
-          className="fas fa-circle-exclamation text-red-500 text-2xl"
+          className="fas fa-circle-exclamation text-danger text-2xl"
           aria-hidden
         />
-        <p className="text-sm text-red-400 max-w-md">{message}</p>
+        <p className="text-sm text-danger max-w-md">{message}</p>
         {onRetry ? (
           <button
             type="button"
             onClick={onRetry}
-            className="text-xs text-white bg-white/5 hover:bg-white/10 border border-border px-4 py-2 rounded-lg"
+            className="text-xs text-fg bg-fg/5 hover:bg-fg/10 border border-border px-4 py-2 rounded-lg"
           >
             Try again
           </button>
@@ -84,12 +84,12 @@ export function EmptyState({
   return (
     <TableStateRow colSpan={colSpan}>
       <div className="flex flex-col items-center gap-2 text-center">
-        <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 text-xl mb-1">
+        <div className="w-14 h-14 rounded-full bg-fg/10 flex items-center justify-center text-muted text-xl mb-1">
           <i className={`fas ${icon}`} aria-hidden />
         </div>
-        <p className="text-sm font-bold text-white">{title}</p>
+        <p className="text-sm font-bold text-fg">{title}</p>
         {description ? (
-          <p className="text-xs text-gray-500 max-w-sm">{description}</p>
+          <p className="text-xs text-muted max-w-sm">{description}</p>
         ) : null}
         {action ? <div className="mt-2">{action}</div> : null}
       </div>
@@ -115,7 +115,7 @@ export function Pagination({
 }) {
   return (
     <div className="px-4 sm:px-6 py-4 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-muted">
         Page {page} of {Math.max(1, totalPages)} • {totalItems} {label}
       </p>
       <div className="flex items-center gap-2">
@@ -123,7 +123,7 @@ export function Pagination({
           type="button"
           disabled={page <= 1 || loading}
           onClick={() => onChange(Math.max(1, page - 1))}
-          className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+          className="bg-sidebar border border-border text-fg px-3 py-1.5 rounded text-xs disabled:opacity-50"
         >
           Prev
         </button>
@@ -131,7 +131,7 @@ export function Pagination({
           type="button"
           disabled={page >= totalPages || loading}
           onClick={() => onChange(Math.min(totalPages, page + 1))}
-          className="bg-sidebar border border-border text-white px-3 py-1.5 rounded text-xs disabled:opacity-50"
+          className="bg-sidebar border border-border text-fg px-3 py-1.5 rounded text-xs disabled:opacity-50"
         >
           Next
         </button>

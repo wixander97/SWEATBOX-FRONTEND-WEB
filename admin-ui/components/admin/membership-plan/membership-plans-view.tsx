@@ -450,7 +450,7 @@ export function MembershipPlansView() {
                                             </button>
                                             <button
                                                 type="button"
-                                                className="text-red-500 hover:text-danger mx-1"
+                                                className="text-danger hover:text-danger mx-1"
                                                 aria-label="Delete"
                                                 onClick={() => void deletePlan(plan.id)}
                                             >

@@ -85,15 +85,15 @@ export function AgreementConsent({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-bold text-white">{label}</p>
+          <p className="text-sm font-bold text-fg">{label}</p>
           {document ? (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               {document.title} • version {document.version}
             </p>
           ) : null}
         </div>
         {accepted ? (
-          <span className="text-xs text-green-500 font-bold whitespace-nowrap">
+          <span className="text-xs text-success font-bold whitespace-nowrap">
             <i className="fas fa-check mr-1" aria-hidden />
             Accepted
           </span>
@@ -101,12 +101,12 @@ export function AgreementConsent({
       </div>
 
       {loading ? (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted">
           <i className="fas fa-circle-notch fa-spin mr-2" aria-hidden />
           Loading the current {label.toLowerCase()}…
         </p>
       ) : loadError ? (
-        <p className="text-xs text-red-400">
+        <p className="text-xs text-danger">
           {loadError} The member cannot accept a document that has not loaded —
           check that an active version is configured under Agreement Documents.
         </p>
@@ -114,7 +114,7 @@ export function AgreementConsent({
         <div
           ref={onContentRef}
           onScroll={onScroll}
-          className="max-h-44 overflow-y-auto rounded-lg bg-dark border border-border p-3 text-xs text-gray-300 whitespace-pre-wrap leading-relaxed"
+          className="max-h-44 overflow-y-auto rounded-lg bg-dark border border-border p-3 text-xs text-fg-soft whitespace-pre-wrap leading-relaxed"
           tabIndex={0}
           role="region"
           aria-label={`${label} text`}
@@ -139,20 +139,20 @@ export function AgreementConsent({
           onChange={(e) => onAcceptedChange(e.target.checked)}
           className="mt-0.5 w-4 h-4 accent-[#ffd700] shrink-0"
         />
-        <span className="text-xs text-gray-300">
+        <span className="text-xs text-fg-soft">
           The member has read and accepts the {label.toLowerCase()}
-          <span className="text-sweat ml-1" aria-hidden>
+          <span className="text-accent-ink ml-1" aria-hidden>
             *
           </span>
           {!reviewed && document ? (
-            <span className="block text-gray-500 mt-0.5">
+            <span className="block text-muted mt-0.5">
               Scroll to the end of the text to enable this.
             </span>
           ) : null}
         </span>
       </label>
 
-      {error ? <p className="text-xs text-red-400">{error}</p> : null}
+      {error ? <p className="text-xs text-danger">{error}</p> : null}
     </div>
   );
 }

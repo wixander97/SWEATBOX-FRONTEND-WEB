@@ -297,17 +297,17 @@ export function PosView() {
       <PanelCard>
         <div className="p-4 sm:p-6 flex flex-col lg:flex-row lg:items-end gap-4">
           <div className="flex-1">
-            <h3 className="text-lg font-bold font-display uppercase text-white">
+            <h3 className="text-lg font-bold font-display uppercase text-fg">
               Point of Sale
             </h3>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted mt-1">
               Select a customer, then a membership product. Prices come from the
               backend, including the member discount.
             </p>
           </div>
           <div className="lg:w-64">
             <label
-              className="block text-gray-400 text-sm mb-1"
+              className="block text-muted text-sm mb-1"
               htmlFor="pos-branch"
             >
               Branch
@@ -335,7 +335,7 @@ export function PosView() {
         <PanelCard className="xl:col-span-1">
           <div className="p-4 sm:p-6 space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <h4 className="text-sm font-bold uppercase tracking-wider text-gray-400">
+              <h4 className="text-sm font-bold uppercase tracking-wider text-muted">
                 Customer
               </h4>
               {canRegister ? (
@@ -352,7 +352,7 @@ export function PosView() {
 
             <div className="relative" ref={searchRef}>
               <i
-                className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
+                className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm"
                 aria-hidden
               />
               <input
@@ -366,7 +366,7 @@ export function PosView() {
               />
               {searching ? (
                 <i
-                  className="fas fa-circle-notch fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
+                  className="fas fa-circle-notch fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-muted text-sm"
                   aria-hidden
                 />
               ) : null}
@@ -378,12 +378,12 @@ export function PosView() {
                       <button
                         type="button"
                         onClick={() => void selectCustomer(member)}
-                        className="w-full text-left px-4 py-3 hover:bg-white/5 transition"
+                        className="w-full text-left px-4 py-3 hover:bg-fg/5 transition"
                       >
-                        <span className="block text-sm text-white">
+                        <span className="block text-sm text-fg">
                           {member.fullName}
                         </span>
-                        <span className="block text-xs text-gray-500">
+                        <span className="block text-xs text-muted">
                           {member.memberCode || member.email || member.phoneNumber}
                         </span>
                       </button>
@@ -392,7 +392,7 @@ export function PosView() {
                 </ul>
               ) : null}
               {dropdownOpen && !searching && results.length === 0 && query ? (
-                <div className="absolute z-20 mt-1 w-full bg-sidebar border border-border rounded-lg p-4 text-xs text-gray-500">
+                <div className="absolute z-20 mt-1 w-full bg-sidebar border border-border rounded-lg p-4 text-xs text-muted">
                   No customer found. Use Quick Register to create one.
                 </div>
               ) : null}
@@ -402,17 +402,17 @@ export function PosView() {
               <div className="rounded-xl border border-border bg-sidebar/40 p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-white font-bold truncate">
+                    <p className="text-fg font-bold truncate">
                       {customer.fullName}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-xs text-muted truncate">
                       {customer.memberCode} • {customer.email}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setCustomer(null)}
-                    className="text-gray-500 hover:text-white text-lg leading-none"
+                    className="text-muted hover:text-fg text-lg leading-none"
                     aria-label="Clear selected customer"
                   >
                     ×
@@ -421,13 +421,13 @@ export function PosView() {
 
                 <dl className="grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <dt className="text-gray-500">Membership</dt>
-                    <dd className="text-white mt-0.5">
+                    <dt className="text-muted">Membership</dt>
+                    <dd className="text-fg mt-0.5">
                       {customer.membershipPlanName || "None"}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-gray-500">Status</dt>
+                    <dt className="text-muted">Status</dt>
                     <dd className="mt-0.5">
                       <Badge tone={customerIsMember ? "success" : "neutral"}>
                         {customer.membershipStatus || "None"}
@@ -435,14 +435,14 @@ export function PosView() {
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-gray-500">Home club</dt>
-                    <dd className="text-white mt-0.5">
+                    <dt className="text-muted">Home club</dt>
+                    <dd className="text-fg mt-0.5">
                       {customer.homeClubBranchName || "-"}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-gray-500">Expires</dt>
-                    <dd className="text-white mt-0.5">
+                    <dt className="text-muted">Expires</dt>
+                    <dd className="text-fg mt-0.5">
                       {customer.expiryDate
                         ? formatDate(customer.expiryDate)
                         : "-"}
@@ -451,13 +451,13 @@ export function PosView() {
                 </dl>
 
                 {customerIsMember ? (
-                  <p className="text-xs text-sweat bg-sweat/5 border border-sweat/20 rounded-lg px-3 py-2">
+                  <p className="text-xs text-accent-ink bg-sweat/5 border border-sweat/20 rounded-lg px-3 py-2">
                     <i className="fas fa-tag mr-1.5" aria-hidden />
                     Holds an active membership, so Drop In and 1 Day Pass are
                     priced at the member rate — at either branch.
                   </p>
                 ) : (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted">
                     No active membership, so every product is at list price.
                   </p>
                 )}
@@ -465,10 +465,10 @@ export function PosView() {
             ) : (
               <div className="rounded-xl border border-dashed border-border p-6 text-center">
                 <i
-                  className="fas fa-user text-gray-600 text-2xl mb-2 block"
+                  className="fas fa-user text-muted text-2xl mb-2 block"
                   aria-hidden
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted">
                   Search for a customer, or register a new one, before selecting
                   a product.
                 </p>
@@ -479,14 +479,14 @@ export function PosView() {
 
         <PanelCard className="xl:col-span-2">
           <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between gap-3">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-gray-400">
+            <h4 className="text-sm font-bold uppercase tracking-wider text-muted">
               Membership Products
             </h4>
             <button
               type="button"
               onClick={() => void loadPlans()}
               disabled={plansLoading}
-              className="text-xs text-gray-400 hover:text-white disabled:opacity-40"
+              className="text-xs text-muted hover:text-fg disabled:opacity-40"
             >
               <i
                 className={`fas fa-rotate mr-1.5 ${plansLoading ? "fa-spin" : ""}`}
@@ -498,16 +498,16 @@ export function PosView() {
 
           <div className="p-4 sm:p-6 space-y-4">
             {plansLoading ? (
-              <p className="text-sm text-gray-400 py-8 text-center">
-                <i className="fas fa-circle-notch fa-spin text-sweat mr-2" aria-hidden />
+              <p className="text-sm text-muted py-8 text-center">
+                <i className="fas fa-circle-notch fa-spin text-accent-ink mr-2" aria-hidden />
                 Loading products…
               </p>
             ) : plansError ? (
-              <p className="text-sm text-red-400 py-8 text-center">
+              <p className="text-sm text-danger py-8 text-center">
                 {plansError}
               </p>
             ) : sellable.length === 0 ? (
-              <p className="text-sm text-gray-500 py-8 text-center">
+              <p className="text-sm text-muted py-8 text-center">
                 No products are currently on sale at this branch.
               </p>
             ) : (
@@ -524,11 +524,11 @@ export function PosView() {
                       className={`text-left rounded-xl border p-4 transition disabled:opacity-50 disabled:cursor-not-allowed ${
                         active
                           ? "border-sweat bg-sweat/10"
-                          : "border-border bg-sidebar hover:border-gray-600"
+                          : "border-border bg-sidebar hover:border-muted"
                       }`}
                     >
                       <span className="flex items-start justify-between gap-2">
-                        <span className="text-sm font-bold text-white">
+                        <span className="text-sm font-bold text-fg">
                           {plan.planName}
                         </span>
                         {plan.isPopular ? (
@@ -536,7 +536,7 @@ export function PosView() {
                         ) : null}
                       </span>
 
-                      <span className="block text-xs text-gray-500 mt-0.5">
+                      <span className="block text-xs text-muted mt-0.5">
                         {membershipTypeLabel(plan.membershipType)} •{" "}
                         {plan.branchName}
                       </span>
@@ -544,24 +544,24 @@ export function PosView() {
                       <span className="block mt-3">
                         {wasDiscounted ? (
                           <>
-                            <span className="text-xs text-gray-500 line-through mr-2">
+                            <span className="text-xs text-muted line-through mr-2">
                               {formatCurrency(plan.price)}
                             </span>
-                            <span className="text-lg font-bold text-sweat">
+                            <span className="text-lg font-bold text-accent-ink">
                               {formatCurrency(amount)}
                             </span>
-                            <span className="block text-[11px] text-sweat mt-0.5">
+                            <span className="block text-[11px] text-accent-ink mt-0.5">
                               Member price
                             </span>
                           </>
                         ) : (
-                          <span className="text-lg font-bold text-white">
+                          <span className="text-lg font-bold text-fg">
                             {formatCurrency(amount)}
                           </span>
                         )}
                       </span>
 
-                      <span className="block text-[11px] text-gray-500 mt-2">
+                      <span className="block text-[11px] text-muted mt-2">
                         {plan.isUnlimitedClasses
                           ? "Unlimited classes"
                           : `${plan.credits} credit${plan.credits === 1 ? "" : "s"}`}{" "}
@@ -570,7 +570,7 @@ export function PosView() {
                       </span>
 
                       {plan.salesEndDate ? (
-                        <span className="block text-[11px] text-gray-500 mt-0.5">
+                        <span className="block text-[11px] text-muted mt-0.5">
                           On sale until {formatDate(plan.salesEndDate)}
                         </span>
                       ) : null}
@@ -582,7 +582,7 @@ export function PosView() {
 
             {notSellable.length > 0 ? (
               <details className="rounded-xl border border-border bg-sidebar/30 p-4">
-                <summary className="text-xs text-gray-400 cursor-pointer">
+                <summary className="text-xs text-muted cursor-pointer">
                   {notSellable.length} plan
                   {notSellable.length === 1 ? "" : "s"} not available for
                   purchase
@@ -593,9 +593,9 @@ export function PosView() {
                       key={plan.id}
                       className="flex items-center justify-between gap-3 text-xs"
                     >
-                      <span className="text-gray-400 truncate">
+                      <span className="text-muted truncate">
                         {plan.planName}{" "}
-                        <span className="text-gray-600">
+                        <span className="text-muted">
                           ({membershipTypeLabel(plan.membershipType)})
                         </span>
                       </span>
@@ -633,23 +633,23 @@ export function PosView() {
         {selectedPlan && customer ? (
           <div className="space-y-4">
             <div className="rounded-xl border border-border bg-sidebar/40 p-4">
-              <p className="text-white font-bold">{selectedPlan.planName}</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-fg font-bold">{selectedPlan.planName}</p>
+              <p className="text-xs text-muted">
                 {membershipTypeLabel(selectedPlan.membershipType)} •{" "}
                 {selectedPlan.branchName}
               </p>
 
               <dl className="mt-3 space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-gray-400">List price</dt>
-                  <dd className="text-white">
+                  <dt className="text-muted">List price</dt>
+                  <dd className="text-fg">
                     {formatCurrency(selectedPlan.price)}
                   </dd>
                 </div>
                 {priceFor(selectedPlan).wasDiscounted ? (
                   <div className="flex justify-between">
-                    <dt className="text-sweat">Member discount</dt>
-                    <dd className="text-sweat">
+                    <dt className="text-accent-ink">Member discount</dt>
+                    <dd className="text-accent-ink">
                       −{" "}
                       {formatCurrency(
                         selectedPlan.price - selectedPlan.memberPrice
@@ -658,8 +658,8 @@ export function PosView() {
                   </div>
                 ) : null}
                 <div className="flex justify-between border-t border-border pt-2 mt-2">
-                  <dt className="text-white font-bold">Expected total</dt>
-                  <dd className="text-sweat font-bold text-lg">
+                  <dt className="text-fg font-bold">Expected total</dt>
+                  <dd className="text-accent-ink font-bold text-lg">
                     {formatCurrency(priceFor(selectedPlan).amount)}
                   </dd>
                 </div>
@@ -668,7 +668,7 @@ export function PosView() {
 
             <div>
               <label
-                className="block text-gray-400 text-sm mb-1"
+                className="block text-muted text-sm mb-1"
                 htmlFor="pos-method"
               >
                 Payment Method
@@ -689,7 +689,7 @@ export function PosView() {
 
             <div>
               <label
-                className="block text-gray-400 text-sm mb-1"
+                className="block text-muted text-sm mb-1"
                 htmlFor="pos-notes"
               >
                 Notes
@@ -742,25 +742,25 @@ export function PosView() {
               <Badge tone={paymentStatusTone(receipt.paymentStatus)}>
                 {PAYMENT_STATUS_LABEL[receipt.paymentStatus] ?? "Unknown"}
               </Badge>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted">
                 {PAYMENT_METHOD_LABEL[receipt.paymentMethod] ?? "-"}
               </span>
             </div>
 
             <dl className="space-y-1 text-sm">
               <div className="flex justify-between">
-                <dt className="text-gray-400">Amount</dt>
-                <dd className="text-white">{formatCurrency(receipt.amount)}</dd>
+                <dt className="text-muted">Amount</dt>
+                <dd className="text-fg">{formatCurrency(receipt.amount)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-400">Discount</dt>
-                <dd className="text-white">
+                <dt className="text-muted">Discount</dt>
+                <dd className="text-fg">
                   {formatCurrency(receipt.discount)}
                 </dd>
               </div>
               <div className="flex justify-between border-t border-border pt-2 mt-2">
-                <dt className="text-white font-bold">Charged</dt>
-                <dd className="text-sweat font-bold text-lg">
+                <dt className="text-fg font-bold">Charged</dt>
+                <dd className="text-accent-ink font-bold text-lg">
                   {formatCurrency(receipt.finalAmount)}
                 </dd>
               </div>

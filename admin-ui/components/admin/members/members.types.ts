@@ -261,16 +261,16 @@ export function memberToForm(m: ApiMember): MemberFormState {
 }
 
 export function statusStyle(status: string) {
-  let s = "bg-gray-500/10 text-gray-500";
+  let s = "bg-gray-500/10 text-muted";
   if (status === "Active") {
-    s = "bg-green-500/10 text-green-500 border border-green-500/20";
+    s = "bg-green-500/10 text-success border border-green-500/20";
   }
   if (status === "Expiring Soon") {
     s =
-      "bg-yellow-500/10 text-yellow-500 border border-yellow-500/50 animate-pulse";
+      "bg-yellow-500/10 text-warning border border-yellow-500/50 animate-pulse";
   }
   if (status === "Expired") {
-    s = "bg-red-500/10 text-red-500";
+    s = "bg-red-500/10 text-danger";
   }
   return s;
 }

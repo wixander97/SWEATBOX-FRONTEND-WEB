@@ -63,7 +63,7 @@ function ContextRow({
       <span className="text-[11px] text-muted uppercase tracking-wide">{label}</span>
       <span
         className={`text-xs text-right truncate ${
-          tone === "warn" ? "text-red-500 font-semibold" : "text-fg-soft"
+          tone === "warn" ? "text-danger font-semibold" : "text-fg-soft"
         }`}
       >
         {value}
@@ -277,7 +277,7 @@ export function PosCustomerPanel({
           {showResults && (
             <div className="mt-2 bg-sidebar border border-border rounded-lg overflow-hidden max-h-64 overflow-y-auto">
               {searchError ? (
-                <p className="px-3 py-3 text-xs text-red-500">{searchError}</p>
+                <p className="px-3 py-3 text-xs text-danger">{searchError}</p>
               ) : results.length === 0 ? (
                 <p className="px-3 py-3 text-xs text-muted">
                   {searching ? "Searching..." : "No customers found."}

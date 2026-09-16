@@ -38,16 +38,24 @@
   --sb-accent-ink: #7a5d00;
   --sb-dark: #f1f2f4;
   --sb-card: #ffffff;
-  --sb-sidebar: #f7f7f8;
-  --sb-border: #d9dade;
+  /* Contrast-tuned: inputs are bg-sidebar on a white card and need to read as
+     wells, and borders have to define a control, not merely hint at one. */
+  --sb-sidebar: #f4f5f7;
+  --sb-border: #c9ccd2;
   --sb-fg: #17181b;
   --sb-fg-soft: #3f4148;
-  --sb-muted: #6b6d76;
+  /* Helper/secondary ink: >= 6:1 on every light surface, still clearly a step
+     below fg-soft so the hierarchy survives. */
+  --sb-muted: #585a63;
   --sb-overlay: rgb(23 24 27 / 0.45);
-  --sb-danger: #dc2626;
-  --sb-success: #15803d;
-  --sb-warning: #a16207;
+  /* Status inks sit on 10-15% tints of their own hue, which eats contrast, so
+     they are one shade deeper than a plain-white target would need. */
+  --sb-danger: #b91c1c;
+  --sb-success: #166534;
+  --sb-warning: #854d0e;
   --sb-info: #1d4ed8;
+  /* Placeholder: readable, but visibly lighter than a typed value. */
+  --sb-placeholder: #75777f;
 }
 
 @theme inline {
@@ -114,6 +122,30 @@ body {
 [data-theme="light"] .text-rose-200 { color: #be123c; }
 [data-theme="light"] .text-violet-200 { color: #6d28d9; }
 [data-theme="light"] .text-purple-400 { color: #7e22ce; }
+/* The one status hue without a token (payment "refunded"). */
+[data-theme="light"] .text-orange-500 { color: #c2410c; }
+
+/*
+ * Light-mode control affordances.
+ *
+ * Tailwind's preflight paints placeholders at 50% of the text colour, which on
+ * white lands near 3:1 and reads as disabled. The yellow focus border is
+ * ~1.4:1 against white, so light mode backs it with a soft ring instead of
+ * relying on the hue alone. The placeholder rule lives in the base layer so a
+ * placeholder: utility on the element still wins.
+ */
+@layer base {
+  [data-theme="light"] input::placeholder,
+  [data-theme="light"] textarea::placeholder {
+    color: var(--sb-placeholder);
+    opacity: 1;
+  }
+}
+
+[data-theme="light"] .focus\:border-sweat:focus {
+  border-color: #c9a400;
+  box-shadow: 0 0 0 3px rgb(255 215 0 / 0.35);
+}
 
 .fade-in {
   animation: fadeIn 0.3s ease-out;
@@ -175,6 +207,11 @@ select {
   background-position: right 0.6rem center;
   background-size: 1rem;
   padding-right: 2rem;
+}
+
+/* The #9ca3af chevron is ~2.5:1 on a light well; use the muted ink instead. */
+[data-theme="light"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23585a63' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
 }
 
 /* Native date/time pickers: render icons light in dark theme */

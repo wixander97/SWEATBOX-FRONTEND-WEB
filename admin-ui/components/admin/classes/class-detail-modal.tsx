@@ -671,7 +671,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                                   ? "bg-red-500/10 text-danger border-red-500/30"
                                   : attended
                                     ? "bg-green-500/10 text-success border-green-500/30"
-                                    : "bg-blue-500/10 text-blue-500 border-blue-500/30"
+                                    : "bg-blue-500/10 text-info border-blue-500/30"
                               }`}
                             >
                               {b.isCancelled ? "Cancelled" : (b.bookingStatus || "Booked")}
@@ -787,13 +787,13 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                 )}
 
                 {attendanceMessage && (
-                  <p className="mt-2 text-[11px] text-green-600 bg-green-500/10 border border-green-500/30 px-3 py-2 rounded">
+                  <p className="mt-2 text-[11px] text-success bg-green-500/10 border border-green-500/30 px-3 py-2 rounded">
                     <i className="fas fa-check mr-1.5" aria-hidden />
                     {attendanceMessage}
                   </p>
                 )}
                 {attendanceError && (
-                  <p className="mt-2 text-[11px] text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
+                  <p className="mt-2 text-[11px] text-danger bg-red-500/10 border border-red-500/30 px-3 py-2 rounded">
                     {attendanceError}
                   </p>
                 )}

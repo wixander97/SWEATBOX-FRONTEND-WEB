@@ -97,7 +97,7 @@ export function PayrollView() {
   if (!canSeeFinance) {
     return (
       <div className="bg-card rounded-xl border border-dashed border-red-500 p-6 sm:p-12 text-center">
-        <i className="fas fa-lock text-red-500 text-5xl mb-4" aria-hidden />
+        <i className="fas fa-lock text-danger text-5xl mb-4" aria-hidden />
         <h3 className="text-2xl font-bold text-fg mb-2">Access Denied</h3>
         <p className="text-muted">
           Your role does not have permission to view Finance &amp; Payroll.
@@ -185,7 +185,7 @@ export function PayrollView() {
                         : "—"}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className="bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded text-xs font-bold border border-yellow-500/20">
+                    <span className="bg-yellow-500/10 text-warning px-3 py-1 rounded text-xs font-bold border border-yellow-500/20">
                       {r.status ?? "Pending"}
                     </span>
                   </td>

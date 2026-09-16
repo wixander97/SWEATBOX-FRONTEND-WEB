@@ -346,7 +346,7 @@ export default function ReportsPage() {
                         <span
                           className={`px-2 py-1 rounded text-xs font-bold ${s.status.toLowerCase().includes("late")
                             ? "bg-red-500/10 text-danger"
-                            : "bg-green-500/10 text-green-500 border border-green-500/20"
+                            : "bg-green-500/10 text-success border border-green-500/20"
                             }`}
                         >
                           {s.status}

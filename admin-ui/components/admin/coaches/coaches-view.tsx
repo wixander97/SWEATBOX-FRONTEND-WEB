@@ -672,11 +672,11 @@ export const CoachesView = forwardRef<CoachesViewHandle, CoachesViewProps>(funct
                             <td className="px-3 py-2 text-xs">{record.branchName || "—"}</td>
                             <td className="px-3 py-2 text-center">
                               {record.isPresent ? (
-                                <span className="text-green-500">
+                                <span className="text-success">
                                   <i className="fas fa-check" aria-hidden />
                                 </span>
                               ) : (
-                                <span className="text-red-500">
+                                <span className="text-danger">
                                   <i className="fas fa-times" aria-hidden />
                                 </span>
                               )}

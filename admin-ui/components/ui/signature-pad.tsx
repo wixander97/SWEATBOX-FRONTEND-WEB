@@ -177,10 +177,10 @@ export function SignaturePad({
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-gray-400 text-sm">
+        <span className="text-muted text-sm">
           {label}
           {required ? (
-            <span className="text-sweat ml-1" aria-hidden>
+            <span className="text-accent-ink ml-1" aria-hidden>
               *
             </span>
           ) : null}
@@ -189,7 +189,7 @@ export function SignaturePad({
           type="button"
           onClick={clear}
           disabled={disabled || !hasInk}
-          className="text-xs text-gray-400 hover:text-white disabled:opacity-40 disabled:hover:text-gray-400"
+          className="text-xs text-muted hover:text-fg disabled:opacity-40 disabled:hover:text-muted"
         >
           <i className="fas fa-eraser mr-1.5" aria-hidden />
           Clear
@@ -210,20 +210,20 @@ export function SignaturePad({
       />
 
       <div className="flex items-center justify-between mt-1 gap-3">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted">
           {hasInk
             ? "Signature captured. Clear to redraw."
             : "Sign inside the box using a mouse, pen or finger."}
         </p>
         {hasInk ? (
-          <span className="text-xs text-green-500 font-bold whitespace-nowrap">
+          <span className="text-xs text-success font-bold whitespace-nowrap">
             <i className="fas fa-check mr-1" aria-hidden />
             Signed
           </span>
         ) : null}
       </div>
 
-      {error ? <p className="text-xs text-red-400 mt-1">{error}</p> : null}
+      {error ? <p className="text-xs text-danger mt-1">{error}</p> : null}
     </div>
   );
 }

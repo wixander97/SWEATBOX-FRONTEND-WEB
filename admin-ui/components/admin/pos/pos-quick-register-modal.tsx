@@ -57,7 +57,7 @@ export function PosQuickRegisterModal({ initialQuery = "", onClose, onCreated }:
     const found = existing;
     return (
       <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-        <p className="text-yellow-600 text-xs font-bold uppercase">
+        <p className="text-warning text-xs font-bold uppercase">
           Customer already registered
         </p>
         <p className="text-sm text-fg mt-1">{memberDisplayName(found)}</p>

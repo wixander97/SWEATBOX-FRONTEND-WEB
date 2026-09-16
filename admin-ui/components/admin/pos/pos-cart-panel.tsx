@@ -79,7 +79,7 @@ export function PosCartPanel({
             type="button"
             onClick={onClear}
             disabled={disabled}
-            className="text-[11px] text-muted hover:text-red-500 disabled:opacity-40"
+            className="text-[11px] text-muted hover:text-danger disabled:opacity-40"
           >
             Clear
           </button>
@@ -114,7 +114,7 @@ export function PosCartPanel({
                     type="button"
                     onClick={() => onRemove(item.lineId)}
                     disabled={disabled}
-                    className="text-muted hover:text-red-500 text-xs mt-1 disabled:opacity-40"
+                    className="text-muted hover:text-danger text-xs mt-1 disabled:opacity-40"
                     aria-label={`Remove ${item.name}`}
                   >
                     <i className="fas fa-trash" aria-hidden />

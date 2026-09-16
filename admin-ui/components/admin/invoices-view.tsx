@@ -155,9 +155,9 @@ export function InvoicesView() {
     return (
       <PanelCard>
         <div className="p-8 sm:p-12 text-center">
-          <i className="fas fa-lock text-red-500 text-4xl mb-4" aria-hidden />
-          <h3 className="text-xl font-bold text-white mb-2">Access Denied</h3>
-          <p className="text-sm text-gray-400">
+          <i className="fas fa-lock text-danger text-4xl mb-4" aria-hidden />
+          <h3 className="text-xl font-bold text-fg mb-2">Access Denied</h3>
+          <p className="text-sm text-muted">
             Your role does not have permission to view payments and invoices.
           </p>
         </div>
@@ -171,19 +171,19 @@ export function InvoicesView() {
         <div className="p-4 sm:p-6 border-b border-border space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h3 className="text-lg font-bold font-display uppercase text-white">
+              <h3 className="text-lg font-bold font-display uppercase text-fg">
                 Payments &amp; Invoices
               </h3>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted mt-1">
                 Invoice PDFs are rendered by the backend with the configured
                 letterhead.
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-500 uppercase tracking-wider">
+              <p className="text-xs text-muted uppercase tracking-wider">
                 Paid in view
               </p>
-              <p className="text-xl font-bold text-sweat">
+              <p className="text-xl font-bold text-accent-ink">
                 {formatCurrency(total)}
               </p>
             </div>
@@ -192,7 +192,7 @@ export function InvoicesView() {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3">
             <div className="relative sm:col-span-2 xl:col-span-2">
               <i
-                className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
+                className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm"
                 aria-hidden
               />
               <input
@@ -263,8 +263,8 @@ export function InvoicesView() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-left text-sm text-gray-400">
-            <thead className="bg-sidebar text-xs uppercase font-bold text-gray-500">
+          <table className="w-full min-w-[980px] text-left text-sm text-muted">
+            <thead className="bg-sidebar text-xs uppercase font-bold text-muted">
               <tr>
                 <th className="px-6 py-4">Invoice</th>
                 <th className="px-6 py-4">Member</th>
@@ -297,30 +297,30 @@ export function InvoicesView() {
                   return (
                     <tr key={payment.id} className="table-row transition">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="block text-white font-bold">
+                        <span className="block text-fg font-bold">
                           {payment.invoiceNo}
                         </span>
-                        <span className="block text-xs text-gray-500">
+                        <span className="block text-xs text-muted">
                           {formatDateTime(payment.created)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-white">
+                      <td className="px-6 py-4 text-fg">
                         {payment.memberName || "-"}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="block text-xs text-white">
+                        <span className="block text-xs text-fg">
                           {payment.membershipPlanName || "-"}
                         </span>
-                        <span className="block text-xs text-gray-500">
+                        <span className="block text-xs text-muted">
                           {payment.branchName || "-"}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="block text-white font-bold">
+                        <span className="block text-fg font-bold">
                           {formatCurrency(payment.finalAmount)}
                         </span>
                         {payment.discount > 0 ? (
-                          <span className="block text-xs text-sweat">
+                          <span className="block text-xs text-accent-ink">
                             −{formatCurrency(payment.discount)} discount
                           </span>
                         ) : null}
@@ -340,7 +340,7 @@ export function InvoicesView() {
                             type="button"
                             onClick={() => void invoice(payment, "view")}
                             disabled={busy}
-                            className="text-gray-400 hover:text-white px-2 py-1 disabled:opacity-40"
+                            className="text-muted hover:text-fg px-2 py-1 disabled:opacity-40"
                             aria-label={`View invoice ${payment.invoiceNo}`}
                             title="View invoice PDF"
                           >
@@ -353,7 +353,7 @@ export function InvoicesView() {
                             type="button"
                             onClick={() => void invoice(payment, "download")}
                             disabled={busy}
-                            className="text-gray-400 hover:text-white px-2 py-1 disabled:opacity-40"
+                            className="text-muted hover:text-fg px-2 py-1 disabled:opacity-40"
                             aria-label={`Download invoice ${payment.invoiceNo}`}
                             title="Download invoice PDF"
                           >
@@ -363,7 +363,7 @@ export function InvoicesView() {
                             type="button"
                             onClick={() => void sendReceipt(payment)}
                             disabled={busy}
-                            className="text-gray-400 hover:text-white px-2 py-1 disabled:opacity-40"
+                            className="text-muted hover:text-fg px-2 py-1 disabled:opacity-40"
                             aria-label={`Email receipt for ${payment.invoiceNo}`}
                             title="Email receipt to the member"
                           >
