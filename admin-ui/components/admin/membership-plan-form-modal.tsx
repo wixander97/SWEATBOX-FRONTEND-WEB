@@ -79,6 +79,13 @@ type FormState = {
   memberDiscountPercent: string;
 };
 
+/** Readable IDR preview under a raw number input, e.g. `Rp 2.000.000`. */
+function currencyHint(raw: string): string | undefined {
+  const value = Number(raw);
+  if (!raw.trim() || Number.isNaN(value) || value <= 0) return undefined;
+  return formatCurrency(value);
+}
+
 function initialState(plan: MembershipPlan | null | undefined): FormState {
   return {
     planName: plan?.planName ?? "",
@@ -264,6 +271,19 @@ export function MembershipPlanFormModal({
     const price = Number(form.price);
     if (!form.price.trim() || Number.isNaN(price) || price <= 0) {
       errors.price = "Price must be greater than 0.";
+    } else if (!Number.isInteger(price)) {
+      errors.price = "Price must be a whole number.";
+    }
+
+    const registrationFee = Number(form.registrationFee);
+    if (
+      form.registrationFee.trim() &&
+      (Number.isNaN(registrationFee) ||
+        registrationFee < 0 ||
+        !Number.isInteger(registrationFee))
+    ) {
+      errors.registrationFee =
+        "Registration fee must be a whole number of 0 or more.";
     }
 
     const validityDays = Number(form.validityDays);
@@ -273,6 +293,8 @@ export function MembershipPlanFormModal({
       validityDays <= 0
     ) {
       errors.validityDays = "Validity days must be greater than 0.";
+    } else if (!Number.isInteger(validityDays)) {
+      errors.validityDays = "Validity days must be a whole number.";
     }
 
     const discount = Number(form.memberDiscountPercent);
@@ -468,12 +490,13 @@ export function MembershipPlanFormModal({
               htmlFor="pf-price"
               required
               error={fieldErrors.price}
+              hint={currencyHint(form.price)}
             >
               <input
                 id="pf-price"
                 type="number"
                 min={1}
-                step={1000}
+                step={1}
                 inputMode="numeric"
                 className={inputClass(Boolean(fieldErrors.price))}
                 value={form.price}
@@ -481,14 +504,19 @@ export function MembershipPlanFormModal({
               />
             </Field>
 
-            <Field label="Registration Fee (IDR)" htmlFor="pf-regfee">
+            <Field
+              label="Registration Fee (IDR)"
+              htmlFor="pf-regfee"
+              error={fieldErrors.registrationFee}
+              hint={currencyHint(form.registrationFee)}
+            >
               <input
                 id="pf-regfee"
                 type="number"
                 min={0}
-                step={1000}
+                step={1}
                 inputMode="numeric"
-                className={inputClass()}
+                className={inputClass(Boolean(fieldErrors.registrationFee))}
                 value={form.registrationFee}
                 onChange={(e) => set("registrationFee", e.target.value)}
               />
@@ -502,6 +530,7 @@ export function MembershipPlanFormModal({
               <input
                 id="pf-credits"
                 type="number"
+                step={1}
                 min={0}
                 inputMode="numeric"
                 className={inputClass()}
@@ -519,6 +548,7 @@ export function MembershipPlanFormModal({
               <input
                 id="pf-validity"
                 type="number"
+                step={1}
                 min={1}
                 inputMode="numeric"
                 className={inputClass(Boolean(fieldErrors.validityDays))}
@@ -553,6 +583,7 @@ export function MembershipPlanFormModal({
               <input
                 id="pf-ptsessions"
                 type="number"
+                step={1}
                 min={0}
                 inputMode="numeric"
                 className={inputClass()}
