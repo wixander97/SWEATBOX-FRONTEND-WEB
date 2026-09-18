@@ -118,3 +118,48 @@ export function toSettingMap(
 ): Record<string, SystemSetting> {
   return Object.fromEntries(settings.map((s) => [s.key, s]));
 }
+
+/**
+ * Normalises a website or logo address typed into Brand Settings.
+ *
+ * People type `www.sweatboxfnp.com` or `sweatboxfnp.com`, not a full URL, and
+ * the browser's `type="url"` check rejected both — which also blocked the whole
+ * form from submitting. A value without a scheme is given `https://`, since the
+ * documents link to it and the PDF renderer fetches the logo from it.
+ *
+ * @returns `""` for a blank value, the normalised absolute URL, or `null` when
+ *   the value is not a usable http(s) address.
+ */
+export function normalizeUrl(raw: string): string | null {
+  const value = raw.trim();
+  if (!value) return "";
+  if (/\s/.test(value)) return null;
+
+  const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(value);
+  if (hasScheme && !/^https?:\/\//i.test(value)) return null;
+  const candidate = hasScheme ? value : `https://${value.replace(/^\/+/, "")}`;
+
+  let url: URL;
+  try {
+    url = new URL(candidate);
+  } catch {
+    return null;
+  }
+
+  // A real host: dot-separated labels ending in an alphabetic TLD, or
+  // localhost. Rejects things like `https://foo` or `https://.com`.
+  const host = url.hostname;
+  const isDomain =
+    /^(?=.{1,253}$)([a-z0-9-]{1,63}\.)+[a-z]{2,63}$/i.test(host) &&
+    host.split(".").every((label) => !label.startsWith("-") && !label.endsWith("-"));
+  if (!isDomain && host !== "localhost") return null;
+
+  // Keep what the user typed after the scheme; `url.href` would add a trailing
+  // slash to a bare domain and lowercase the path's host only.
+  return hasScheme ? value : candidate;
+}
+
+/** A pragmatic address check: something@domain.tld, no spaces. */
+export function isValidEmail(raw: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(raw.trim());
+}

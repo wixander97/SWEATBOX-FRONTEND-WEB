@@ -18,11 +18,19 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    let res: Response;
+    try {
+      res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+    } catch {
+      // A network failure used to leave the button stuck on its loading state.
+      setLoading(false);
+      setError("Could not reach the server. Check your connection and try again.");
+      return;
+    }
 
     const payload = (await res.json().catch(() => ({}))) as { ok?: boolean; token?: string; message?: string };
     setLoading(false);

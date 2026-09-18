@@ -5,6 +5,8 @@ import { useRole } from "@/contexts/role-context";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { downloadXlsx } from "@/lib/export";
+import { useToast } from "@/components/ui/toast";
 
 type PayrollRow = {
   coachId?: string;
@@ -31,12 +33,14 @@ export function PayrollView() {
   // Payroll figures are finance data; the API guards the equivalent summary
   // behind SuperAdmin, so the page follows the same rule.
   const { can } = useRole();
+  const toast = useToast();
   const canSeeFinance = can("finance.read");
   const [rows, setRows] = useState<PayrollRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sortKey, setSortKey] = useState<PayrollSortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [exporting, setExporting] = useState(false);
 
   function toggleSort(key: PayrollSortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -46,35 +50,87 @@ export function PayrollView() {
   const loadPayroll = useCallback(async () => {
     setLoading(true);
     setError("");
-    const res = await authFetch(`${API_BASE_URL}/api/v1/coaches?page=1&pageSize=100`, { cache: "no-store" });
-    if (redirectToLoginIfUnauthorized(res.status)) return;
-    const payload = await res.json().catch(() => ({})) as {
-      items?: PayrollRow[];
-      data?: PayrollRow[];
-    } | PayrollRow[];
-    if (!res.ok) {
-      setError("Failed to load payroll data");
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/coaches?page=1&pageSize=100`, { cache: "no-store" });
+      if (redirectToLoginIfUnauthorized(res.status)) return;
+      const payload = await res.json().catch(() => ({})) as {
+        items?: PayrollRow[];
+        data?: PayrollRow[];
+        message?: string;
+      } | PayrollRow[];
+      if (!res.ok) {
+        const msg = !Array.isArray(payload) ? payload.message : undefined;
+        setError(msg || "Failed to load payroll data");
+        return;
+      }
+      const coaches: PayrollRow[] = Array.isArray(payload)
+        ? payload
+        : (payload.items ?? payload.data ?? []);
+
+      const payrollRows: PayrollRow[] = coaches.map((c) => ({
+        coachId: (c as { id?: string }).id,
+        coachName: c.coachName || c.fullName || "—",
+        totalClasses: c.totalClasses ?? 0,
+        totalMembers: c.totalMembers ?? 0,
+        totalPtSessions: c.totalPtSessions ?? 0,
+        // A coach without payroll configured comes back with an empty string,
+        // which rendered as a blank cell.
+        payrollType: c.payrollType?.trim() || undefined,
+        payrollRate: c.payrollRate ?? undefined,
+        estimatedPayout: c.estimatedPayout ?? c.estPayout,
+        status: c.status || "Pending",
+      }));
+      setRows(payrollRows);
+    } catch {
+      // authFetch rejects on a network failure; without this the page stayed
+      // on "Loading payroll data..." forever.
+      setError("Failed to load payroll data. Check your connection and try again.");
+    } finally {
       setLoading(false);
+    }
+  }, []);
+
+  /**
+   * There is no payroll export endpoint, so the report is built from the rows
+   * already loaded, in the order currently shown — the same client-side
+   * approach every other export in the portal uses.
+   */
+  async function exportReport() {
+    if (exporting) return;
+    if (sorted.length === 0) {
+      toast.info("Nothing to export", "There is no payroll data to include in the report.");
       return;
     }
-    const coaches: PayrollRow[] = Array.isArray(payload)
-      ? payload
-      : (payload.items ?? payload.data ?? []);
-
-    const payrollRows: PayrollRow[] = coaches.map((c) => ({
-      coachId: (c as { id?: string }).id,
-      coachName: c.coachName ?? c.fullName ?? "—",
-      totalClasses: c.totalClasses ?? 0,
-      totalMembers: c.totalMembers ?? 0,
-      totalPtSessions: c.totalPtSessions ?? 0,
-      payrollType: c.payrollType ?? "—",
-      payrollRate: c.payrollRate ?? 0,
-      estimatedPayout: c.estimatedPayout ?? c.estPayout,
-      status: c.status ?? "Pending",
-    }));
-    setRows(payrollRows);
-    setLoading(false);
-  }, []);
+    setExporting(true);
+    try {
+      const header = [
+        "Coach Name",
+        "Total Classes",
+        "Total Members",
+        "Total PT Sessions",
+        "Payroll Type",
+        "Rate",
+        "Est. Payout",
+        "Status",
+      ];
+      const data = sorted.map((r) => [
+        r.coachName ?? "—",
+        r.totalClasses ?? 0,
+        r.totalMembers ?? 0,
+        r.totalPtSessions ?? 0,
+        r.payrollType ?? "—",
+        r.payrollRate ?? "—",
+        r.estimatedPayout ?? "—",
+        r.status ?? "Pending",
+      ]);
+      const date = new Date().toISOString().slice(0, 10);
+      const ok = await downloadXlsx([header, ...data], `coaches-payroll-report-${date}.xlsx`);
+      if (ok) toast.success("Payroll report exported.");
+      else toast.error("Could not export the payroll report", "The file could not be generated. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   useEffect(() => {
     if (!canSeeFinance) return;
@@ -107,7 +163,20 @@ export function PayrollView() {
   }
 
   if (loading) return <div className="text-muted">Loading payroll data...</div>;
-  if (error) return <div className="text-danger">{error}</div>;
+  if (error) {
+    return (
+      <div className="bg-card rounded-xl border border-border p-8 text-center space-y-3">
+        <p className="text-sm text-danger">{error}</p>
+        <button
+          type="button"
+          onClick={() => void loadPayroll()}
+          className="text-xs text-fg bg-fg/5 hover:bg-fg/10 border border-border px-4 py-2 rounded-lg"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -115,10 +184,13 @@ export function PayrollView() {
         <h4 className="font-bold text-lg">Coach Payroll Overview</h4>
         <button
           type="button"
-          className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5"
+          onClick={() => void exportReport()}
+          disabled={exporting}
+          aria-busy={exporting}
+          className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <i className="fas fa-download mr-2" aria-hidden />
-          Export Report
+          <i className={`fas ${exporting ? "fa-circle-notch fa-spin" : "fa-download"} mr-2`} aria-hidden />
+          {exporting ? "Exporting…" : "Export Report"}
         </button>
       </div>
       <div className="overflow-x-auto">

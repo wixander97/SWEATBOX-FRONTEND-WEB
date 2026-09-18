@@ -39,25 +39,27 @@ export function EditStaffModal({
     async function loadDetail() {
       setLoading(true);
       setError("");
-      const res = await authFetch(`${API_BASE_URL}/api/v1/staffs/${staffId}`, {
-        cache: "no-store",
-      });
-      if (redirectToLoginIfUnauthorized(res.status)) {
-        setLoading(false);
-        return;
+      try {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/staffs/${staffId}`, {
+          cache: "no-store",
+        });
+        if (redirectToLoginIfUnauthorized(res.status)) return;
+        const data = (await res.json().catch(() => ({}))) as StaffDetail & {
+          data?: StaffDetail;
+          message?: string;
+        };
+        if (!res.ok) {
+          setError(data?.message ?? "Failed to load staff details.");
+          return;
+        }
+        const detail = (data.data ?? data) as StaffDetail;
+        if (!cancelled) setForm(staffToEditForm(detail));
+      } catch {
+        // A network failure used to leave the modal loading forever.
+        if (!cancelled) setError("Failed to load staff details.");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      const data = (await res.json().catch(() => ({}))) as StaffDetail & {
-        data?: StaffDetail;
-        message?: string;
-      };
-      if (!res.ok) {
-        setError(data?.message ?? "Failed to load staff details.");
-        setLoading(false);
-        return;
-      }
-      const detail = (data.data ?? data) as StaffDetail;
-      if (!cancelled) setForm(staffToEditForm(detail));
-      setLoading(false);
     }
     void loadDetail();
     return () => {

@@ -7,11 +7,14 @@
  * @param aoa - Array of rows; first row is treated as the header. All cell
  *   values are written as-is (string/number), matching prior CSV content.
  * @param filename - Download filename (should end in `.xlsx`).
+ * @returns `true` once the download was handed to the browser, `false` if the
+ *   file could not be built. Never throws, so existing fire-and-forget callers
+ *   are unaffected; callers that report failure can check the result.
  */
 export async function downloadXlsx(
   aoa: (string | number)[][],
   filename: string
-): Promise<void> {
+): Promise<boolean> {
   try {
     const XLSX = await import("xlsx");
     const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -26,10 +29,18 @@ export async function downloadXlsx(
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    // Revoking synchronously after click() can cancel the download in Safari
+    // and Firefox, which start reading the blob asynchronously.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return true;
   } catch (err) {
     console.error(`[lib/export] downloadXlsx(${filename}) failed:`, err);
+    return false;
   }
 }
 

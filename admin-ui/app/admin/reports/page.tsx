@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { downloadXlsx } from "@/lib/export";
+import { useToast } from "@/components/ui/toast";
 
 type StaffAttendance = {
   id: string;
@@ -58,6 +59,8 @@ export default function ReportsPage() {
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
   const [attendances, setAttendances] = useState<StaffAttendance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const toast = useToast();
   const [error, setError] = useState("");
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -94,28 +97,33 @@ export default function ReportsPage() {
     const url = staffId
       ? `/api/staff-attendances/${staffId}`
       : "/api/staff-attendances";
-    const res = await fetch(url, { cache: "no-store" });
-    if (redirectToLoginIfUnauthorized(res.status)) return;
-    const data = await res.json().catch(() => []);
-    if (!res.ok) {
-      setError(
-        typeof data === "object" && !Array.isArray(data)
-          ? (data.message ?? "Failed to load attendance data")
-          : "Failed to load attendance data"
-      );
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (redirectToLoginIfUnauthorized(res.status)) return;
+      const data = await res.json().catch(() => []);
+      if (!res.ok) {
+        setError(
+          typeof data === "object" && !Array.isArray(data)
+            ? (data.message ?? "Failed to load attendance data")
+            : "Failed to load attendance data"
+        );
+        setAttendances([]);
+        return;
+      }
+      const list: StaffAttendance[] = Array.isArray(data)
+        ? data
+        : (data.items ?? data.data ?? []);
+      setAttendances(list);
+    } catch {
+      // A network failure used to leave the table loading forever.
+      setError("Failed to load attendance data");
       setAttendances([]);
+    } finally {
       setLoading(false);
-      return;
     }
-    const list: StaffAttendance[] = Array.isArray(data)
-      ? data
-      : (data.items ?? data.data ?? []);
-    setAttendances(list);
-    setLoading(false);
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadAttendances(selectedStaffId);
   }, [loadAttendances, selectedStaffId]);
 
@@ -175,34 +183,52 @@ export default function ReportsPage() {
       formatDate(s.createdAt),
       s.updatedAt ? formatDate(s.updatedAt) : "",
     ]);
-    await downloadXlsx([header, ...dataRows], filename);
+    return downloadXlsx([header, ...dataRows], filename);
   }
 
-  async function exportAllReport() {
-    const res = await fetch("/api/staff-attendances", { cache: "no-store" });
-    if (redirectToLoginIfUnauthorized(res.status)) return;
-    const data = await res.json().catch(() => []);
-    if (!res.ok) return;
-    const list: StaffAttendance[] = Array.isArray(data)
-      ? data
-      : (data.items ?? data.data ?? []);
-    exportAttendanceXlsx(list, "staff-attendance-all.xlsx");
+  /**
+   * Fetches a fresh attendance list and downloads it. Failures used to return
+   * silently, so a failed export looked exactly like a button that did nothing.
+   */
+  async function runExport(url: string, filename: string) {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (redirectToLoginIfUnauthorized(res.status)) return;
+      const data = await res.json().catch(() => []);
+      if (!res.ok) {
+        const msg =
+          typeof data === "object" && !Array.isArray(data) ? data.message : undefined;
+        toast.error("Could not export the report", msg || "Failed to load attendance data.");
+        return;
+      }
+      const list: StaffAttendance[] = Array.isArray(data)
+        ? data
+        : (data.items ?? data.data ?? []);
+      if (await exportAttendanceXlsx(list, filename)) toast.success("Report exported.");
+      else toast.error("Could not export the report", "The file could not be generated.");
+    } catch {
+      toast.error("Could not export the report", "Check your connection and try again.");
+    } finally {
+      setExporting(false);
+    }
   }
 
-  async function exportCurrentStaffReport() {
+  function exportAllReport() {
+    return runExport("/api/staff-attendances", "staff-attendance-all.xlsx");
+  }
+
+  function exportCurrentStaffReport() {
     if (!selectedStaffId) return;
-    const res = await fetch(`/api/staff-attendances/${selectedStaffId}`, { cache: "no-store" });
-    if (redirectToLoginIfUnauthorized(res.status)) return;
-    const data = await res.json().catch(() => []);
-    if (!res.ok) return;
-    const list: StaffAttendance[] = Array.isArray(data)
-      ? data
-      : (data.items ?? data.data ?? []);
     const staff = staffList.find((s) => s.id === selectedStaffId);
     const namePart = (staff?.fullName ?? staff?.name ?? selectedStaffId)
       .replace(/\s+/g, "-")
       .replace(/[^a-zA-Z0-9-_]/g, "");
-    exportAttendanceXlsx(list, `staff-attendance-${namePart || "staff"}.xlsx`);
+    return runExport(
+      `/api/staff-attendances/${selectedStaffId}`,
+      `staff-attendance-${namePart || "staff"}.xlsx`
+    );
   }
 
   return (
@@ -244,7 +270,7 @@ export default function ReportsPage() {
               <button
                 type="button"
                 onClick={() => void exportAllReport()}
-                disabled={loading}
+                disabled={loading || exporting}
                 className="bg-sidebar border border-border text-fg px-4 py-2 rounded-lg text-sm hover:bg-fg/5 disabled:opacity-50"
               >
                 <i className="fas fa-file-export mr-2" aria-hidden />
@@ -254,7 +280,7 @@ export default function ReportsPage() {
                 type="button"
                 onClick={() => void exportCurrentStaffReport()}
                 data-help-target="reports-export"
-                disabled={loading || !selectedStaffId}
+                disabled={loading || exporting || !selectedStaffId}
                 className="bg-sweat text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition disabled:opacity-50"
               >
                 <i className="fas fa-user-clock mr-2" aria-hidden />

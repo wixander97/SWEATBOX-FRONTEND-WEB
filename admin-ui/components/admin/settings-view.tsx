@@ -15,6 +15,8 @@ import {
   READ_ONLY_BRAND_FIELDS,
   brandBranchToken,
   brandKeyFor,
+  isValidEmail,
+  normalizeUrl,
   toSettingMap,
   type BrandScope,
   type SystemSetting,
@@ -131,7 +133,7 @@ export function SettingsView() {
     e.preventDefault();
     if (saving || !canWrite) return;
 
-    const discount = values[DROP_IN_DISCOUNT_KEY];
+    const discount = values[DROP_IN_DISCOUNT_KEY] ?? "";
     if (discount.trim()) {
       const parsed = Number(discount);
       if (Number.isNaN(parsed) || parsed < 0 || parsed > 100) {
@@ -140,24 +142,60 @@ export function SettingsView() {
       }
     }
 
+    // Validated here rather than by the browser: `type="url"` rejected
+    // `www.sweatboxfnp.com` and, because a failed native check cancels the
+    // submit event, Save Settings silently did nothing. Every scope is checked
+    // up front so a bad value on another branch tab cannot fail half a save.
+    const pending: { key: string; value: string; description: string }[] = [];
+    const normalized: Record<string, string> = {};
+    for (const scope of scopesFor(branches)) {
+      for (const field of BRAND_FIELDS) {
+        const key = brandKeyFor(field.key, scope);
+        const current = settings[key]?.value ?? "";
+        let next = values[key] ?? "";
+        // Untouched fields are never rewritten, even if a stored legacy value
+        // would not pass today's check.
+        if (next === current) continue;
+
+        const where = scope ? ` for ${scope.branchName}` : "";
+        if (field.kind === "url") {
+          const url = normalizeUrl(next);
+          if (url === null) {
+            setScopeId(scope?.branchId ?? "");
+            setError(`${field.label}${where} is not a valid web address. Use a domain such as www.sweatboxfnp.com.`);
+            return;
+          }
+          next = url;
+        } else if (field.kind === "email") {
+          next = next.trim();
+          if (next && !isValidEmail(next)) {
+            setScopeId(scope?.branchId ?? "");
+            setError(`${field.label}${where} is not a valid email address.`);
+            return;
+          }
+        }
+        if (next !== values[key]) normalized[key] = next;
+        if (next === current) continue;
+        pending.push({
+          key,
+          value: next,
+          description: scope ? `${field.label} for ${scope.branchName}.` : field.hint,
+        });
+      }
+    }
+
     setError(null);
     setSaving(true);
+    // Show exactly what is being saved (e.g. the added https://).
+    if (Object.keys(normalized).length > 0) {
+      setValues((prev) => ({ ...prev, ...normalized }));
+    }
     try {
       // Every scope is saved, so edits made on one branch tab are not lost by
       // switching to another before saving. Each key belongs to one scope, so
       // no scope's write can land on another's row.
-      for (const scope of scopesFor(branches)) {
-        for (const field of BRAND_FIELDS) {
-          const key = brandKeyFor(field.key, scope);
-          const current = settings[key]?.value ?? "";
-          const next = values[key] ?? "";
-          if (next === current) continue;
-          await writeSetting(
-            key,
-            next,
-            scope ? `${field.label} for ${scope.branchName}.` : field.hint
-          );
-        }
+      for (const { key, value, description } of pending) {
+        await writeSetting(key, value, description);
       }
 
       const currentDiscount = settings[DROP_IN_DISCOUNT_KEY]?.value ?? "";
@@ -167,6 +205,11 @@ export function SettingsView() {
           discount,
           "Discount applied to a Drop In or 1 Day Pass for a customer who already holds an active membership."
         );
+      }
+
+      if (pending.length === 0 && discount === currentDiscount) {
+        toast.info("No changes to save.");
+        return;
       }
 
       toast.success("Settings saved.");
@@ -210,12 +253,15 @@ export function SettingsView() {
   const scope = scopes.find((s) => (s?.branchId ?? "") === scopeId) ?? null;
   const valueOf = (fieldKey: string, forScope: BrandScope) =>
     values[brandKeyFor(fieldKey, forScope)] ?? "";
-  const logoUrl = (
-    valueOf("BRAND_LOGO_URL", scope).trim() || valueOf("BRAND_LOGO_URL", null)
-  ).trim();
+  // Previewed as it will be saved, so `cdn.example.com/logo.png` is not
+  // resolved as a path on this portal.
+  const logoUrl =
+    normalizeUrl(
+      valueOf("BRAND_LOGO_URL", scope).trim() || valueOf("BRAND_LOGO_URL", null)
+    ) ?? "";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} noValidate className="space-y-4">
       <PanelCard>
         <div className="p-4 sm:p-6 border-b border-border">
           <h3 className="text-lg font-bold font-display uppercase text-fg">
@@ -299,13 +345,12 @@ export function SettingsView() {
                   ) : (
                     <input
                       id={inputId}
-                      type={
-                        field.kind === "email"
-                          ? "email"
-                          : field.kind === "url"
-                            ? "url"
-                            : "text"
-                      }
+                      // Not `type="url"`: the browser's check rejects a bare
+                      // domain. URLs are validated and normalised on save.
+                      type={field.kind === "email" ? "email" : "text"}
+                      inputMode={field.kind === "url" ? "url" : undefined}
+                      autoComplete={field.kind === "url" ? "url" : undefined}
+                      spellCheck={field.kind === "url" ? false : undefined}
                       className={inputClass()}
                       value={values[key] ?? ""}
                       placeholder={placeholder}
