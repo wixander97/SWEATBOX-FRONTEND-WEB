@@ -22,6 +22,35 @@ type PayrollRow = {
   status?: string;
 };
 
+/** `CoachPayrollSummaryResponse` from `GET /api/v1/coaches/{id}/payroll-summary`. */
+type PayrollSummary = {
+  coachId?: string;
+  payrollRate?: number;
+  payrollType?: string;
+  totalCompletedClasses?: number;
+  totalMembers?: number;
+  totalPtSessions?: number;
+  estimatedPayrollAmount?: number;
+};
+
+/**
+ * One coach's payroll summary, or null when it cannot be read — the row then
+ * falls back to the coach list's totals and shows no payout rather than a
+ * made-up one.
+ */
+async function loadSummary(coachId: string): Promise<PayrollSummary | null> {
+  try {
+    const res = await authFetch(
+      `${API_BASE_URL}/api/v1/coaches/${encodeURIComponent(coachId)}/payroll-summary`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    return (await res.json().catch(() => null)) as PayrollSummary | null;
+  } catch {
+    return null;
+  }
+}
+
 type SortDir = "asc" | "desc";
 type PayrollSortKey = "coachName" | "totalClasses" | "totalMembers" | "estimatedPayout" | "status";
 
@@ -67,19 +96,33 @@ export function PayrollView() {
         ? payload
         : (payload.items ?? payload.data ?? []);
 
-      const payrollRows: PayrollRow[] = coaches.map((c) => ({
-        coachId: (c as { id?: string }).id,
-        coachName: c.coachName || c.fullName || "—",
-        totalClasses: c.totalClasses ?? 0,
-        totalMembers: c.totalMembers ?? 0,
-        totalPtSessions: c.totalPtSessions ?? 0,
-        // A coach without payroll configured comes back with an empty string,
-        // which rendered as a blank cell.
-        payrollType: c.payrollType?.trim() || undefined,
-        payrollRate: c.payrollRate ?? undefined,
-        estimatedPayout: c.estimatedPayout ?? c.estPayout,
-        status: c.status || "Pending",
-      }));
+      // The coach list names the coaches; the payout comes from each coach's
+      // payroll summary, which prices every completed seat through the rate
+      // tiers. The list has no payout or status field of its own.
+      const summaries = await Promise.all(
+        coaches.map((c) => {
+          const id = (c as { id?: string }).id;
+          return id ? loadSummary(id) : Promise.resolve(null);
+        })
+      );
+
+      const payrollRows: PayrollRow[] = coaches.map((c, i) => {
+        const summary = summaries[i];
+        return {
+          coachId: (c as { id?: string }).id,
+          coachName: c.coachName || c.fullName || "—",
+          totalClasses: summary?.totalCompletedClasses ?? c.totalClasses ?? 0,
+          totalMembers: summary?.totalMembers ?? c.totalMembers ?? 0,
+          totalPtSessions: summary?.totalPtSessions ?? c.totalPtSessions ?? 0,
+          // A coach without payroll configured comes back with an empty string,
+          // which rendered as a blank cell.
+          payrollType: (summary?.payrollType ?? c.payrollType)?.trim() || undefined,
+          payrollRate: summary?.payrollRate ?? c.payrollRate ?? undefined,
+          estimatedPayout: summary?.estimatedPayrollAmount ?? undefined,
+          // The API has no payroll status or approval record, so none is shown.
+          status: undefined,
+        };
+      });
       setRows(payrollRows);
     } catch {
       // authFetch rejects on a network failure; without this the page stayed
@@ -121,7 +164,7 @@ export function PayrollView() {
         r.payrollType ?? "—",
         r.payrollRate ?? "—",
         r.estimatedPayout ?? "—",
-        r.status ?? "Pending",
+        r.status ?? "—",
       ]);
       const date = new Date().toISOString().slice(0, 10);
       const ok = await downloadXlsx([header, ...data], `coaches-payroll-report-${date}.xlsx`);
@@ -204,6 +247,7 @@ export function PayrollView() {
                   { label: "Total Members", key: "totalMembers" },
                   { label: "Payroll Type", key: null },
                   { label: "Rate", key: null },
+                  { label: "Est. Payout", key: "estimatedPayout" },
                 ] as { label: string; key: PayrollSortKey | null }[]
               ).map(({ label, key }) => (
                 <th key={label} className="px-6 py-4">
@@ -240,7 +284,7 @@ export function PayrollView() {
           <tbody className="divide-y divide-border">
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-6 text-center text-muted">No data available</td>
+                <td colSpan={7} className="px-6 py-6 text-center text-muted">No data available</td>
               </tr>
             ) : (
               sorted.map((r, i) => (
@@ -250,16 +294,19 @@ export function PayrollView() {
                   <td className="px-6 py-4">{r.totalMembers ?? 0}</td>
                   <td className="px-6 py-4 capitalize">{r.payrollType ?? "—"}</td>
                   <td className="px-6 py-4 font-mono">
-                    {r.estimatedPayout != null
-                      ? formatRupiah(r.estimatedPayout)
-                      : r.payrollRate != null
-                        ? formatRupiah(r.payrollRate)
-                        : "—"}
+                    {r.payrollRate != null ? formatRupiah(r.payrollRate) : "—"}
+                  </td>
+                  <td className="px-6 py-4 font-mono">
+                    {r.estimatedPayout != null ? formatRupiah(r.estimatedPayout) : "—"}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className="bg-yellow-500/10 text-warning px-3 py-1 rounded text-xs font-bold border border-yellow-500/20">
-                      {r.status ?? "Pending"}
-                    </span>
+                    {r.status ? (
+                      <span className="bg-yellow-500/10 text-warning px-3 py-1 rounded text-xs font-bold border border-yellow-500/20">
+                        {r.status}
+                      </span>
+                    ) : (
+                      <span className="text-muted" title="Payroll status is not tracked by the API">—</span>
+                    )}
                   </td>
                 </tr>
               ))

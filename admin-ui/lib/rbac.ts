@@ -45,6 +45,8 @@ export type Permission =
   | "class.delete"
   /** CoachRateTiersController: POST/PUT/DELETE. */
   | "coachRate.write"
+  /** PromoBannersController: POST/PUT/DELETE. */
+  | "promoBanner.write"
   /** MembershipPlansController: POST/PUT. */
   | "membershipPlan.write"
   /** MembershipPlansController: DELETE. */
@@ -88,6 +90,7 @@ const ALLOWED: Record<Permission, Role[]> = {
   "class.write": ["SuperAdmin", "Admin", "Staff"],
   "class.delete": ["SuperAdmin", "Admin"],
   "coachRate.write": ["SuperAdmin"],
+  "promoBanner.write": ["SuperAdmin", "Admin"],
   "membershipPlan.write": ["SuperAdmin"],
   "membershipPlan.delete": ["SuperAdmin"],
   "agreement.write": ["SuperAdmin"],

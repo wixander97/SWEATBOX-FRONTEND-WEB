@@ -14,7 +14,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   const { id } = await params;
-  const url = `${API_BASE_URL}/api/v1/coaches/${id}/payroll`;
+  // The API route is /payroll-summary; /payroll never existed.
+  const url = `${API_BASE_URL}/api/v1/coaches/${id}/payroll-summary`;
   console.log(`[API/v1/coaches/[id]/payroll/GET] Fetching: ${url}`);
 
   try {

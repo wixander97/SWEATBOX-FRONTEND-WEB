@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
+import { useRole } from "@/contexts/role-context";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import {
   redirectTypeLabel,
@@ -20,6 +21,8 @@ async function extractMessage(res: Response): Promise<string> {
 }
 
 export function PromoBannersView() {
+  // Writes are SuperAdmin/Admin on the API; other roles only view.
+  const canWrite = useRole().can("promoBanner.write");
   const [banners, setBanners] = useState<ApiPromoBanner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -139,6 +142,7 @@ export function PromoBannersView() {
               </span>
             </p>
           </div>
+          {canWrite && (
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
@@ -148,6 +152,7 @@ export function PromoBannersView() {
             <i className="fas fa-plus" aria-hidden />
             Create New Banner
           </button>
+          )}
         </div>
 
         {error && (
@@ -227,6 +232,8 @@ export function PromoBannersView() {
                         <i className="fas fa-eye mr-1" aria-hidden />
                         Detail
                       </button>
+                      {canWrite && (
+                      <>
                       <button
                         type="button"
                         onClick={() => openEdit(b)}
@@ -243,6 +250,8 @@ export function PromoBannersView() {
                         <i className="fas fa-trash mr-1" aria-hidden />
                         Delete
                       </button>
+                      </>
+                      )}
                     </div>
                   </div>
                 </div>

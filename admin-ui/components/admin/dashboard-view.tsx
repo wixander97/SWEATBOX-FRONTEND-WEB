@@ -271,7 +271,9 @@ export function DashboardView() {
     async function load() {
       setLoading(true);
       const [statsRes, memberStatsRes, paymentSummaryRes, classStatsRes, staffAttendanceRes, coachesStatsRes, paymentsRes, classesRes] = await Promise.allSettled([
-        authFetch(`${API_BASE_URL}/api/v1/stats`, { cache: "no-store" }),
+        // Same-origin aggregate (app/api/v1/stats): the SWEATBOX API has no
+        // /api/v1/stats of its own, so calling it on API_BASE_URL always 404'd.
+        authFetch("/api/v1/stats", { cache: "no-store" }),
         authFetch(`${API_BASE_URL}/api/v1/members/stats`, { cache: "no-store" }),
         authFetch(`${API_BASE_URL}/api/v1/payments/summary`, { cache: "no-store" }),
         authFetch(`${API_BASE_URL}/api/v1/class-schedules/stats`, { cache: "no-store" }),

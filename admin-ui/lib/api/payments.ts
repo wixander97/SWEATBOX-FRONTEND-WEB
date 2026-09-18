@@ -113,7 +113,11 @@ export type UpdatePaymentRequest = {
   discount: number;
   tax: number;
   paymentMethod: PaymentMethod;
-  /** Not part of the documented DTO; ignored by builds that do not read it. */
+  /**
+   * `Manual` records that an unpaid payment was settled on the EDC terminal —
+   * how a drop-in (always opened on AsteriPay) becomes a "Card (EDC)" sale.
+   * The backend ignores any other value and never changes a paid record's rail.
+   */
   paymentProvider?: PaymentProvider;
   paymentStatus: PaymentStatus;
   providerTransactionId?: string;
