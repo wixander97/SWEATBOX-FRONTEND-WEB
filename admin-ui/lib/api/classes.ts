@@ -1,4 +1,4 @@
-import { ApiError, apiGet, apiPost, toList, type PagedResponse, type RequestOptions } from "./http";
+import { ApiError, apiGet, apiPost, apiPut, toList, type PagedResponse, type RequestOptions } from "./http";
 import type {
   AssistantCoachAssignment,
   AssistantCoachSelection,
@@ -7,6 +7,8 @@ import type { ApiClass } from "@/components/admin/classes/classes.types";
 import {
   expandRecurrence,
   isRepeating,
+  validateFiniteRecurrence,
+  type RecurrenceFrequency,
   type RecurrenceRule,
 } from "@/lib/classes/recurrence";
 
@@ -18,7 +20,10 @@ export type ClassSchedulePayload = {
   coachId: string;
   classDate: string;
   startTime: string;
+  /** Still sent so older backends keep working; newer ones derive it. */
   endTime: string;
+  /** When present the backend sets endTime = startTime + duration. */
+  durationMinutes?: number;
   capacity: number;
   branchId: string;
   roomName: string;
@@ -76,23 +81,123 @@ export function toIsoClassDate(value: string): string {
   return new Date(`${value}T00:00:00.000Z`).toISOString();
 }
 
+/** `ClassSeriesResult` returned by every series endpoint. */
+export type ClassSeriesResult = {
+  seriesId: string;
+  created: number;
+  updated: number;
+  removed: number;
+  keptWithBookings: number;
+  generatedThrough?: string | null;
+  /** Ready-to-show summary, e.g. "9 classes created through 04 Dec 2026. ..." */
+  message: string;
+};
+
+/** `ClassSeriesResponse` from `GET /api/v1/class-schedules/series/{id}`. */
+export type ClassSeries = {
+  id: string;
+  className: string;
+  coachId: string;
+  coachName?: string | null;
+  branchId: string;
+  branchName?: string | null;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  capacity: number;
+  roomName?: string | null;
+  description?: string | null;
+  classType?: string | null;
+  difficultyLevel?: string | null;
+  assistantCoachIds: string[];
+  frequency: Exclude<RecurrenceFrequency, "none">;
+  /** JS numbering, 0 = Sunday. */
+  daysOfWeek: number[];
+  startDate: string;
+  endDate?: string | null;
+  noEndDate: boolean;
+  generatedThrough?: string | null;
+  parentSeriesId?: string | null;
+  isActive: boolean;
+};
+
+/** The rule a series repeats on, in the shape the class form edits. */
+export function seriesToRecurrence(series: ClassSeries): RecurrenceRule {
+  return {
+    frequency: series.frequency,
+    daysOfWeek: [...series.daysOfWeek].sort((a, b) => a - b),
+    until: series.endDate ? series.endDate.slice(0, 10) : "",
+    noEndDate: series.noEndDate || !series.endDate,
+  };
+}
+
+/** The `recurrence` object accepted by the series endpoints. */
+function recurrenceBody(rule: RecurrenceRule) {
+  return {
+    frequency: rule.frequency,
+    daysOfWeek: rule.daysOfWeek,
+    until: rule.noEndDate ? null : rule.until || null,
+    noEndDate: rule.noEndDate,
+  };
+}
+
+export function getClassSeries(seriesId: string, options?: RequestOptions): Promise<ClassSeries> {
+  return apiGet<ClassSeries>(
+    `/api/v1/class-schedules/series/${encodeURIComponent(seriesId)}`,
+    { errorMessage: "Failed to load recurring class", ...options }
+  );
+}
+
+/**
+ * Edit a series from `effectiveFrom` (`YYYY-MM-DD`) on. Earlier classes are
+ * untouched; the backend may answer with a new series id when it splits.
+ */
+export function updateClassSeries(
+  seriesId: string,
+  base: ClassSchedulePayload,
+  rule: RecurrenceRule,
+  effectiveFrom: string
+): Promise<ClassSeriesResult> {
+  return apiPut<ClassSeriesResult>(
+    `/api/v1/class-schedules/series/${encodeURIComponent(seriesId)}`,
+    {
+      ...base,
+      classDate: toIsoClassDate(effectiveFrom),
+      effectiveFrom: toIsoClassDate(effectiveFrom),
+      recurrence: recurrenceBody(rule),
+    },
+    { errorMessage: "Failed to update recurring class" }
+  );
+}
+
+/** Stop a series after `lastDate` (`YYYY-MM-DD`, inclusive). */
+export function endClassSeries(seriesId: string, lastDate: string): Promise<ClassSeriesResult> {
+  return apiPost<ClassSeriesResult>(
+    `/api/v1/class-schedules/series/${encodeURIComponent(seriesId)}/end`,
+    { lastDate },
+    { errorMessage: "Failed to end recurring class" }
+  );
+}
+
 export type RecurringCreateResult = {
-  /** Dates that were persisted successfully. */
+  /** Dates that were persisted successfully (fallback path only). */
   created: string[];
   /** Dates that failed, with the backend message. */
   failed: Array<{ date: string; message: string }>;
   /** How the series was persisted. */
   mode: "series-endpoint" | "per-occurrence";
+  /** The backend's summary when the series endpoint handled it. */
+  series?: ClassSeriesResult;
 };
 
 /**
- * Create every occurrence of a recurring class.
+ * Create a recurring class.
  *
- * Preferred path is a single `POST /api/v1/class-schedules/recurring` call so
- * the backend can own the series. Until that endpoint exists, the same rule is
- * expanded here and each occurrence is created through the existing
- * `POST /api/v1/class-schedules` — every occurrence is still a real, bookable
- * schedule row rather than browser-only state.
+ * Preferred path is a single `POST /api/v1/class-schedules/recurring` call: the
+ * backend owns the series and generates classes a rolling window ahead, so the
+ * rule may have no end date. On an older backend without that endpoint, a rule
+ * with a finite end date is expanded here and each occurrence is created
+ * through `POST /api/v1/class-schedules`; "No end date" cannot be emulated.
  */
 export async function createRecurringClassSchedules(
   base: ClassSchedulePayload,
@@ -100,28 +205,30 @@ export async function createRecurringClassSchedules(
   startDate: string,
   onProgress?: (done: number, total: number) => void
 ): Promise<RecurringCreateResult> {
-  const dates = isRepeating(rule) ? expandRecurrence(rule, startDate) : [startDate];
-
   try {
-    await apiPost<unknown>(
+    const series = await apiPost<ClassSeriesResult>(
       "/api/v1/class-schedules/recurring",
       {
         ...base,
         classDate: toIsoClassDate(startDate),
-        recurrence: {
-          frequency: rule.frequency,
-          daysOfWeek: rule.daysOfWeek,
-          until: toIsoClassDate(rule.until),
-        },
+        recurrence: recurrenceBody(rule),
       },
       { errorMessage: "Failed to create recurring class" }
     );
-    onProgress?.(dates.length, dates.length);
-    return { created: dates, failed: [], mode: "series-endpoint" };
+    return { created: [], failed: [], mode: "series-endpoint", series };
   } catch (err) {
     if (!(err instanceof ApiError) || !err.isNotImplemented) throw err;
   }
 
+  if (rule.noEndDate) {
+    throw new Error(
+      "No end date needs the updated API, which this server does not have yet. Choose an end date instead."
+    );
+  }
+  const check = validateFiniteRecurrence(rule, startDate);
+  if (!check.ok) throw new Error(check.message);
+
+  const dates = isRepeating(rule) ? expandRecurrence(rule, startDate) : [startDate];
   const created: string[] = [];
   const failed: Array<{ date: string; message: string }> = [];
   // Sequential on purpose: keeps the backend's per-class validation meaningful

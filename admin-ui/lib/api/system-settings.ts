@@ -51,6 +51,7 @@ export type DropInSettingOption = {
   key: string;
   label: string;
   kind: "single" | "pass";
+  /** Classes covered; 0 means unlimited (the One Day Pass). */
   visits: number;
   price: number;
   validityDays?: number;
@@ -103,8 +104,15 @@ function pick(record: Record<string, unknown>, keys: string[]): unknown {
 }
 
 function labelFor(kind: "single" | "pass", visits: number): string {
-  if (kind === "single") return "Single visit";
-  return visits > 1 ? `${visits}x visit pass` : "Multi visit pass";
+  if (kind === "single") return "Single Visit";
+  // A pass with no visit count (blank, 0 or UNLIMITED) is the One Day Pass.
+  return visits > 0 ? `${visits}x Visit Pass` : "One Day Pass";
+}
+
+/** `_VISITS` values that mean "unlimited": the One Day Pass. */
+function isUnlimitedValue(value: string | null | undefined): boolean {
+  const text = (value ?? "").trim().toUpperCase();
+  return text === "" || text === "UNLIMITED" || text === "0";
 }
 
 /**
@@ -288,20 +296,16 @@ export function dropInOptionsFromSettings(
     }
 
     const visitsRow = group.find((r) => r.role === "visits");
-    const visitsValue = visitsRow ? toNumber(visitsRow.setting.value) : null;
+    const visitsText = visitsRow?.setting.value ?? "";
+    // Blank, 0 or "UNLIMITED" on a pass is the One Day Pass (visits = 0);
+    // the backend reads the same rows the same way.
+    const visitsValue = isUnlimitedValue(visitsText) ? null : toNumber(visitsText);
     const visits =
       visitsValue != null && visitsValue > 0
         ? Math.floor(visitsValue)
         : priceRow.kind === "pass"
           ? 0
           : 1;
-
-    if (priceRow.kind === "pass" && visits <= 1) {
-      warnings.push(
-        `${priceRow.setting.key} is a multi-visit pass but its visit count is not set in settings.`
-      );
-      continue;
-    }
 
     const validityRow = group.find((r) => r.role === "validity");
     const validityValue = validityRow ? toNumber(validityRow.setting.value) : null;
@@ -319,7 +323,8 @@ export function dropInOptionsFromSettings(
     });
   }
 
-  // Cheapest first: the single visit is what most walk-ins buy.
-  options.sort((a, b) => a.visits - b.visits || a.price - b.price);
+  // Single Visit first (what most walk-ins buy), then passes by price.
+  const rank = (o: DropInSettingOption) => (o.kind === "single" ? 0 : 1);
+  options.sort((a, b) => rank(a) - rank(b) || a.price - b.price);
   return { options, disabled: false, warnings };
 }

@@ -5,7 +5,10 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/auth/constants";
 import { authFetch } from "@/lib/auth/client-fetch";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
-import type { ApiClass } from "@/components/admin/classes/classes.types";
+import {
+  classDurationMinutes,
+  type ApiClass,
+} from "@/components/admin/classes/classes.types";
 import {
   activateClassSession,
   listBookingsForSchedule,
@@ -20,7 +23,16 @@ import { memberDisplayName, searchMembers, type ApiMember } from "@/lib/api/memb
 type Props = {
   cls: ApiClass;
   onClose: () => void;
+  /** Opens the create form as a copy of this class, when the viewer may write. */
+  onDuplicate?: (cls: ApiClass) => void;
 };
+
+function fmtDuration(minutes: number | null): string | null {
+  if (!minutes) return null;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return [h ? `${h} hr` : "", m ? `${m} mins` : ""].filter(Boolean).join(" ");
+}
 
 function statusBadge(c: ApiClass): { label: string; class: string } {
   if (c.isCancelled === true) {
@@ -155,7 +167,7 @@ function IdRow({ label, value }: { label: string; value: string | null | undefin
   );
 }
 
-export function ClassDetailModal({ cls, onClose }: Props) {
+export function ClassDetailModal({ cls, onClose, onDuplicate }: Props) {
   const [detail, setDetail] = useState<ApiClass | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -408,6 +420,12 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                 Class Schedule Detail
               </p>
               <p className="text-base font-bold text-fg truncate">{c.className}</p>
+              {c.seriesId && (
+                <span className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sweat/10 text-accent-ink border border-sweat/30">
+                  <i className="fas fa-repeat" aria-hidden />
+                  Repeats
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <span
@@ -454,6 +472,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                 <Row label="Class Date" value={fmtDate(c.classDate)} />
                 <Row label="Start Time" value={c.startTime?.slice(0, 5) ?? null} />
                 <Row label="End Time" value={c.endTime?.slice(0, 5) ?? null} />
+                <Row label="Duration" value={fmtDuration(classDurationMinutes(c))} />
                 <Row label="Class Name" value={c.className} highlight />
                 <Row label="Class Type" value={c.classType ?? null} />
                 <Row label="Difficulty Level" value={c.difficultyLevel ?? null} />
@@ -487,7 +506,7 @@ export function ClassDetailModal({ cls, onClose }: Props) {
                   }
                 />
                 <Row label="Branch" value={c.branchName ?? c.branchId ?? null} />
-                <Row label="Room" value={c.roomName ?? null} />
+                <Row label="Location" value={c.roomName ?? null} />
               </div>
 
               {/* Capacity */}
@@ -818,7 +837,17 @@ export function ClassDetailModal({ cls, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="p-5 sm:p-6 pt-0">
+        <div className="p-5 sm:p-6 pt-0 flex flex-col gap-2">
+          {onDuplicate && (
+            <button
+              type="button"
+              onClick={() => onDuplicate(c)}
+              className="w-full bg-sidebar border border-border text-fg px-4 py-2.5 rounded-lg font-semibold hover:bg-fg/5 transition text-sm"
+            >
+              <i className="fas fa-copy mr-2" aria-hidden />
+              Duplicate
+            </button>
+          )}
           <button
             type="button"
             onClick={onClose}

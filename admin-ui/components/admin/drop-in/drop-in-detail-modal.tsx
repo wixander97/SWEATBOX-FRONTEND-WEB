@@ -92,7 +92,7 @@ export function DropInDetailModal({ memberId, memberName, onClose }: Props) {
         <div className="p-5 sm:p-6 border-b border-border flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-bold font-display uppercase text-fg">
-              Drop In Passes
+              Drop-In Passes
             </h3>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-sm text-fg-soft font-medium">{memberName}</span>

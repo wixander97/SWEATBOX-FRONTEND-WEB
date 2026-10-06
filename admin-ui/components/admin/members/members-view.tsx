@@ -8,6 +8,7 @@ import { authFetch } from "@/lib/auth/client-fetch";
 import { downloadXlsx } from "@/lib/export";
 import { EditMemberModal } from "@/components/admin/members/edit-member-modal";
 import { QuickRegisterModal } from "@/components/admin/quick-register-modal";
+import { MemberPointsModal } from "@/components/admin/loyalty/member-points-modal";
 import { useRole } from "@/contexts/role-context";
 import {
   formatClassCredits,
@@ -27,6 +28,8 @@ export function MembersView() {
   // waiver, the house rules and a signature; editing is a separate permission.
   const canRegister = can("member.register");
   const canEdit = can("member.write");
+  const canSeePoints = can("loyalty.read");
+  const [pointsMember, setPointsMember] = useState<ApiMember | null>(null);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [memberFilterTab, setMemberFilterTab] = useState<FilterTab>("all");
   const [keyword, setKeyword] = useState("");
@@ -526,19 +529,33 @@ export function MembersView() {
                   </td>
 
 
-                  <td className="px-6 py-4 text-right">
-                    {canEdit ? (
-                      <button
-                        type="button"
-                        onClick={() => setMemberModal({ mode: "edit", member: m })}
-                        className="bg-sweat text-black px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-yellow-400 transition inline-flex items-center gap-1.5"
-                      >
-                        <i className="fas fa-edit" aria-hidden />
-                        Edit
-                      </button>
-                    ) : (
-                      <span className="text-xs text-muted">-</span>
-                    )}
+                  <td className="px-6 py-4 text-right whitespace-nowrap">
+                    <div className="inline-flex items-center gap-2">
+                      {canSeePoints ? (
+                        <button
+                          type="button"
+                          onClick={() => setPointsMember(m)}
+                          title="Loyalty points"
+                          className="border border-border text-fg px-3 py-1.5 rounded-lg text-xs hover:bg-fg/5 transition inline-flex items-center gap-1.5"
+                        >
+                          <i className="fas fa-gift text-accent-ink" aria-hidden />
+                          Points
+                        </button>
+                      ) : null}
+                      {canEdit ? (
+                        <button
+                          type="button"
+                          onClick={() => setMemberModal({ mode: "edit", member: m })}
+                          className="bg-sweat text-black px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-yellow-400 transition inline-flex items-center gap-1.5"
+                        >
+                          <i className="fas fa-edit" aria-hidden />
+                          Edit
+                        </button>
+                      ) : null}
+                      {!canEdit && !canSeePoints ? (
+                        <span className="text-xs text-muted">-</span>
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               )))}
@@ -580,6 +597,15 @@ export function MembersView() {
           onSuccess={() => void loadMembers(keyword, memberFilterTab, page)}
         />
       )}
+
+      {pointsMember ? (
+        <MemberPointsModal
+          memberId={pointsMember.id}
+          memberName={pointsMember.fullName || "-"}
+          memberCode={pointsMember.memberCode || ""}
+          onClose={() => setPointsMember(null)}
+        />
+      ) : null}
 
       <QuickRegisterModal
         open={registerOpen}

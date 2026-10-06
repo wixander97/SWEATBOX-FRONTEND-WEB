@@ -3,8 +3,8 @@
 import {
   WEEKDAYS,
   describeRecurrence,
-  expandRecurrence,
   isRepeating,
+  weekdayOf,
   type RecurrenceFrequency,
   type RecurrenceRule,
 } from "@/lib/classes/recurrence";
@@ -12,23 +12,36 @@ import {
 type Props = {
   value: RecurrenceRule;
   onChange: (rule: RecurrenceRule) => void;
-  /** The class date the series starts from (`YYYY-MM-DD`). */
+  /** The date the series starts from (`YYYY-MM-DD`): Begin Date or Effective From. */
   startDate: string;
   disabled?: boolean;
+  /**
+   * Offer "Does not repeat". Off when editing a series from a date on, where
+   * the rule itself is what is being changed.
+   */
+  allowNone?: boolean;
 };
 
 const FREQUENCIES: Array<{ value: RecurrenceFrequency; label: string }> = [
   { value: "none", label: "Does not repeat" },
-  { value: "daily", label: "Daily" },
   { value: "weekly", label: "Weekly" },
   { value: "biweekly", label: "Every 2 weeks" },
+  { value: "daily", label: "Daily" },
 ];
 
-/** Recurrence controls for the create-class form. */
-export function RecurrenceFields({ value, onChange, startDate, disabled }: Props) {
+const inputClass =
+  "w-full bg-sidebar border border-border text-fg px-4 py-2.5 rounded-lg focus:outline-none focus:border-sweat disabled:opacity-50";
+
+/** Recurrence controls for the class form: repeat, repeat on, ends. */
+export function RecurrenceFields({
+  value,
+  onChange,
+  startDate,
+  disabled,
+  allowNone = true,
+}: Props) {
   const repeating = isRepeating(value);
   const showDays = value.frequency === "weekly" || value.frequency === "biweekly";
-  const preview = repeating && startDate ? expandRecurrence(value, startDate) : [];
 
   function toggleDay(day: number) {
     const next = value.daysOfWeek.includes(day)
@@ -38,11 +51,10 @@ export function RecurrenceFields({ value, onChange, startDate, disabled }: Props
   }
 
   function setFrequency(frequency: RecurrenceFrequency) {
-    // Seed weekly rules with the weekday the staff already picked.
+    // Seed weekly rules with the Begin Date's weekday.
+    const startDay = weekdayOf(startDate);
     const seed =
-      value.daysOfWeek.length > 0 || !startDate
-        ? value.daysOfWeek
-        : [new Date(`${startDate}T00:00:00`).getDay()];
+      value.daysOfWeek.length > 0 || startDay == null ? value.daysOfWeek : [startDay];
     onChange({ ...value, frequency, daysOfWeek: frequency === "daily" ? [] : seed });
   }
 
@@ -55,18 +67,21 @@ export function RecurrenceFields({ value, onChange, startDate, disabled }: Props
         </span>
       </div>
 
-      <select
-        value={value.frequency}
-        onChange={(e) => setFrequency(e.target.value as RecurrenceFrequency)}
-        disabled={disabled}
-        className="w-full bg-sidebar border border-border text-fg px-4 py-2.5 rounded-lg focus:outline-none focus:border-sweat disabled:opacity-50"
-      >
-        {FREQUENCIES.map((f) => (
-          <option key={f.value} value={f.value}>
-            {f.label}
-          </option>
-        ))}
-      </select>
+      <div>
+        <label className="block text-muted text-xs mb-1">Repeat</label>
+        <select
+          value={value.frequency}
+          onChange={(e) => setFrequency(e.target.value as RecurrenceFrequency)}
+          disabled={disabled}
+          className={inputClass}
+        >
+          {FREQUENCIES.filter((f) => allowNone || f.value !== "none").map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {showDays && (
         <div>
@@ -98,18 +113,48 @@ export function RecurrenceFields({ value, onChange, startDate, disabled }: Props
 
       {repeating && (
         <div>
-          <label className="block text-muted text-xs mb-1">
-            Repeat until <span className="text-danger">*</span>
-          </label>
-          <input
-            type="date"
-            value={value.until}
-            min={startDate || undefined}
-            onChange={(e) => onChange({ ...value, until: e.target.value })}
-            disabled={disabled}
-            style={{ colorScheme: "dark" }}
-            className="w-full bg-sidebar border border-border text-fg px-4 py-2.5 rounded-lg focus:outline-none focus:border-sweat disabled:opacity-50"
-          />
+          <p className="text-muted text-xs mb-1.5">Ends</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-fg">
+              <label className="flex items-center gap-2 shrink-0">
+                <input
+                  type="radio"
+                  name="recurrence-ends"
+                  checked={!value.noEndDate}
+                  onChange={() => onChange({ ...value, noEndDate: false })}
+                  disabled={disabled}
+                  className="accent-sweat"
+                />
+                On date
+              </label>
+              <input
+                type="date"
+                aria-label="End date"
+                value={value.until ?? ""}
+                min={startDate || undefined}
+                onChange={(e) =>
+                  onChange({ ...value, until: e.target.value, noEndDate: false })
+                }
+                onFocus={() => {
+                  if (value.noEndDate) onChange({ ...value, noEndDate: false });
+                }}
+                disabled={disabled}
+                style={{ colorScheme: "dark" }}
+                className={`${inputClass} py-2 ${value.noEndDate ? "opacity-50" : ""}`}
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-fg">
+              <input
+                type="radio"
+                name="recurrence-ends"
+                checked={value.noEndDate}
+                onChange={() => onChange({ ...value, noEndDate: true })}
+                disabled={disabled}
+                className="accent-sweat"
+              />
+              No end date
+            </label>
+          </div>
         </div>
       )}
 
@@ -117,13 +162,9 @@ export function RecurrenceFields({ value, onChange, startDate, disabled }: Props
         <p className="text-[11px] text-muted">
           <i className="fas fa-info-circle mr-1.5 text-accent-ink" aria-hidden />
           {describeRecurrence(value, startDate)}
-          {preview.length > 0 && (
-            <span className="block text-muted mt-1">
-              Starts {new Date(`${preview[0]}T00:00:00`).toLocaleDateString("en-GB")}
-              {preview.length > 1 &&
-                ` · last ${new Date(
-                  `${preview[preview.length - 1]}T00:00:00`
-                ).toLocaleDateString("en-GB")}`}
+          {value.noEndDate && (
+            <span className="block mt-1">
+              Classes are created a few weeks ahead and added automatically.
             </span>
           )}
         </p>

@@ -1,4 +1,5 @@
 import type { DropInKind } from "./membership-plans";
+import { DROP_IN_CATEGORY, dropInProductLabel, getDropInCatalogue } from "./drop-in";
 import {
   dropInOptionsFromSettings,
   listSystemSettings,
@@ -25,6 +26,7 @@ export type DropInOption = {
   id: string;
   label: string;
   kind: DropInKind;
+  /** Classes covered; 0 = unlimited (One Day Pass). */
   visits: number;
   price: number;
   validityDays?: number;
@@ -46,6 +48,9 @@ export type DropInOptionsResult = {
  * everywhere. Never throws — the till has a customer standing at it.
  */
 export async function loadDropInOptions(branchName?: string): Promise<DropInOptionsResult> {
+  const fromCatalogue = await optionsFromCatalogue(branchName);
+  if (fromCatalogue) return fromCatalogue;
+
   let settings;
   try {
     settings = await listSystemSettings({ redirectOn401: false });
@@ -92,8 +97,55 @@ export async function loadDropInOptions(branchName?: string): Promise<DropInOpti
   };
 }
 
-/** Card/line subtitle: "5x visits · valid for 30 days". */
+/**
+ * The backend's own catalogue (`GET /api/v1/drop-in/catalogue`), which reads
+ * the same settings rows but also knows the defaults a branch sells before
+ * anyone configured it. Null when the endpoint is missing (older backend) or
+ * does not know this branch, so the caller falls back to System Settings.
+ */
+async function optionsFromCatalogue(branchName?: string): Promise<DropInOptionsResult | null> {
+  const wanted = branchName ? normalizeToken(branchName) : "";
+  if (!wanted) return null;
+
+  let products;
+  try {
+    products = await getDropInCatalogue({ redirectOn401: false });
+  } catch {
+    return null;
+  }
+
+  const atBranch = products.filter((p) => normalizeToken(p.branchName) === wanted);
+  if (atBranch.length === 0) return null;
+
+  const enabled = atBranch.filter((p) => p.isEnabled);
+  const options: DropInOption[] = enabled
+    .map((p) => ({
+      id: `${p.branchId}:${p.paymentCategory}`,
+      label: dropInProductLabel(p),
+      kind: (p.paymentCategory === DROP_IN_CATEGORY.singleVisit ? "single" : "pass") as DropInKind,
+      visits: p.isUnlimited ? 0 : (p.visits ?? 1),
+      price: p.price,
+      validityDays: p.validityDays,
+      branchToken: wanted,
+    }))
+    .sort((a, b) => (a.kind === "single" ? 0 : 1) - (b.kind === "single" ? 0 : 1) || a.price - b.price);
+
+  return {
+    options,
+    warning:
+      options.length === 0
+        ? `Drop-in is switched off for branch ${branchName}. Turn it on under Drop In → Products.`
+        : null,
+  };
+}
+
+/** Card/line subtitle: "Unlimited classes · valid for 1 day". */
 export function dropInOptionSubtitle(option: DropInOption): string {
-  const visits = option.visits > 1 ? `${option.visits}x visits` : "1x visit";
+  const visits =
+    option.visits <= 0
+      ? "Unlimited classes"
+      : option.visits > 1
+        ? `${option.visits}x visits`
+        : "1x visit";
   return option.validityDays ? `${visits} · valid for ${option.validityDays} days` : visits;
 }

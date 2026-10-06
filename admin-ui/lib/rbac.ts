@@ -67,6 +67,12 @@ export type Permission =
   | "payment.write"
   /** SystemSettingsController: PUT/POST (any authenticated caller). */
   | "settings.write"
+  /** DropInProductsController: PUT /drop-in/catalogue (Management). */
+  | "dropIn.write"
+  /** LoyaltyController: settings, accounts, ledger, vouchers (FrontDesk). */
+  | "loyalty.read"
+  /** LoyaltyController: settings/rewards writes and point adjustments (Management). */
+  | "loyalty.write"
   /**
    * PaymentsController: GET /payments/summary, payment method admin;
    * CoachesController: GET /coaches/{id}/payroll-summary.
@@ -103,6 +109,9 @@ const ALLOWED: Record<Permission, Role[]> = {
   "payment.read": ["SuperAdmin", "Staff"],
   "payment.write": ["SuperAdmin", "Admin", "Staff"],
   "settings.write": ["SuperAdmin", "Admin"],
+  "dropIn.write": ["SuperAdmin", "Admin"],
+  "loyalty.read": ["SuperAdmin", "Admin", "Staff"],
+  "loyalty.write": ["SuperAdmin", "Admin"],
   "finance.read": ["SuperAdmin"],
   // Every role that could open the section before, minus Admin. Pages inside
   // still apply their own narrower permission on top of this.

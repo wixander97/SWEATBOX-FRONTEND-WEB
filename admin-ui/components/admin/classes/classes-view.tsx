@@ -32,11 +32,24 @@ import {
 import { EditClassModal } from "@/components/admin/classes/edit-class-modal";
 import { ClassDetailModal } from "@/components/admin/classes/class-detail-modal";
 import { ClassCalendar } from "@/components/admin/classes/class-calendar";
-import type { ApiClass, ApiCoach, PagedResponse } from "@/components/admin/classes/classes.types";
+import {
+  classToFormValues,
+  type ApiClass,
+  type ApiCoach,
+  type PagedResponse,
+} from "@/components/admin/classes/classes.types";
 import { redirectToLoginIfUnauthorized } from "@/lib/auth/client-guard";
 import { downloadXlsx } from "@/lib/export";
-import { createRecurringClassSchedules } from "@/lib/api/classes";
-import type { RecurrenceRule } from "@/lib/classes/recurrence";
+import {
+  createRecurringClassSchedules,
+  getClassSeries,
+  seriesToRecurrence,
+} from "@/lib/api/classes";
+import {
+  emptyRecurrence,
+  weeklyOn,
+  type RecurrenceRule,
+} from "@/lib/classes/recurrence";
 import { WorkoutFormModal } from "@/components/admin/workout-form-modal";
 import { useToast } from "@/components/ui/toast";
 import { useRole } from "@/contexts/role-context";
@@ -129,6 +142,16 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
   const [editOpen, setEditOpen] = useState(false);
   const [editClass, setEditClass] = useState<ApiClass | null>(null);
   const [detailTarget, setDetailTarget] = useState<ApiClass | null>(null);
+  /**
+   * Duplicate opens the create form prefilled from another class. Each time
+   * slot is its own class (or series), so this is how a 09:00 copy of the
+   * 06:45 class is made; the source is never modified.
+   */
+  const [duplicate, setDuplicate] = useState<{
+    values: Partial<ClassFormValues>;
+    recurrence: RecurrenceRule;
+  } | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [classes, setClasses] = useState<ApiClass[]>([]);
   const [trainers, setTrainers] = useState<Array<{ id: string; name: string }>>(
     []
@@ -389,18 +412,24 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
       // capacity and attendance behave exactly as they do for a single class.
       const startDate = values.classDate.slice(0, 10);
       const result = await createRecurringClassSchedules(values, recurrence, startDate);
-      if (result.created.length === 0) {
-        throw new Error(
-          result.failed[0]?.message || "Failed to create recurring class"
+      if (result.series) {
+        // The backend owns the series and reports what it generated.
+        setSeriesNotice(result.series.message || "Recurring class created.");
+        toast.success("Recurring class created.", result.series.message);
+      } else {
+        if (result.created.length === 0) {
+          throw new Error(
+            result.failed[0]?.message || "Failed to create recurring class"
+          );
+        }
+        setSeriesNotice(
+          result.failed.length === 0
+            ? `${result.created.length} schedules created successfully.`
+            : `${result.created.length} schedules created, ${result.failed.length} failed: ${result.failed
+                .map((f) => `${f.date} (${f.message})`)
+                .join("; ")}`
         );
       }
-      setSeriesNotice(
-        result.failed.length === 0
-          ? `${result.created.length} schedules created successfully.`
-          : `${result.created.length} schedules created, ${result.failed.length} failed: ${result.failed
-              .map((f) => `${f.date} (${f.message})`)
-              .join("; ")}`
-      );
     } else {
       const res = await authFetch(`${API_BASE_URL}/api/v1/class-schedules`, {
         method: "POST",
@@ -417,6 +446,47 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
     setPage(1);
     setCalendarRefreshKey((k) => k + 1);
     await loadClasses(1, keyword);
+  }
+
+  /**
+   * Open the create form as a copy of `cls`: every setting, its date as the
+   * Begin Date and, for a series, the same repeat rule. Start Time is focused
+   * because a different slot is the usual reason to duplicate.
+   */
+  async function duplicateClass(cls: ApiClass) {
+    const beginDate = cls.classDate ? cls.classDate.slice(0, 10) : "";
+    let recurrence = emptyRecurrence();
+    if (cls.seriesId) {
+      recurrence = weeklyOn(beginDate);
+      setDuplicatingId(cls.id);
+      try {
+        const series = await getClassSeries(cls.seriesId);
+        const rule = seriesToRecurrence(series);
+        // An end date already behind the copy's Begin Date would not repeat.
+        recurrence =
+          !rule.noEndDate && rule.until && rule.until < beginDate
+            ? { ...rule, until: "", noEndDate: true }
+            : rule;
+      } catch {
+        // Fall back to weekly on that weekday with no end date.
+      } finally {
+        setDuplicatingId(null);
+      }
+    }
+    const values = classToFormValues(cls);
+    setDuplicate({
+      values: {
+        ...values,
+        classDate: beginDate,
+        // A copy is paid the branch default, like any new class.
+        coachRateTierId: null,
+        assistantCoaches: (values.assistantCoaches ?? []).map(({ coachId }) => ({
+          coachId,
+          coachRateTierId: null,
+        })),
+      },
+      recurrence,
+    });
   }
 
   /** Opens the workout for one occurrence, editing the one already attached. */
@@ -850,7 +920,20 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                         {c.classDate ? new Date(c.classDate).toLocaleDateString("en-GB") : "-"}
                       </td>
                       <td className="px-6 py-4 font-bold text-fg">{c.time}</td>
-                      <td className="px-6 py-4 font-medium text-fg">{c.className}</td>
+                      <td className="px-6 py-4 font-medium text-fg">
+                        <span className="inline-flex items-center gap-2">
+                          {c.className}
+                          {c.seriesId && (
+                            <span
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sweat/10 text-accent-ink border border-sweat/30"
+                              title="Part of a repeating schedule"
+                            >
+                              <i className="fas fa-repeat" aria-hidden />
+                              Repeats
+                            </span>
+                          )}
+                        </span>
+                      </td>
                       <td className="px-6 py-4">
                         <span className="flex items-center gap-2">
                           <span className="w-6 h-6 rounded-full bg-fg/10 shrink-0" />
@@ -921,6 +1004,21 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
                           <i className="fas fa-edit" aria-hidden />
                         </button>
                         )}
+                        {canWriteClass && (
+                          <button
+                            type="button"
+                            className="text-fg hover:text-accent-ink mx-1 disabled:opacity-50"
+                            aria-label="Duplicate"
+                            title="Duplicate"
+                            disabled={duplicatingId === c.id}
+                            onClick={() => void duplicateClass(c)}
+                          >
+                            <i
+                              className={`fas ${duplicatingId === c.id ? "fa-circle-notch fa-spin" : "fa-copy"}`}
+                              aria-hidden
+                            />
+                          </button>
+                        )}
                         {canWriteClass && statusTab !== "cancelled" && !c.isCancelled && (
                           <button
                             type="button"
@@ -989,6 +1087,17 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
         allowRecurrence
         onSubmit={createClass}
       />
+      <CreateClassModal
+        open={duplicate !== null}
+        onClose={() => setDuplicate(null)}
+        title="Duplicate Class"
+        initialValues={duplicate?.values}
+        initialRecurrence={duplicate?.recurrence}
+        focusStartTime
+        trainerOptions={trainers}
+        allowRecurrence
+        onSubmit={createClass}
+      />
       <EditClassModal
         cls={editClass}
         open={editOpen}
@@ -997,7 +1106,11 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
           setEditClass(null);
         }}
         trainerOptions={trainers}
-        onSuccess={() => {
+        onSuccess={(message) => {
+          if (message) {
+            setSeriesNotice(message);
+            toast.success("Recurring class updated.", message);
+          }
           setCalendarRefreshKey((k) => k + 1);
           void loadClasses(page, keyword);
         }}
@@ -1029,6 +1142,14 @@ export function ClassesView({ initialStatus }: { initialStatus?: StatusTab }) {
         <ClassDetailModal
           cls={detailTarget}
           onClose={() => setDetailTarget(null)}
+          onDuplicate={
+            canWriteClass
+              ? (cls) => {
+                  setDetailTarget(null);
+                  void duplicateClass(cls);
+                }
+              : undefined
+          }
         />
       )}
 

@@ -20,6 +20,7 @@ export const adminPaths = {
   settings: "/admin/settings",
   systemSettings: "/admin/system-settings",
   dropIn: "/admin/drop-in",
+  loyalty: "/admin/loyalty",
   promoBanners: "/admin/promo-banners",
   help: "/admin/help",
 } as const;
@@ -48,6 +49,7 @@ export const pageTitleByPath: Record<string, string> = {
   [adminPaths.settings]: "Brand Settings",
   [adminPaths.systemSettings]: "System Settings",
   [adminPaths.dropIn]: "Drop In",
+  [adminPaths.loyalty]: "Loyalty & Benefits",
   [adminPaths.promoBanners]: "Promo Banners",
   [adminPaths.help]: "Help & Support",
 };

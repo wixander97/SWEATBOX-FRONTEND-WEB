@@ -31,6 +31,7 @@ const mainNav: NavItem[] = [
   { href: adminPaths.scan, label: "Barcode Scanner", icon: "fa-qrcode", id: "scan" },
   { href: adminPaths.scanCamera, label: "Webcam Scanner", icon: "fa-camera", id: "scan-camera" },
   { href: adminPaths.dropIn, label: "Drop In", icon: "fa-door-open", id: "drop-in" },
+  { href: adminPaths.loyalty, label: "Loyalty & Benefits", icon: "fa-gift", id: "loyalty" },
   { href: adminPaths.promoBanners, label: "Promo Banners", icon: "fa-bullhorn", id: "promo-banners" },
 ];
 
@@ -96,9 +97,11 @@ export function AdminSidebar({
   const isSuperadmin = currentRole === "superadmin";
 
   // POS is a staff tool; Members must never see it.
-  const filteredMainNav = mainNav.filter(
-    (item) => item.id !== "pos" || currentRole !== "member"
-  );
+  const filteredMainNav = mainNav.filter((item) => {
+    if (item.id === "pos") return currentRole !== "member";
+    if (item.id === "loyalty") return can("loyalty.read");
+    return true;
+  });
 
   /*
    * Each destination is hidden from a role the API would refuse anyway. The

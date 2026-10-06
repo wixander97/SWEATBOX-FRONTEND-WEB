@@ -28,7 +28,11 @@ function lineDetail(item: CartItem): string {
       }`;
     case "dropin":
       return [
-        item.dropInKind === "pass" ? `${item.visits}x visits` : "1x visit",
+        item.dropInKind === "pass"
+          ? item.visits > 0
+            ? `${item.visits}x visits`
+            : "Unlimited classes"
+          : "1x visit",
         item.validityDays ? `valid for ${item.validityDays} days` : null,
       ]
         .filter(Boolean)
