@@ -59,44 +59,50 @@ export function LoyaltyView({
 
   return (
     <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
+      {/* Title and the tab's action share a row; the min height keeps the tabs
+          from jumping when "Adjust points" appears or disappears. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 min-h-10 mb-4">
         <h2 className="text-lg font-display font-bold uppercase text-fg">
           <i className="fas fa-gift text-accent-ink mr-2" aria-hidden />
           Loyalty &amp; Benefits
         </h2>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div
-            role="tablist"
-            aria-label="Loyalty and benefits sections"
-            className="flex overflow-x-auto bg-sidebar border border-border rounded-lg p-1"
+        {canWrite && ADJUST_TABS.includes(tab) ? (
+          <button
+            type="button"
+            onClick={() => setAdjusting(null)}
+            className="bg-sidebar border border-border text-fg px-3 py-2 rounded-lg text-sm hover:bg-fg/5 transition inline-flex items-center gap-2 whitespace-nowrap shrink-0"
           >
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                aria-selected={tab === t.id}
-                onClick={() => setTab(t.id)}
-                className={`px-3 py-1.5 rounded-md text-sm transition inline-flex items-center gap-2 whitespace-nowrap ${
-                  tab === t.id ? "bg-sweat text-black font-bold" : "text-muted hover:text-fg"
-                }`}
-              >
-                <i className={`fas ${t.icon}`} aria-hidden />
-                {t.label}
-              </button>
-            ))}
-          </div>
-          {canWrite && ADJUST_TABS.includes(tab) ? (
-            <button
-              type="button"
-              onClick={() => setAdjusting(null)}
-              className="bg-sidebar border border-border text-fg px-3 py-2 rounded-lg text-sm hover:bg-fg/5 transition inline-flex items-center gap-2 self-start"
-            >
-              <i className="fas fa-plus-minus" aria-hidden />
-              Adjust points
-            </button>
-          ) : null}
-        </div>
+            <i className="fas fa-plus-minus" aria-hidden />
+            Adjust points
+          </button>
+        ) : null}
+      </div>
+
+      {/* Tabs get their own full-width row and scroll sideways (scrollbar
+          hidden) when they do not fit, rather than squeezing the card. */}
+      <div
+        role="tablist"
+        aria-label="Loyalty and benefits sections"
+        className="flex w-fit max-w-full overflow-x-auto bg-sidebar border border-border rounded-lg p-1 gap-1 mb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={(e) => {
+              setTab(t.id);
+              e.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest" });
+            }}
+            className={`shrink-0 px-3 py-1.5 rounded-md text-sm transition inline-flex items-center gap-2 whitespace-nowrap ${
+              tab === t.id ? "bg-sweat text-black font-bold" : "text-muted hover:text-fg"
+            }`}
+          >
+            <i className={`fas ${t.icon}`} aria-hidden />
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {tab === "overview" ? <LoyaltySettingsTab /> : null}

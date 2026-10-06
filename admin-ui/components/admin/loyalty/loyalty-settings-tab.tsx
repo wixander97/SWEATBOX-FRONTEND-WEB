@@ -141,17 +141,20 @@ export function LoyaltySettingsTab() {
               />
             </div>
             <span>earns</span>
-            <input
-              type="number"
-              min={1}
-              step={1}
-              inputMode="numeric"
-              aria-label="Points per earning unit"
-              disabled={!canWrite}
-              className={`${inputClass()} w-24`}
-              value={Number.isFinite(settings.pointsPerUnit) ? settings.pointsPerUnit : ""}
-              onChange={(e) => set("pointsPerUnit", Math.floor(Number(e.target.value)))}
-            />
+            {/* Sized by the wrapper: the shared field class is `w-full`. */}
+            <div className="w-24">
+              <input
+                type="number"
+                min={1}
+                step={1}
+                inputMode="numeric"
+                aria-label="Points per earning unit"
+                disabled={!canWrite}
+                className={inputClass()}
+                value={Number.isFinite(settings.pointsPerUnit) ? settings.pointsPerUnit : ""}
+                onChange={(e) => set("pointsPerUnit", Math.floor(Number(e.target.value)))}
+              />
+            </div>
             <span>point(s)</span>
           </div>
           <p className="text-xs text-muted mt-2">
