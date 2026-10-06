@@ -31,6 +31,12 @@ export type DropInProduct = {
   discount: number;
   finalPrice: number;
   discountReason?: string | null;
+  /**
+   * The part of `discount` that is the first transaction discount for the
+   * member the products were priced for; 0 when it does not apply. Only set by
+   * `GET /api/v1/drop-in/products`.
+   */
+  firstTransactionDiscount?: number;
   isUnlimited: boolean;
   /** Null when unlimited. */
   visits: number | null;
@@ -98,6 +104,24 @@ export function dropInPassTypeLabel(passType: string | null | undefined, passNam
 export async function getDropInCatalogue(options?: RequestOptions): Promise<DropInProduct[]> {
   const payload = await apiGet<DropInProduct[]>("/api/v1/drop-in/catalogue", {
     errorMessage: "Failed to load the drop-in catalogue",
+    ...options,
+  });
+  return Array.isArray(payload) ? payload : [];
+}
+
+/**
+ * `GET /api/v1/drop-in/products` — the drop-ins on sale at one branch, priced
+ * for `memberId` exactly as the payment will charge them (member discount and
+ * first transaction discount included in `finalPrice`).
+ */
+export async function getDropInProducts(
+  branchId: string,
+  memberId: string,
+  options?: RequestOptions
+): Promise<DropInProduct[]> {
+  const search = new URLSearchParams({ branchId, memberId });
+  const payload = await apiGet<DropInProduct[]>(`/api/v1/drop-in/products?${search}`, {
+    errorMessage: "Failed to load drop-in prices",
     ...options,
   });
   return Array.isArray(payload) ? payload : [];

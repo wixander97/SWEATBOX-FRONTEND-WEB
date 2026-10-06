@@ -53,6 +53,11 @@ export type Payment = {
   discount?: number;
   tax?: number;
   finalAmount?: number;
+  /**
+   * The part of `discount` that is the first transaction discount
+   * (`Payment.FirstTransactionDiscountAmount`); 0 when it did not apply.
+   */
+  firstTransactionDiscount?: number;
   paymentMethod?: number;
   paymentStatus?: number;
   paymentProvider?: number;

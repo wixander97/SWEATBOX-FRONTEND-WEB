@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { formatRupiah, type CartItem } from "@/lib/pos/cart";
 import { memberDisplayName, type ApiMember } from "@/lib/api/members";
 import { listPaymentMethods, PaymentMethod, PaymentProvider } from "@/lib/api/payments";
+import { applyPayments, type CartSummary } from "@/lib/pos/pricing";
 import {
   POS_PAYMENT_CHOICES,
   isEdc,
@@ -12,6 +13,8 @@ import {
   type PosPaymentChoice,
 } from "./use-pos-checkout";
 import { PosReceiptModal } from "./pos-receipt-modal";
+import { PosPriceSummary } from "./pos-price-summary";
+import { usePosQuote } from "./use-pos-quote";
 
 type Props = {
   items: CartItem[];
@@ -30,6 +33,11 @@ type Props = {
   completeLabel?: string;
   /** Reports whether a checkout is in flight, to lock the rest of the POS. */
   onBusyChange?: (busy: boolean) => void;
+  /**
+   * Backend pricing the caller already holds for these items. Without it the
+   * modal quotes the items itself.
+   */
+  summary?: CartSummary;
 };
 
 function StatusPill({ label, tone }: { label: string; tone: "wait" | "ok" | "bad" | "idle" }) {
@@ -65,8 +73,12 @@ export function PosCheckoutModal({
   onCompleted,
   completeLabel = "New transaction",
   onBusyChange,
+  summary: providedSummary,
 }: Props) {
   const checkout = usePosCheckout(items, customer, branchName, branchId);
+  const ownQuote = usePosQuote(items, customer.id, !providedSummary);
+  const quoted = providedSummary ?? ownQuote.summary;
+  const quoting = !providedSummary && ownQuote.loading;
   const [selected, setSelected] = useState<PosPaymentChoice>("qris");
   const [notes, setNotes] = useState("");
   /** EDC slip reference per payment line — never carried between payments. */
@@ -74,7 +86,20 @@ export function PosCheckoutModal({
   const [qrisAvailable, setQrisAvailable] = useState<boolean | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
 
-  const { phase, steps, activeIndex, subtotal, paidPaymentIds } = checkout;
+  const { phase, steps, activeIndex, paidPaymentIds } = checkout;
+
+  /*
+   * Quoted until a line's payment exists, then that payment's own figures —
+   * so the amount on screen is always the `finalAmount` the backend settles.
+   */
+  const summary = useMemo(
+    () =>
+      applyPayments(
+        quoted,
+        Object.fromEntries(steps.map((step) => [step.lineId, step.payment]))
+      ),
+    [quoted, steps]
+  );
 
   const running = phase !== "idle";
   const finished = phase === "done";
@@ -129,12 +154,7 @@ export function PosCheckoutModal({
           {phase === "idle" && (
             <>
               <div className="bg-sidebar border border-border rounded-lg px-4 py-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted">Amount due</span>
-                  <span className="text-lg font-bold text-accent-ink font-display">
-                    {formatRupiah(subtotal)}
-                  </span>
-                </div>
+                <PosPriceSummary summary={summary} loading={quoting} />
               </div>
 
               <div>
@@ -192,10 +212,10 @@ export function PosCheckoutModal({
               <button
                 type="button"
                 onClick={() => void checkout.start({ choice: selected, notes })}
-                disabled={checkout.isBusy()}
+                disabled={checkout.isBusy() || quoting}
                 className="w-full bg-sweat text-black py-3 rounded-lg text-sm font-bold hover:brightness-95 transition disabled:opacity-60"
               >
-                Pay {formatRupiah(subtotal)}
+                {quoting ? "Calculating price…" : `Pay ${formatRupiah(summary.total)}`}
               </button>
             </>
           )}
@@ -233,6 +253,12 @@ export function PosCheckoutModal({
                           {formatRupiah(step.amount)}
                           {step.payment?.invoiceNo ? ` · ${step.payment.invoiceNo}` : ""}
                         </p>
+                        {(step.payment?.firstTransactionDiscount ?? 0) > 0 && (
+                          <p className="text-[11px] text-success">
+                            First transaction discount -
+                            {formatRupiah(step.payment?.firstTransactionDiscount)}
+                          </p>
+                        )}
                       </div>
                       <StatusPill
                         label={
@@ -398,6 +424,10 @@ export function PosCheckoutModal({
                   </div>
                 );
               })}
+
+              <div className="bg-sidebar border border-border rounded-lg px-4 py-3">
+                <PosPriceSummary summary={summary} />
+              </div>
             </div>
           )}
 

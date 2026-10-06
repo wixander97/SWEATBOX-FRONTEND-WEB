@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { adminPaths } from "@/lib/admin-routes";
@@ -14,6 +14,7 @@ import { PosCatalog } from "./pos-catalog";
 import { PosCartPanel } from "./pos-cart-panel";
 import { PosCustomerPanel } from "./pos-customer-panel";
 import { PosCheckoutModal } from "./pos-checkout-modal";
+import { usePosQuote } from "./use-pos-quote";
 
 type ProfileData = {
   fullName?: string | null;
@@ -110,10 +111,10 @@ export function PosView() {
     setContextVersion((v) => v + 1);
   }, []);
 
-  const total = useMemo(
-    () => items.reduce((sum, i) => sum + i.price, 0),
-    [items]
-  );
+  // The backend prices the cart for this customer: member and first
+  // transaction discounts are its answer, never the till's.
+  const { summary, loading: quoting } = usePosQuote(items, customer?.id);
+  const total = summary.total;
 
   const exitPos = useCallback(() => {
     if (checkoutBusy) return;
@@ -290,6 +291,8 @@ export function PosView() {
                 onClear={() => setItems([])}
                 onCheckout={() => setCheckoutOpen(true)}
                 hasCustomer={!!customer}
+                summary={summary}
+                quoting={quoting}
                 disabled={checkoutBusy}
               />
             </aside>
@@ -327,6 +330,7 @@ export function PosView() {
           }}
           onCompleted={resetTransaction}
           onBusyChange={setCheckoutBusy}
+          summary={summary}
         />
       )}
     </div>

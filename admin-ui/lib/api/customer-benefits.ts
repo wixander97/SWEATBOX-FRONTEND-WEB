@@ -76,6 +76,36 @@ export function updateFirstTransactionSettings(
   );
 }
 
+/**
+ * `GET /api/v1/customer-benefits/quote` → `PurchaseQuoteResponse`.
+ *
+ * What a membership plan or PT package would cost this customer right now,
+ * priced by the same calculation `POST /api/v1/payments` uses: list price,
+ * member discount, then the first transaction discount.
+ */
+export type PurchaseQuote = {
+  price: number;
+  /** Always 0 for a PT package. */
+  memberDiscount: number;
+  /** 0 when the customer is not eligible for this purchase. */
+  firstTransactionDiscount: number;
+  finalPrice: number;
+  notes?: string | null;
+};
+
+export function getPurchaseQuote(
+  params: { memberId: string } & (
+    | { membershipPlanId: string; ptPackageId?: never }
+    | { ptPackageId: string; membershipPlanId?: never }
+  ),
+  options?: RequestOptions
+): Promise<PurchaseQuote> {
+  return apiGet<PurchaseQuote>(`${BENEFITS}/quote${query(params)}`, {
+    errorMessage: "Failed to load the price quote",
+    ...options,
+  });
+}
+
 /* Referral programme ------------------------------------------------------ */
 
 export type ReferralQualificationEvent =

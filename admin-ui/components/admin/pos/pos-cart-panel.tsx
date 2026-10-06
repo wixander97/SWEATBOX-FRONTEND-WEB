@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  CART_KIND_LABEL,
-  cartSubtotal,
-  formatRupiah,
-  type CartItem,
-} from "@/lib/pos/cart";
+import { CART_KIND_LABEL, formatRupiah, type CartItem } from "@/lib/pos/cart";
+import type { CartSummary } from "@/lib/pos/pricing";
+import { PosPriceSummary } from "./pos-price-summary";
 
 type Props = {
   items: CartItem[];
@@ -13,6 +10,10 @@ type Props = {
   onClear: () => void;
   onCheckout: () => void;
   hasCustomer: boolean;
+  /** Backend pricing for the cart (see `usePosQuote`). */
+  summary: CartSummary;
+  /** Quotes are still loading; the totals are not final yet. */
+  quoting?: boolean;
   disabled?: boolean;
 };
 
@@ -62,10 +63,10 @@ export function PosCartPanel({
   onClear,
   onCheckout,
   hasCustomer,
+  summary,
+  quoting = false,
   disabled = false,
 }: Props) {
-  const subtotal = cartSubtotal(items);
-
   const blockedReason = !hasCustomer
     ? "Select a customer first"
     : items.length === 0
@@ -131,35 +132,18 @@ export function PosCartPanel({
       </div>
 
       <div className="border-t border-border p-4 space-y-2 bg-sidebar">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted">Subtotal</span>
-          <span className="text-fg-soft">{formatRupiah(subtotal)}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-muted">Discount</span>
-          <span
-            className="text-fg-soft"
-            title="Prices are taken as-is from the plan/package record — the backend applies no discount"
-          >
-            {formatRupiah(0)}
-          </span>
-        </div>
-        <div className="flex justify-between items-baseline pt-2 border-t border-border">
-          <span className="text-sm font-bold uppercase text-fg-soft">Total</span>
-          <span className="text-xl font-bold text-accent-ink font-display">
-            {formatRupiah(subtotal)}
-          </span>
-        </div>
+        <PosPriceSummary summary={summary} loading={quoting} />
 
         <button
           type="button"
           onClick={onCheckout}
           data-help-target="pos-checkout"
-          disabled={disabled || !!blockedReason}
+          disabled={disabled || quoting || !!blockedReason}
           className="w-full bg-sweat text-black py-3 rounded-lg text-sm font-bold hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           <i className="fas fa-cash-register" aria-hidden />
-          {blockedReason ?? `Pay · ${formatRupiah(subtotal)}`}
+          {blockedReason ??
+            (quoting ? "Calculating price…" : `Pay · ${formatRupiah(summary.total)}`)}
         </button>
       </div>
     </div>
